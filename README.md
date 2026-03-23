@@ -69,12 +69,74 @@ Visualizer (CLI / Web)
 ```bash
 git clone https://github.com/your-username/cpp-flow-visualizer.git
 cd cpp-flow-visualizer
+```
 
 ### 2. Install Dependencies
+```bash
 pip install -r requirements.txt
+```
 
 ### 3. Ensure GDB is Installed
-  gdb --version
+```bash
+gdb --version
+```
 
 If not installed:
-  sudo apt install gdb
+```bash
+sudo apt install gdb
+```
+
+---
+
+## ▶️ Run the MVP
+
+### 1. Compile sample C++ with debug symbols
+```bash
+mkdir -p build
+g++ -g examples/simple.cpp -o build/simple
+```
+
+### 2. Run flow visualizer
+```bash
+PYTHONPATH=src python main.py build/simple --max-steps 50
+```
+
+Default backend is LLDB (recommended on macOS).
+
+Use GDB explicitly if needed:
+```bash
+PYTHONPATH=src python main.py build/simple --backend gdb
+```
+
+### 3. Interactive stepping mode
+```bash
+PYTHONPATH=src python main.py build/simple --interactive
+```
+
+---
+
+## 📁 Current Project Structure
+
+```text
+.
+├── README.md
+├── MVP.md
+├── requirements.txt
+├── main.py
+├── examples/
+│   └── simple.cpp
+└── src/
+    └── flowviz/
+        ├── __init__.py
+        ├── cli.py
+        ├── executor.py
+        ├── gdb_controller.py
+        └── models.py
+```
+
+---
+
+## ✅ Current MVP Status
+
+- Implemented: GDB MI control, step execution, variable extraction, timeline snapshots, CLI rendering.
+- Deferred: AI explanations and web UI.
