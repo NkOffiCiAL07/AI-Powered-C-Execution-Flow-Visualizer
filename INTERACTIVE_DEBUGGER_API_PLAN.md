@@ -1,5 +1,14 @@
 # Interactive Debugger API & Architecture Plan
 
+## Scope Mode (Current)
+This plan is currently scoped to **No-History MVP**:
+- Keep only current/live state in memory
+- No timeline storage
+- No step replay API
+- No seek-to-step command
+
+History/timeline can be added later as Phase 2+.
+
 ## 1) Product Goal
 Build an interactive backend service that lets users control a running C++ debug session in real time and receive UI-ready state updates for animations.
 
@@ -89,9 +98,9 @@ Command validity:
 - `output_appended`
 
 ## 5.4 Command
-- `type`: `STEP_OVER`, `STEP_IN`, `STEP_OUT`, `CONTINUE`, `PAUSE`, `STOP`, `SEEK_STEP`
+- `type`: `STEP_OVER`, `STEP_IN`, `STEP_OUT`, `CONTINUE`, `PAUSE`, `STOP`
 - `session_id`
-- `payload` (e.g., target step number)
+- `payload` (optional command metadata)
 
 ---
 
@@ -113,10 +122,8 @@ Command validity:
 ## 6.3 Read APIs
 - `GET /sessions/{id}/state`
   - Latest execution state
-- `GET /sessions/{id}/steps/{step_no}`
-  - Exact historical state
-- `GET /sessions/{id}/timeline?from=0&limit=100`
-  - Batched timeline for replay/scrubber
+
+No history endpoints in current MVP scope.
 
 ## 6.4 Realtime API
 - `WS /sessions/{id}/events`
@@ -171,11 +178,11 @@ Principle: animation must be deterministic from event payload, not inferred heur
 
 MVP:
 - In-memory session registry
-- In-memory step history list
+- In-memory latest state only
 
 Next:
 - Redis for distributed session state and event fanout
-- Optional durable timeline store for long replays
+- Add timeline/history persistence when replay is introduced
 
 ---
 
@@ -219,9 +226,8 @@ src/flowviz/server/
 - Maintain in-memory latest state per session
 
 ### Phase 3 — Timeline + Realtime
-- Persist every `StepState`
-- Add `/steps/{n}` and `/timeline`
 - Add WebSocket `events` stream
+- Keep latest-state broadcast only (no persistence)
 
 ### Phase 4 — Diff Engine for Animation
 - Compute line/stack/variable/output diffs between steps
@@ -237,7 +243,7 @@ src/flowviz/server/
 ## 12) Immediate Next Steps
 1. Scaffold FastAPI service and route modules.
 2. Define request/response schemas for all MVP endpoints.
-3. Implement session manager + in-memory timeline store.
+3. Implement session manager + in-memory latest-state store.
 4. Integrate existing LLDB execution loop behind adapter interface.
 5. Add one vertical slice end-to-end:
-   - create session -> compile -> start -> step -> get latest state -> receive WS event.
+  - create session -> compile -> start -> step -> get latest state -> receive WS event.
