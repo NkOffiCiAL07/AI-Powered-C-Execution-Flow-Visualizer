@@ -30,19 +30,10 @@ def compile_session(
     session_id: str,
     request: CompileSessionRequest,
 ) -> CompileSessionResponse:
-    del request
     try:
-        record = session_manager.mark_compiled(session_id)
+        return session_manager.compile_session(session_id, request.override_flags)
     except KeyError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
-
-    return CompileSessionResponse(
-        session_id=record.session_id,
-        status=record.status,
-        success=True,
-        diagnostics=[],
-        executable_path=f"/tmp/flowviz/{record.session_id}/a.out",
-    )
 
 
 @router.post("/{session_id}/start", response_model=StartSessionResponse)
@@ -61,7 +52,11 @@ def start_session(session_id: str) -> StartSessionResponse:
             detail=f"Cannot start session in status '{record.status}'",
         )
 
-    started = session_manager.mark_started(session_id)
+    try:
+        started = session_manager.mark_started(session_id)
+    except RuntimeError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+
     return StartSessionResponse(
         session_id=started.session_id,
         status=started.status,

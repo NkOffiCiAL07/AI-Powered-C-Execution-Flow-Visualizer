@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import time
 from typing import Iterable
 
 import pexpect
@@ -25,6 +26,8 @@ class LLDBController:
         self._process.expect_exact("(lldb)")
         self._process.sendline("settings set use-color false")
         self._process.expect_exact("(lldb)")
+        self._process.sendline("settings set auto-confirm true")
+        self._process.expect_exact("(lldb)")
 
     def close(self) -> None:
         if not self._process:
@@ -44,6 +47,7 @@ class LLDBController:
         if not self._process:
             raise RuntimeError("LLDB process is not started")
 
+        self._drain_pending_output()
         self._process.sendline(command)
         self._process.expect_exact("(lldb)")
         output = self._process.before or ""
@@ -51,6 +55,10 @@ class LLDBController:
         for line in output.splitlines():
             cleaned = ANSI_ESCAPE_RE.sub("", line).replace("\r", "").strip()
             if cleaned:
+                if cleaned == command:
+                    continue
+                if cleaned.startswith("(lldb)"):
+                    continue
                 lines.append(cleaned)
         return lines
 
@@ -62,6 +70,18 @@ class LLDBController:
 
     def exec_step(self) -> list[str]:
         return self.run("thread step-over")
+
+    def exec_step_in(self) -> list[str]:
+        return self.run("thread step-in")
+
+    def exec_step_out(self) -> list[str]:
+        return self.run("thread step-out")
+
+    def exec_continue(self) -> list[str]:
+        return self.run("continue")
+
+    def kill(self) -> list[str]:
+        return self.run("process kill")
 
     def list_locals(self) -> dict[str, str]:
         for _ in range(3):
@@ -94,6 +114,24 @@ class LLDBController:
 
         return "unknown", -1, "unknown"
 
+    def call_stack(self) -> list[tuple[int, str, str, int]]:
+        output = self.run("thread backtrace")
+        frames: list[tuple[int, str, str, int]] = []
+        for line in output:
+            match = re.search(
+                r"frame\s+#(\d+):\s+.*?`([^`]+)(?:\s+at\s+(.+?):(\d+)(?::\d+)?)?\s*$",
+                line,
+            )
+            if not match:
+                continue
+
+            frame_index = int(match.group(1))
+            function_name = match.group(2).strip()
+            frame_file = match.group(3) or "unknown"
+            frame_line = int(match.group(4)) if match.group(4) else -1
+            frames.append((frame_index, function_name, frame_file, frame_line))
+        return frames
+
     @staticmethod
     def is_exited(lines: Iterable[str]) -> bool:
         text = "\n".join(lines)
@@ -109,4 +147,19 @@ class LLDBController:
             if "error:" in line.lower():
                 return line.strip()
         return "Unknown LLDB error"
+
+    def _drain_pending_output(self) -> None:
+        if not self._process:
+            return
+
+        for _ in range(5):
+            try:
+                pending = self._process.read_nonblocking(size=4096, timeout=0.02)
+            except pexpect.TIMEOUT:
+                break
+            except pexpect.EOF:
+                break
+            if not pending:
+                break
+            time.sleep(0.01)
 
