@@ -1,0 +1,185 @@
+#!/bin/bash
+# Quick Start Guide for C Execution Flow Visualizer
+
+cat << 'EOF'
+
+╔════════════════════════════════════════════════════════════════════════╗
+║                                                                        ║
+║     🚀 C Execution Flow Visualizer - Quick Start Guide                ║
+║                                                                        ║
+║     Visualize and animate C/C++ code execution with variables!        ║
+║                                                                        ║
+╚════════════════════════════════════════════════════════════════════════╝
+
+📋 WHAT YOU NEED:
+═════════════════════════════════════════════════════════════════════════
+
+✓ Python 3.10+
+✓ Node.js 16+
+✓ LLDB or GDB installed
+  (macOS: comes with Xcode)
+  (Linux: apt-get install lldb)
+
+
+🚀 3-STEP STARTUP:
+═════════════════════════════════════════════════════════════════════════
+
+STEP 1: Start the Backend Server
+─────────────────────────────────
+  cd /path/to/AI-Powered-C-Execution-Flow-Visualizer
+  python3 run_server.py
+
+  ✓ Server starts on http://localhost:8000
+  ✓ You'll see: "Uvicorn running on http://127.0.0.1:8000"
+
+
+STEP 2: Install Frontend Dependencies (first time only)
+─────────────────────────────────────────────────────────
+  cd frontend
+  npm install
+
+  ✓ This takes 1-2 minutes
+
+
+STEP 3: Start the Frontend Dev Server
+──────────────────────────────────────
+  npm start
+
+  ✓ Browser opens automatically to http://localhost:3000
+  ✓ You're ready to go!
+
+
+💡 QUICK TEST:
+═════════════════════════════════════════════════════════════════════════
+
+1. Paste this code in the editor:
+
+   #include <iostream>
+   int main() {
+       int x = 5;
+       int y = 10;
+       int sum = x + y;
+       std::cout << sum << std::endl;
+       return 0;
+   }
+
+2. Click "Analyze & Run"
+
+3. Watch the animation:
+   ✓ x changes from ? → 5 (flashes orange)
+   ✓ y changes from ? → 10 (flashes orange)
+   ✓ sum changes from ? → 15 (flashes orange)
+
+4. Use controls:
+   ⏮️ Restart | ▶️ Play/Pause | ⬅️ ➡️ Step | Speed 🎚️
+
+
+🎮 CONTROLS:
+═════════════════════════════════════════════════════════════════════════
+
+Buttons:
+  ⏮️  Restart   → Go back to step 1
+  ▶️  Play     → Start auto-animation (changes to ⏸️ Pause)
+  ⏸️  Pause    → Stop animation
+  ⬅️  Previous → Go to previous step
+  Next ➡️      → Go to next step
+
+Slider:
+  🎚️ Speed Control
+     Left  = Faster (20x)
+     Right = Slower (0.5x)
+
+Tabs:
+  📊 Execution Flow → Animated visualization (default)
+  📋 Output & Details → Detailed table view
+
+
+📊 WHAT YOU SEE:
+═════════════════════════════════════════════════════════════════════════
+
+When a variable changes:
+  🟠 Orange highlight    → Variable just changed
+  ⚡ Flash animation     → Attention-grabbing effect
+  ← Arrow with old value → Shows what it was before
+  ⭐ "NEW" badge         → Pulsing indicator
+
+Timeline:
+  🔵 Blue pulsing dot    → Current step
+  🟢 Green dots          → Already executed
+  ⚪ Gray dots           → Future steps
+  Click any dot to jump to that step
+
+
+📁 PROJECT STRUCTURE:
+═════════════════════════════════════════════════════════════════════════
+
+Frontend:
+  frontend/src/
+  ├── components/          6 React components
+  ├── styles/              6 CSS files with animations
+  ├── services/api.js      API client
+  └── App.js + App.css
+
+Backend:
+  src/flowviz/
+  ├── executor.py          Execution capture
+  ├── lldb_controller.py   LLDB interface
+  └── server/
+      └── app.py           FastAPI with /analyze endpoint
+
+
+🔍 TROUBLESHOOTING:
+═════════════════════════════════════════════════════════════════════════
+
+Problem: "Cannot connect to server"
+  Solution: Make sure backend is running on terminal 1
+
+Problem: "Code won't compile"
+  Solution: Use valid C++ code with #include statements
+
+Problem: "Frontend won't load"
+  Solution: npm install was successful? Try: npm start again
+
+Problem: "Variables not showing"
+  Solution: Try this simple example:
+    int x = 5;
+    int y = x + 10;
+    int z = y * 2;
+
+Problem: "Animation is too slow"
+  Solution: Move speed slider to the left (faster)
+
+
+📚 DOCUMENTATION:
+═════════════════════════════════════════════════════════════════════════
+
+Read these files for more details:
+
+  FRONTEND_SETUP.md          Complete setup guide
+  FRONTEND_UI_GUIDE.md       Features and usage
+  FRONTEND_IMPLEMENTATION.md Technical details
+  PHASE2_SUMMARY.md          What was built
+
+
+🎯 NEXT STEPS:
+═════════════════════════════════════════════════════════════════════════
+
+1. ✅ Start both servers (backend + frontend)
+2. ✅ Paste example code
+3. ✅ Click "Analyze & Run"
+4. ✅ Watch the animation!
+5. ✅ Try your own C code
+6. ✅ Use the controls to explore
+7. ✅ Check the "Output & Details" tab
+
+
+🎉 YOU'RE READY!
+═════════════════════════════════════════════════════════════════════════
+
+Start debugging visually with animated variable tracking! 🚀
+
+Questions? Check the documentation files above.
+
+EOF
+
+EOF

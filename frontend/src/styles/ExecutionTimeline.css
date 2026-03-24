@@ -1,0 +1,112 @@
+.execution-timeline {
+  background: linear-gradient(135deg, rgba(88, 166, 255, 0.08), rgba(78, 204, 163, 0.05));
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.timeline-header {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.timeline-container {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 6px;
+}
+
+.timeline-container::-webkit-scrollbar { height: 4px; }
+.timeline-container::-webkit-scrollbar-track { background: var(--bg-primary); border-radius: 2px; }
+.timeline-container::-webkit-scrollbar-thumb { background: #4ecca3; border-radius: 2px; }
+
+.timeline-track {
+  display: flex;
+  gap: 6px;
+  padding: 6px 2px;
+  min-width: min-content;
+  align-items: flex-end;
+}
+
+.timeline-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.2s;
+  min-width: 48px;
+}
+
+.timeline-step:hover {
+  transform: translateY(-3px);
+}
+
+.step-dot {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--bg-card);
+  border: 2px solid var(--text-secondary);
+  transition: all 0.3s ease;
+}
+
+.step-dot-pulse {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: rgba(88, 166, 255, 0.35);
+  animation: dotPulse 1s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+  0%, 100% { transform: scale(1);   opacity: 0.8; }
+  50%       { transform: scale(1.5); opacity: 0.3; }
+}
+
+.timeline-step.past .step-dot {
+  background: #4ecca3;
+  border-color: #4ecca3;
+}
+
+.timeline-step.active .step-dot {
+  width: 16px;
+  height: 16px;
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 14px rgba(88, 166, 255, 0.8);
+}
+
+.step-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+  max-width: 56px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timeline-step.past  .step-label { color: #4ecca3; }
+.timeline-step.active .step-label { color: var(--accent-blue); font-weight: 800; }
+
+.timeline-legend {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.legend-past    { color: #4ecca3; }
+.legend-current { color: var(--accent-blue); }
+.legend-future  { color: var(--text-secondary); }
