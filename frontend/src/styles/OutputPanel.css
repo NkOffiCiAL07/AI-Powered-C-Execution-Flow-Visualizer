@@ -11,14 +11,14 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  min-height: 300px;
+  min-height: 250px;
   color: var(--text-secondary);
-  font-size: 15px;
-  gap: 12px;
+  font-size: 13px;
+  gap: 10px;
 }
 
 .output-header {
-  padding: 16px;
+  padding: 12px 14px;
   background-color: var(--bg-card);
   border-bottom: 1px solid var(--border);
   position: sticky;
@@ -27,15 +27,15 @@
 }
 
 .output-header h3 {
-  margin: 0 0 8px 0;
-  font-size: 14px;
+  margin: 0 0 6px 0;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .output-summary {
   margin: 0;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-secondary);
 }
 
@@ -46,13 +46,13 @@
 .output-table-container {
   flex: 1;
   overflow: auto;
-  padding: 16px;
+  padding: 12px;
 }
 
 .output-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: 11px;
   font-family: var(--font-mono);
 }
 
@@ -65,13 +65,13 @@
 }
 
 .output-table th {
-  padding: 10px 12px;
+  padding: 8px 10px;
   text-align: left;
   color: var(--text-secondary);
   font-weight: 600;
   text-transform: uppercase;
-  font-size: 10px;
-  letter-spacing: 0.5px;
+  font-size: 9px;
+  letter-spacing: 0.3px;
 }
 
 .output-row {
@@ -89,7 +89,7 @@
 }
 
 .output-row td {
-  padding: 10px 12px;
+  padding: 8px 10px;
   color: var(--text-primary);
   border-right: 1px solid var(--border);
 }

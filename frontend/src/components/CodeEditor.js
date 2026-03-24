@@ -19,21 +19,9 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest 
   if (currentLine !== undefined && currentLine !== null) {
     return (
       <div className="code-editor">
-        <div className="editor-hint" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span>▶ Playing — currently on line {currentLine}</span>
-          <button
-            onClick={onEditRequest}
-            style={{
-              background: "rgba(78,204,163,0.15)",
-              color: "#4ecca3",
-              border: "2px solid #4ecca3",
-              borderRadius: "6px",
-              padding: "4px 12px",
-              cursor: "pointer",
-              fontSize: "13px",
-              fontWeight: "700",
-            }}
-          >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", backgroundColor: "var(--bg-card)", borderBottom: "1px solid var(--border)" }}>
+          <span style={{ fontSize: "13px", color: "var(--text-primary)" }}>▶ Playing — currently on line {currentLine}</span>
+          <button className="edit-code-btn" onClick={onEditRequest}>
             ✏️ Edit Code
           </button>
         </div>
