@@ -38,6 +38,43 @@ int main() {
     }
     return 0;
 }`,
+  fibonacci: `#include <iostream>
+#include <string>
+#include <vector>
+using namespace std;
+
+int fibonacci(int n) {
+    if (n <= 1) {
+        return n;
+    }
+    int first = 0;
+    int second = 1;
+    for (int i = 2; i <= n; i++) {
+        int next = first + second;
+        first = second;
+        second = next;
+    }
+    return second;
+}
+
+int main() {
+    vector<int> values = {2, 4, 6};
+    int total = 0;
+    string label = "start";
+    for (int index = 0; index < values.size(); index++) {
+        int current = values[index];
+        int fib = fibonacci(current);
+        total += fib;
+        if (fib % 2 == 0) {
+            label = "even";
+        } else {
+            label = "odd";
+        }
+        cout << "fib(" << current << ")=" << fib << " label=" << label << endl;
+    }
+    cout << "total=" << total << endl;
+    return 0;
+}`,
 };
 
 const DEFAULT_CODE = EXAMPLE_CODES.simple;
@@ -62,11 +99,14 @@ function App() {
 
   const handleLoadExample = (exampleKey) => {
     setSelectedExample(exampleKey);
-    setCode(EXAMPLE_CODES[exampleKey]);
+    const newCode = EXAMPLE_CODES[exampleKey];
+    setCode(newCode);
+    handleAnalyze(newCode);
   };
 
-  const handleAnalyze = useCallback(async () => {
-    if (!code.trim()) {
+  const handleAnalyze = useCallback(async (codeOverride) => {
+    const codeToAnalyze = typeof codeOverride === "string" ? codeOverride : code;
+    if (!codeToAnalyze.trim()) {
       setError("Please enter some C code before analyzing.");
       return;
     }
@@ -80,7 +120,7 @@ function App() {
     setError(null);
     setAnalysisResult(null);
     try {
-      const result = await analyzeCode(code, abortControllerRef.current.signal);
+      const result = await analyzeCode(codeToAnalyze, abortControllerRef.current.signal);
       setAnalysisResult(result);
     } catch (err) {
       if (err.name === "AbortError") return;
@@ -122,9 +162,20 @@ function App() {
               >
                 If Statement
               </button>
+              <button
+                className={`example-btn ${selectedExample === "fibonacci" ? "active" : ""}`}
+                onClick={() => handleLoadExample("fibonacci")}
+              >
+                🔢 Fibonacci
+              </button>
             </div>
           </div>
-          <CodeEditor code={code} onChange={setCode} currentLine={currentLine} />
+          <CodeEditor
+            code={code}
+            onChange={(newCode) => { setCode(newCode); setCurrentLine(null); setAnalysisResult(null); }}
+            currentLine={currentLine}
+            onEditRequest={() => { setCurrentLine(null); setAnalysisResult(null); }}
+          />
         </section>
         <section className="visualizer-section">
           <div className="section-header">
@@ -153,7 +204,9 @@ function App() {
           </div>
           {error && (
             <div className="error-banner">
-              {error}
+              <span>
+                ⚠️ <strong>Error:</strong> {error}
+              </span>
               <button
                 className="error-dismiss"
                 onClick={() => setError(null)}

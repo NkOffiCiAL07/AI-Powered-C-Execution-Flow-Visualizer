@@ -48,20 +48,54 @@ def create_app() -> FastAPI:
         """
         Analyze C code by compiling it and capturing execution timeline.
         Returns snapshots of variable values at each step.
+        Supports code snippets without main() by wrapping them automatically.
         """
         if not request.code or not request.code.strip():
             raise HTTPException(status_code=400, detail="No C code provided")
 
+        code = request.code.strip()
+        
+        # Check if code already has a main function
+        has_main = "main(" in code or "main ()" in code
+        
+        # Prepare the code - wrap in main if needed
+        if not has_main:
+            # Auto-wrap code without main in a main function
+            wrapped_code = f"""#include <iostream>
+#include <vector>
+#include <string>
+#include <cmath>
+using namespace std;
+
+int main() {{
+{chr(10).join('    ' + line for line in code.split(chr(10)))}
+    return 0;
+}}
+"""
+        else:
+            # Ensure necessary headers are included
+            if "#include" not in code:
+                wrapped_code = f"""#include <iostream>
+#include <vector>
+#include <string>
+#include <cmath>
+using namespace std;
+
+{code}
+"""
+            else:
+                wrapped_code = code
+
         try:
             # Create temporary file for the C code
             with tempfile.NamedTemporaryFile(mode="w", suffix=".cpp", delete=False) as f:
-                f.write(request.code)
+                f.write(wrapped_code)
                 source_file = f.name
 
             try:
                 executable = source_file.replace(".cpp", "")
 
-                # Compile the code
+                # Compile the code - try clang++ first, then g++
                 result = subprocess.run(
                     ["clang++", "-g", "-O0", "-std=c++17", "-o", executable, source_file],
                     capture_output=True,
@@ -79,9 +113,13 @@ def create_app() -> FastAPI:
                     )
 
                 if result.returncode != 0:
+                    # Format error message with file/line details
+                    error_msg = result.stderr
+                    # Extract line numbers and provide better context
+                    detail_msg = f"Compilation failed:\n{error_msg}"
                     raise HTTPException(
                         status_code=400,
-                        detail=f"Compilation failed: {result.stderr}",
+                        detail=detail_msg,
                     )
 
                 # Collect execution timeline

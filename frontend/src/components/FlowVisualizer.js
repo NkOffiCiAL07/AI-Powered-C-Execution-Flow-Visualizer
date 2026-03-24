@@ -69,6 +69,11 @@ export default function FlowVisualizer({ result, loading, onLineChange, code }) 
   const safeCurrentStep = Math.min(currentStep, Math.max(0, totalSteps - 1));
 
   useEffect(() => {
+    setCurrentStep(0);
+    setIsAnimating(true);
+  }, [result]);
+
+  useEffect(() => {
     if (snapshots.length === 0) return;
 
     setCurrentStep((prev) => Math.min(prev, maxStep));

@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import "../styles/CodeEditor.css";
 
-export default function CodeEditor({ code, onChange, currentLine }) {
+export default function CodeEditor({ code, onChange, currentLine, onEditRequest }) {
   const lineRefs = useRef({});
 
   // Auto-scroll to the active line
@@ -19,7 +19,24 @@ export default function CodeEditor({ code, onChange, currentLine }) {
   if (currentLine !== undefined && currentLine !== null) {
     return (
       <div className="code-editor">
-        <div className="editor-hint">▶ Playing — currently on line {currentLine}</div>
+        <div className="editor-hint" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span>▶ Playing — currently on line {currentLine}</span>
+          <button
+            onClick={onEditRequest}
+            style={{
+              background: "rgba(78,204,163,0.15)",
+              color: "#4ecca3",
+              border: "2px solid #4ecca3",
+              borderRadius: "6px",
+              padding: "4px 12px",
+              cursor: "pointer",
+              fontSize: "13px",
+              fontWeight: "700",
+            }}
+          >
+            ✏️ Edit Code
+          </button>
+        </div>
         <div className="code-viewer">
           {lines.map((line, idx) => {
             const lineNum = idx + 1;
