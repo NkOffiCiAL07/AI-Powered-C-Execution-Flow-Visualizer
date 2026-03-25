@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import "../styles/FlowVisualizer.css";
 import VariableTracker from "./VariableTracker";
 import ExecutionTimeline from "./ExecutionTimeline";
@@ -58,13 +58,16 @@ export default function FlowVisualizer({ result, loading, onLineChange, code }) 
   const [isAnimating, setIsAnimating] = useState(true);
   const [animationSpeed, setAnimationSpeed] = useState(1500);
 
-  const snapshots = result?.snapshots || [];
+  const snapshots = useMemo(() => result?.snapshots || [], [result]);
   const stopLine = getLastPlayableLine(code);
   const stopStep = snapshots.findIndex(
     (snapshot) => snapshot.location?.line >= stopLine
   );
   const maxStep = stopStep >= 0 ? stopStep : Math.max(0, snapshots.length - 1);
-  const visibleSnapshots = snapshots.slice(0, maxStep + 1);
+  const visibleSnapshots = useMemo(
+    () => snapshots.slice(0, maxStep + 1),
+    [snapshots, maxStep]
+  );
   const totalSteps = visibleSnapshots.length;
   const safeCurrentStep = Math.min(currentStep, Math.max(0, totalSteps - 1));
 

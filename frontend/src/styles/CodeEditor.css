@@ -14,32 +14,49 @@
   border-bottom: 1px solid var(--border);
 }
 
-/* ── Editable textarea mode ── */
-.editor-textarea {
+.editor-shell {
   flex: 1;
-  padding: 16px;
   background-color: var(--bg-primary);
-  color: var(--text-primary);
-  border: none;
-  font-family: var(--font-mono);
-  font-size: 14px;
-  line-height: 1.6;
-  resize: none;
-  overflow: auto;
-  caret-color: var(--accent-blue);
+  display: flex;
+  flex-direction: column;
 }
 
-.editor-textarea::placeholder {
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background-color: #202020;
+}
+
+.editor-language-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background-color: rgba(59, 130, 246, 0.15);
+  color: var(--accent-blue);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.editor-toolbar-tip {
   color: var(--text-secondary);
-  opacity: 0.6;
+  font-size: 11px;
+  text-align: right;
 }
 
-.editor-textarea:focus {
-  outline: none;
-  border-left: 2px solid var(--accent-blue);
+.monaco-editor-pane {
+  flex: 1;
 }
 
-/* ── Line-number viewer mode (during playback) ── */
+/* Playback viewer */
 .code-viewer {
   flex: 1;
   overflow-y: auto;

@@ -107,7 +107,7 @@ function App() {
   const handleAnalyze = useCallback(async (codeOverride) => {
     const codeToAnalyze = typeof codeOverride === "string" ? codeOverride : code;
     if (!codeToAnalyze.trim()) {
-      setError("Please enter some C code before analyzing.");
+      setError("Please enter some C++ code before analyzing.");
       return;
     }
 
