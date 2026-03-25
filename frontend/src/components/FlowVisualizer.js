@@ -125,7 +125,11 @@ export default function FlowVisualizer({ result, loading, onLineChange, code }) 
   if (!result || snapshots.length === 0) {
     return (
       <div className="flow-visualizer-empty">
-        <p>Press <strong>Analyze &amp; Run</strong> to watch your program execute!</p>
+        <p>
+          {result?.execution_mode === "output_only"
+            ? "This program was run with stdin input in output-only mode. Open Output & Details to see the result."
+            : <><strong>Analyze &amp; Run</strong> to watch your program execute!</>}
+        </p>
       </div>
     );
   }

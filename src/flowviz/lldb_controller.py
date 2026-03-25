@@ -65,7 +65,10 @@ class LLDBController:
     def break_main(self) -> list[str]:
         return self.run("breakpoint set --name main")
 
-    def exec_run(self) -> list[str]:
+    def exec_run(self, stdin_path: str | None = None) -> list[str]:
+        if stdin_path:
+            escaped_path = stdin_path.replace("\\", "\\\\").replace('"', '\\"')
+            return self.run(f'process launch --stdin "{escaped_path}"')
         return self.run("run")
 
     def exec_step(self) -> list[str]:

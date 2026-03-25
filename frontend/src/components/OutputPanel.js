@@ -13,7 +13,18 @@ export default function OutputPanel({ result, loading }) {
     );
   }
 
-  if (!result || !result.snapshots || result.snapshots.length === 0) {
+  if (!result) {
+    return (
+      <div className="output-panel-empty">
+        <p>No execution data available</p>
+      </div>
+    );
+  }
+
+  const hasSnapshots = Array.isArray(result.snapshots) && result.snapshots.length > 0;
+  const hasProgramOutput = Boolean(result.stdout || result.stderr);
+
+  if (!hasSnapshots && !hasProgramOutput) {
     return (
       <div className="output-panel-empty">
         <p>No execution data available</p>
@@ -40,6 +51,42 @@ export default function OutputPanel({ result, loading }) {
         </p>
       </div>
 
+      {hasProgramOutput && (
+        <div className="output-table-container">
+          <table className="output-table">
+            <tbody>
+              <tr className="expanded-row">
+                <td colSpan="5">
+                  <div className="expanded-content">
+                    <div className="expanded-section">
+                      <h4>Program Output:</h4>
+                      <p>
+                        <code>{result.stdout || "(no stdout)"}</code>
+                      </p>
+                    </div>
+                    {result.stderr && (
+                      <div className="expanded-section">
+                        <h4>Runtime Errors:</h4>
+                        <p>
+                          <code>{result.stderr}</code>
+                        </p>
+                      </div>
+                    )}
+                    {result.execution_mode === "output_only" && (
+                      <div className="expanded-section">
+                        <h4>Execution Mode:</h4>
+                        <p>Ran with stdin input in output-only mode. Step-by-step variable tracing is currently limited to non-stdin runs.</p>
+                      </div>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {hasSnapshots && (
       <div className="output-table-container">
         <table className="output-table">
           <thead>
@@ -117,6 +164,7 @@ export default function OutputPanel({ result, loading }) {
           </tbody>
         </table>
       </div>
+      )}
     </div>
   );
 }

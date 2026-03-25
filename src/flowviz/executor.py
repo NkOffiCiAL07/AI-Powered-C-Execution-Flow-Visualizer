@@ -13,6 +13,7 @@ def collect_execution_timeline(
     delay_seconds: float = 0.0,
     auto_mode: bool = True,
     backend: str = "lldb",
+    stdin_path: str | None = None,
 ) -> list[StateSnapshot]:
     if backend == "lldb":
         controller = LLDBController(executable)
@@ -39,7 +40,10 @@ def collect_execution_timeline(
                 f"{debugger_name} failed to set breakpoint at main: {controller.get_error_message(break_output)}"
             )
 
-        run_output = controller.exec_run()
+        if backend == "gdb" and stdin_path:
+            raise RuntimeError("stdin input is only supported with the LLDB backend")
+
+        run_output = controller.exec_run(stdin_path=stdin_path) if backend == "lldb" else controller.exec_run()
         if controller.has_error(run_output):
             raise RuntimeError(
                 f"{debugger_name} failed to run executable: {controller.get_error_message(run_output)}"

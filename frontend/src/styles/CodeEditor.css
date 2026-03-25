@@ -16,6 +16,7 @@
 
 .editor-shell {
   flex: 1;
+  min-height: 320px;
   background-color: var(--bg-primary);
   display: flex;
   flex-direction: column;
@@ -54,6 +55,7 @@
 
 .monaco-editor-pane {
   flex: 1;
+  min-height: 260px;
 }
 
 /* Playback viewer */

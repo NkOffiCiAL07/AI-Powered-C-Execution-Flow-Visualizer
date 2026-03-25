@@ -26,6 +26,62 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
+.editor-section .code-editor {
+  flex: 1;
+  min-height: 0;
+}
+
+.stdin-panel {
+  border-top: 1px solid var(--border);
+  background-color: var(--bg-card);
+  padding: 12px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stdin-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.stdin-header h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.stdin-header span {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.stdin-textarea {
+  min-height: 96px;
+  resize: vertical;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 12px;
+}
+
+.stdin-textarea:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+}
+
+.stdin-textarea::placeholder {
+  color: var(--text-secondary);
+}
+
 .visualizer-section {
   flex: 0.6;
   display: flex;

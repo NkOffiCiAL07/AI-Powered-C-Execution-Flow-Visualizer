@@ -3,8 +3,10 @@ import CodeEditor from "./components/CodeEditor";
 import FlowVisualizer from "./components/FlowVisualizer";
 import OutputPanel from "./components/OutputPanel";
 import Header from "./components/Header";
+import CppEditorPage from "./components/CppEditorPage";
 import { analyzeCode } from "./services/api";
 import "./App.css";
+import "./styles/CppEditorPage.css";
 
 const EXAMPLE_CODES = {
   simple: `#include <iostream>
@@ -81,9 +83,11 @@ const DEFAULT_CODE = EXAMPLE_CODES.simple;
 
 function App() {
   const [code, setCode] = useState(DEFAULT_CODE);
+  const [programInput, setProgramInput] = useState("");
   const [analysisResult, setAnalysisResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [view, setView] = useState("editor");
   const [activeTab, setActiveTab] = useState("flow");
   const [selectedExample, setSelectedExample] = useState("simple");
   const [currentLine, setCurrentLine] = useState(null);
@@ -101,7 +105,9 @@ function App() {
     setSelectedExample(exampleKey);
     const newCode = EXAMPLE_CODES[exampleKey];
     setCode(newCode);
-    handleAnalyze(newCode);
+    setCurrentLine(null);
+    setAnalysisResult(null);
+    setError(null);
   };
 
   const handleAnalyze = useCallback(async (codeOverride) => {
@@ -120,8 +126,11 @@ function App() {
     setError(null);
     setAnalysisResult(null);
     try {
-      const result = await analyzeCode(codeToAnalyze, abortControllerRef.current.signal);
+      const result = await analyzeCode(codeToAnalyze, programInput, abortControllerRef.current.signal);
       setAnalysisResult(result);
+      if (result.execution_mode === "output_only") {
+        setActiveTab("output");
+      }
     } catch (err) {
       if (err.name === "AbortError") return;
       setError(err.message || "Analysis failed");
@@ -129,16 +138,39 @@ function App() {
       setLoading(false);
       abortControllerRef.current = null;
     }
-  }, [code]);
-
-  // Auto-analyze on initial load
-  useEffect(() => {
-    handleAnalyze();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [code, programInput]);
 
   return (
     <div className="app">
-      <Header onAnalyze={handleAnalyze} loading={loading} />
+      <Header
+        onAnalyze={handleAnalyze}
+        loading={loading}
+        view={view}
+        onSwitchView={setView}
+      />
+
+      {view === "editor" ? (
+        <CppEditorPage
+          code={code}
+          onCodeChange={(newCode) => {
+            setCode(newCode);
+            setCurrentLine(null);
+            setAnalysisResult(null);
+            setError(null);
+          }}
+          programInput={programInput}
+          onProgramInputChange={(value) => {
+            setProgramInput(value);
+            setCurrentLine(null);
+            setAnalysisResult(null);
+            setError(null);
+          }}
+          onRun={handleAnalyze}
+          loading={loading}
+          error={error}
+          result={analysisResult}
+        />
+      ) : (
       <main className="app-main">
         <section className="editor-section">
           <div className="section-header">
@@ -176,6 +208,23 @@ function App() {
             currentLine={currentLine}
             onEditRequest={() => { setCurrentLine(null); setAnalysisResult(null); }}
           />
+          <div className="stdin-panel">
+            <div className="stdin-header">
+              <h3>Program Input</h3>
+              <span>Optional stdin for `cin` or `getline`</span>
+            </div>
+            <textarea
+              className="stdin-textarea"
+              value={programInput}
+              onChange={(event) => {
+                setProgramInput(event.target.value);
+                setCurrentLine(null);
+                setAnalysisResult(null);
+              }}
+              placeholder={"Example:\n5\n10\nhello"}
+              spellCheck="false"
+            />
+          </div>
         </section>
         <section className="visualizer-section">
           <div className="section-header">
@@ -227,6 +276,7 @@ function App() {
           )}
         </section>
       </main>
+      )}
     </div>
   );
 }

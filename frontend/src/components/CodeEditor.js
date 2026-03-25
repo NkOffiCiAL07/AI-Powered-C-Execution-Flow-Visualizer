@@ -181,6 +181,7 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest 
         </div>
         <Editor
           className="monaco-editor-pane"
+          height="100%"
           defaultLanguage="cpp"
           language="cpp"
           value={code}
