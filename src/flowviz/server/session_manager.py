@@ -9,6 +9,7 @@ import tempfile
 from uuid import uuid4
 
 from flowviz.lldb_controller import LLDBController
+from flowviz.server.mongo_store import MongoExecutionStore
 from flowviz.server.models import (
     CommandType,
     CompileSessionResponse,
@@ -34,13 +35,19 @@ class _SessionRecord:
     work_dir: Path | None = None
     source_path: Path | None = None
     executable_path: Path | None = None
+    stdin_path: Path | None = None
     controller: LLDBController | None = None
     previous_variables: dict[str, str] | None = None
+    history: list[LiveExecutionStateDTO] | None = None
+    cursor: int = -1
+    completed: bool = False
+    has_seen_user_source: bool = False
 
 
 class SessionManager:
     def __init__(self) -> None:
         self._sessions: dict[str, _SessionRecord] = {}
+        self._execution_store = MongoExecutionStore()
 
     def create_session(self, request: CreateSessionRequest) -> SessionSummaryResponse:
         session_id = str(uuid4())
@@ -52,6 +59,11 @@ class SessionManager:
             request=request,
         )
         self._sessions[session_id] = record
+        self._execution_store.create_session(
+            session_id=session_id,
+            code=request.source.code,
+            stdin=request.settings.stdin_data,
+        )
         return SessionSummaryResponse(
             session_id=record.session_id,
             status=record.status,
@@ -73,6 +85,8 @@ class SessionManager:
         work_dir = Path(tempfile.mkdtemp(prefix=f"flowviz_{record.session_id}_"))
         source_path = work_dir / record.request.source.file_name
         source_path.write_text(record.request.source.code)
+        stdin_path = work_dir / "stdin.txt"
+        stdin_path.write_text(record.request.settings.stdin_data or "")
 
         executable_path = work_dir / "program.out"
         compile_flags = override_flags if override_flags is not None else record.request.settings.compiler_flags
@@ -115,9 +129,21 @@ class SessionManager:
         record.work_dir = work_dir
         record.source_path = source_path
         record.executable_path = executable_path
+        record.stdin_path = stdin_path
         record.status = SessionStatus.COMPILED
         record.state = None
         record.previous_variables = None
+        record.history = []
+        record.cursor = -1
+        record.completed = False
+        record.has_seen_user_source = False
+
+        self._execution_store.update_cursor(
+            session_id=record.session_id,
+            status=record.status,
+            cursor=record.cursor,
+            total_recorded_steps=0,
+        )
 
         return CompileSessionResponse(
             session_id=record.session_id,
@@ -147,7 +173,9 @@ class SessionManager:
             record.status = SessionStatus.ERROR
             raise RuntimeError(controller.get_error_message(break_output))
 
-        run_output = controller.exec_run()
+        run_output = controller.exec_run(
+            stdin_path=str(record.stdin_path) if record.stdin_path and record.stdin_path.exists() else None
+        )
         if controller.has_error(run_output):
             record.status = SessionStatus.ERROR
             raise RuntimeError(controller.get_error_message(run_output))
@@ -155,13 +183,85 @@ class SessionManager:
         if controller.is_exited(run_output):
             record.controller = controller
             record.status = SessionStatus.EXITED
+            record.completed = True
             self._refresh_state(record, increment_step=False)
+            self._execution_store.update_cursor(
+                session_id=record.session_id,
+                status=record.status,
+                cursor=record.cursor,
+                total_recorded_steps=len(record.history or []),
+            )
             return record
 
         record.controller = controller
         record.status = SessionStatus.PAUSED
+        record.completed = False
         self._refresh_state(record, increment_step=False)
+        self._execution_store.update_cursor(
+            session_id=record.session_id,
+            status=record.status,
+            cursor=record.cursor,
+            total_recorded_steps=len(record.history or []),
+        )
         return record
+
+    def step_next(self, session_id: str) -> tuple[bool, str | None, _SessionRecord, bool]:
+        record = self._require_session(session_id)
+        history = record.history or []
+        max_steps = max(1, record.request.settings.max_steps)
+
+        if record.cursor < len(history) - 1:
+            record.cursor += 1
+            record.state = history[record.cursor]
+            if record.completed and record.cursor == len(history) - 1:
+                record.status = SessionStatus.EXITED
+            else:
+                record.status = SessionStatus.PAUSED
+            self._execution_store.update_cursor(
+                session_id=record.session_id,
+                status=record.status,
+                cursor=record.cursor,
+                total_recorded_steps=len(history),
+            )
+            return True, None, record, False
+
+        if len(history) >= max_steps:
+            record.completed = True
+            record.status = SessionStatus.EXITED
+            self._execution_store.update_cursor(
+                session_id=record.session_id,
+                status=record.status,
+                cursor=record.cursor,
+                total_recorded_steps=len(history),
+            )
+            return False, f"Maximum step limit reached ({max_steps})", record, False
+
+        if record.completed or record.status == SessionStatus.EXITED:
+            return False, "Execution already completed", record, False
+
+        accepted, message, record = self.apply_command(session_id, CommandType.STEP_OVER)
+        return accepted, message, record, accepted
+
+    def step_back(self, session_id: str) -> tuple[bool, str | None, _SessionRecord]:
+        record = self._require_session(session_id)
+        history = record.history or []
+
+        if not history:
+            return False, "No execution history available", record
+
+        if record.cursor <= 0:
+            return False, "Already at the first recorded step", record
+
+        record.cursor -= 1
+        record.state = history[record.cursor]
+        record.status = SessionStatus.PAUSED
+        self._execution_store.update_cursor(
+            session_id=record.session_id,
+            status=record.status,
+            cursor=record.cursor,
+            total_recorded_steps=len(history),
+        )
+        return True, None, record
 
     def apply_command(self, session_id: str, command: CommandType) -> tuple[bool, str | None, _SessionRecord]:
         record = self._require_session(session_id)
@@ -176,6 +276,12 @@ class SessionManager:
                 controller.close()
                 record.controller = None
             record.status = SessionStatus.EXITED
+            self._execution_store.update_cursor(
+                session_id=record.session_id,
+                status=record.status,
+                cursor=record.cursor,
+                total_recorded_steps=len(record.history or []),
+            )
             return True, None, record
 
         if record.status not in {SessionStatus.PAUSED, SessionStatus.RUNNING}:
@@ -192,9 +298,16 @@ class SessionManager:
                 return False, controller.get_error_message(continue_output), record
             if controller.is_exited(continue_output):
                 record.status = SessionStatus.EXITED
+                record.completed = True
             else:
                 record.status = SessionStatus.PAUSED
                 self._refresh_state(record, increment_step=True)
+            self._execution_store.update_cursor(
+                session_id=record.session_id,
+                status=record.status,
+                cursor=record.cursor,
+                total_recorded_steps=len(record.history or []),
+            )
             return True, "Execution resumed", record
 
         if command == CommandType.PAUSE:
@@ -202,6 +315,12 @@ class SessionManager:
                 return False, "Pause command is valid only while running", record
             record.status = SessionStatus.PAUSED
             self._refresh_state(record, increment_step=False)
+            self._execution_store.update_cursor(
+                session_id=record.session_id,
+                status=record.status,
+                cursor=record.cursor,
+                total_recorded_steps=len(record.history or []),
+            )
             return True, "Execution paused", record
 
         if command in {CommandType.STEP_OVER, CommandType.STEP_IN, CommandType.STEP_OUT}:
@@ -221,10 +340,30 @@ class SessionManager:
 
             if controller.is_exited(step_output):
                 record.status = SessionStatus.EXITED
+                record.completed = True
                 self._refresh_state(record, increment_step=True)
+                self._execution_store.update_cursor(
+                    session_id=record.session_id,
+                    status=record.status,
+                    cursor=record.cursor,
+                    total_recorded_steps=len(record.history or []),
+                )
                 return True, None, record
 
             self._refresh_state(record, increment_step=True)
+            if self._should_finalize_after_user_code(record):
+                finalize_output = controller.exec_continue()
+                if controller.has_error(finalize_output):
+                    record.status = SessionStatus.ERROR
+                    return False, controller.get_error_message(finalize_output), record
+                record.status = SessionStatus.EXITED
+                record.completed = True
+            self._execution_store.update_cursor(
+                session_id=record.session_id,
+                status=record.status,
+                cursor=record.cursor,
+                total_recorded_steps=len(record.history or []),
+            )
             return True, None, record
 
         return False, f"Unsupported command '{command}'", record
@@ -248,6 +387,8 @@ class SessionManager:
             return
 
         current_file, current_line, current_function = record.controller.current_location()
+        if self._is_user_source_location(record, current_file):
+            record.has_seen_user_source = True
         variables = record.controller.list_locals()
         if not variables and record.previous_variables:
             variables = record.previous_variables.copy()
@@ -263,7 +404,8 @@ class SessionManager:
             for frame_index, function, file_name, line in record.controller.call_stack()
         ]
 
-        previous_step = previous_state.step if previous_state else 0
+        history = record.history or []
+        previous_step = history[-1].step if history else 0
         next_step = previous_step + 1 if increment_step else previous_step
 
         record.state = LiveExecutionStateDTO(
@@ -280,6 +422,19 @@ class SessionManager:
             stderr_tail=previous_state.stderr_tail if previous_state else "",
         )
         record.previous_variables = variables.copy()
+        if record.history is None:
+            record.history = []
+        if record.cursor < len(record.history) - 1:
+            record.history = record.history[: record.cursor + 1]
+        record.history.append(record.state)
+        record.cursor = len(record.history) - 1
+        self._execution_store.append_snapshot(
+            session_id=record.session_id,
+            snapshot=record.state,
+            status=record.status,
+            cursor=record.cursor,
+            total_recorded_steps=len(record.history),
+        )
 
     def _cleanup_runtime(self, record: _SessionRecord) -> None:
         if record.controller is not None:
@@ -294,3 +449,18 @@ class SessionManager:
         record.work_dir = None
         record.source_path = None
         record.executable_path = None
+        record.stdin_path = None
+
+    def _is_user_source_location(self, record: _SessionRecord, location_file: str) -> bool:
+        if not record.source_path or not location_file or location_file == "unknown":
+            return False
+
+        try:
+            return Path(location_file).resolve() == record.source_path.resolve()
+        except Exception:
+            return Path(location_file).name == record.source_path.name
+
+    def _should_finalize_after_user_code(self, record: _SessionRecord) -> bool:
+        if not record.has_seen_user_source or record.state is None:
+            return False
+        return not self._is_user_source_location(record, record.state.location.file)

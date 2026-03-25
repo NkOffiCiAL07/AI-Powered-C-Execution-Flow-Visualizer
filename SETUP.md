@@ -129,6 +129,7 @@ pip install -r requirements.txt
 - python-multipart
 - python-dotenv
 - cors
+- pymongo (optional, for MongoDB session history persistence)
 
 ### Step 4: Set Up Frontend
 

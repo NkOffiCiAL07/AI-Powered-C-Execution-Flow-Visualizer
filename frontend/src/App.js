@@ -4,7 +4,7 @@ import FlowVisualizer from "./components/FlowVisualizer";
 import OutputPanel from "./components/OutputPanel";
 import Header from "./components/Header";
 import CppEditorPage from "./components/CppEditorPage";
-import { analyzeCode } from "./services/api";
+import { analyzeCode, stepAnalyzeSession } from "./services/api";
 import "./App.css";
 import "./styles/CppEditorPage.css";
 
@@ -87,16 +87,21 @@ function App() {
   const [analysisResult, setAnalysisResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [stepLoading, setStepLoading] = useState(false);
   const [view, setView] = useState("editor");
   const [activeTab, setActiveTab] = useState("flow");
   const [selectedExample, setSelectedExample] = useState("simple");
   const [currentLine, setCurrentLine] = useState(null);
   const abortControllerRef = useRef(null);
+  const stepAbortControllerRef = useRef(null);
 
   useEffect(() => {
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
+      }
+      if (stepAbortControllerRef.current) {
+        stepAbortControllerRef.current.abort();
       }
     };
   }, []);
@@ -108,6 +113,7 @@ function App() {
     setCurrentLine(null);
     setAnalysisResult(null);
     setError(null);
+    setStepLoading(false);
   };
 
   const handleAnalyze = useCallback(async (codeOverride) => {
@@ -123,14 +129,13 @@ function App() {
     abortControllerRef.current = new AbortController();
 
     setLoading(true);
+    setStepLoading(false);
     setError(null);
     setAnalysisResult(null);
     try {
       const result = await analyzeCode(codeToAnalyze, programInput, abortControllerRef.current.signal);
       setAnalysisResult(result);
-      if (result.execution_mode === "output_only") {
-        setActiveTab("output");
-      }
+      setActiveTab("flow");
     } catch (err) {
       if (err.name === "AbortError") return;
       setError(err.message || "Analysis failed");
@@ -139,6 +144,61 @@ function App() {
       abortControllerRef.current = null;
     }
   }, [code, programInput]);
+
+  const handleStep = useCallback(async (direction) => {
+    if (!analysisResult?.session_id) {
+      return;
+    }
+
+    if (stepAbortControllerRef.current) {
+      stepAbortControllerRef.current.abort();
+    }
+    stepAbortControllerRef.current = new AbortController();
+
+    setStepLoading(true);
+    setError(null);
+
+    try {
+      const response = await stepAnalyzeSession(
+        analysisResult.session_id,
+        direction,
+        stepAbortControllerRef.current.signal
+      );
+
+      setAnalysisResult((prev) => {
+        if (!prev) return prev;
+        const nextSnapshots = [...(prev.snapshots || [])];
+
+        if (response.snapshot && response.cursor >= 0) {
+          if (response.cursor < nextSnapshots.length) {
+            nextSnapshots[response.cursor] = response.snapshot;
+          } else if (response.cursor === nextSnapshots.length) {
+            nextSnapshots.push(response.snapshot);
+          }
+        }
+
+        return {
+          ...prev,
+          status: response.status,
+          cursor: response.cursor,
+          snapshots: nextSnapshots,
+          total_steps: response.total_recorded_steps,
+          total_recorded_steps: response.total_recorded_steps,
+          message: response.message || prev.message || "",
+        };
+      });
+
+      if (!response.accepted && response.message) {
+        setError(response.message);
+      }
+    } catch (err) {
+      if (err.name === "AbortError") return;
+      setError(err.message || "Step failed");
+    } finally {
+      setStepLoading(false);
+      stepAbortControllerRef.current = null;
+    }
+  }, [analysisResult]);
 
   return (
     <div className="app">
@@ -157,6 +217,7 @@ function App() {
             setCurrentLine(null);
             setAnalysisResult(null);
             setError(null);
+            setStepLoading(false);
           }}
           programInput={programInput}
           onProgramInputChange={(value) => {
@@ -164,6 +225,7 @@ function App() {
             setCurrentLine(null);
             setAnalysisResult(null);
             setError(null);
+            setStepLoading(false);
           }}
           onRun={handleAnalyze}
           loading={loading}
@@ -220,6 +282,7 @@ function App() {
                 setProgramInput(event.target.value);
                 setCurrentLine(null);
                 setAnalysisResult(null);
+                setStepLoading(false);
               }}
               placeholder={"Example:\n5\n10\nhello"}
               spellCheck="false"
@@ -267,7 +330,15 @@ function App() {
           )}
           {activeTab === "flow" ? (
             <div id="panel-flow" role="tabpanel" aria-labelledby="tab-flow">
-              <FlowVisualizer result={analysisResult} loading={loading} onLineChange={setCurrentLine} code={code} />
+              <FlowVisualizer
+                result={analysisResult}
+                loading={loading}
+                stepLoading={stepLoading}
+                onLineChange={setCurrentLine}
+                code={code}
+                onNext={() => handleStep("next")}
+                onBack={() => handleStep("back")}
+              />
             </div>
           ) : (
             <div id="panel-output" role="tabpanel" aria-labelledby="tab-output">

@@ -1,35 +1,87 @@
 from __future__ import annotations
 
-import tempfile
-import subprocess
 import os
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-
-from flowviz.server.api import router as sessions_router
-from flowviz.executor import collect_execution_timeline
 
 
-class AnalyzeCodeRequest(BaseModel):
-    code: str
-    stdin: str = ""
+def _load_local_env() -> None:
+    env_file = Path(__file__).resolve().parents[3] / ".env"
+    if not env_file.exists():
+        return
+
+    for line in env_file.read_text().splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or "=" not in stripped:
+            continue
+        key, value = stripped.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        os.environ.setdefault(key, value)
 
 
-class ExecutionSnapshot(BaseModel):
-    step: int
-    location: dict
-    variables: dict
-    changed_variables: list
+_load_local_env()
+
+from flowviz.server.api import router as sessions_router, session_manager
+from flowviz.server.models import (
+    AnalyzeCodeRequest,
+    AnalyzeCodeResponse,
+    AnalyzeStepRequest,
+    AnalyzeStepResponse,
+    CreateSessionRequest,
+    DebugBackend,
+    ExecutionSnapshot,
+    SessionSettings,
+    SessionStatus,
+    SourceFile,
+)
 
 
-class AnalyzeCodeResponse(BaseModel):
-    snapshots: list[ExecutionSnapshot]
-    total_steps: int
-    stdout: str = ""
-    stderr: str = ""
-    execution_mode: str = "timeline"
-    message: str = ""
+def _prepare_cpp_code(code: str) -> str:
+    normalized = code.strip()
+    has_main = "main(" in normalized or "main ()" in normalized
+
+    if not has_main:
+        return f"""#include <iostream>
+#include <vector>
+#include <string>
+#include <cmath>
+using namespace std;
+
+int main() {{
+{chr(10).join('    ' + line for line in normalized.split(chr(10)))}
+    return 0;
+}}
+"""
+
+    if "#include" not in normalized:
+        return f"""#include <iostream>
+#include <vector>
+#include <string>
+#include <cmath>
+using namespace std;
+
+{normalized}
+"""
+
+    return normalized
+
+
+def _to_execution_snapshot(state) -> ExecutionSnapshot | None:
+    if state is None:
+        return None
+    return ExecutionSnapshot(
+        step=state.step,
+        location={
+            "file": state.location.file,
+            "line": state.location.line,
+            "function": state.location.function,
+        },
+        variables=state.variables,
+        changed_variables=list(state.changed_variables),
+    )
 
 
 def create_app() -> FastAPI:
@@ -50,197 +102,75 @@ def create_app() -> FastAPI:
 
     @app.post("/analyze", response_model=AnalyzeCodeResponse, tags=["analysis"])
     def analyze_code(request: AnalyzeCodeRequest):
-        """
-        Analyze C++ code by compiling it and capturing execution timeline.
-        Returns snapshots of variable values at each step.
-        Supports code snippets without main() by wrapping them automatically.
-        Accepts optional stdin input for programs that read from cin.
-        """
         if not request.code or not request.code.strip():
             raise HTTPException(status_code=400, detail="No C++ code provided")
 
-        code = request.code.strip()
-        stdin_text = request.stdin or ""
-        
-        # Check if code already has a main function
-        has_main = "main(" in code or "main ()" in code
-        
-        # Prepare the code - wrap in main if needed
-        if not has_main:
-            # Auto-wrap code without main in a main function
-            wrapped_code = f"""#include <iostream>
-#include <vector>
-#include <string>
-#include <cmath>
-using namespace std;
-
-int main() {{
-{chr(10).join('    ' + line for line in code.split(chr(10)))}
-    return 0;
-}}
-"""
-        else:
-            # Ensure necessary headers are included
-            if "#include" not in code:
-                wrapped_code = f"""#include <iostream>
-#include <vector>
-#include <string>
-#include <cmath>
-using namespace std;
-
-{code}
-"""
-            else:
-                wrapped_code = code
+        wrapped_code = _prepare_cpp_code(request.code)
+        create_request = CreateSessionRequest(
+            source=SourceFile(file_name="main.cpp", language="cpp", code=wrapped_code),
+            settings=SessionSettings(
+                backend=DebugBackend.LLDB,
+                compiler="clang++",
+                compiler_flags=["-std=c++17", "-g", "-O0"],
+                stdin_data=request.stdin or "",
+                stop_at_main=True,
+                max_steps=150,
+                execution_timeout_seconds=15,
+            ),
+        )
 
         try:
-            # Create temporary files for the C++ source and stdin payload.
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".cpp", delete=False) as f:
-                f.write(wrapped_code)
-                source_file = f.name
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
-                f.write(stdin_text)
-                stdin_file = f.name
+            summary = session_manager.create_session(create_request)
+            compile_result = session_manager.compile_session(summary.session_id)
+            if not compile_result.success:
+                diagnostics = "\n".join(compile_result.diagnostics) or "Compilation failed"
+                raise HTTPException(status_code=400, detail=diagnostics)
 
-            try:
-                executable = source_file.replace(".cpp", "")
+            started = session_manager.mark_started(summary.session_id)
+            first_snapshot = _to_execution_snapshot(started.state)
+            snapshots = [first_snapshot] if first_snapshot is not None else []
+            total_steps = len(started.history or [])
 
-                # Compile the code - try clang++ first, then g++
-                result = subprocess.run(
-                    ["clang++", "-g", "-O0", "-std=c++17", "-o", executable, source_file],
-                    capture_output=True,
-                    text=True,
-                    timeout=10,
-                )
-
-                if result.returncode != 0:
-                    # Try g++ as fallback
-                    result = subprocess.run(
-                        ["g++", "-g", "-O0", "-std=c++17", "-o", executable, source_file],
-                        capture_output=True,
-                        text=True,
-                        timeout=10,
-                    )
-
-                if result.returncode != 0:
-                    # Format error message with file/line details
-                    error_msg = result.stderr
-                    # Extract line numbers and provide better context
-                    detail_msg = f"Compilation failed:\n{error_msg}"
-                    raise HTTPException(
-                        status_code=400,
-                        detail=detail_msg,
-                    )
-
-                if stdin_text:
-                    run_result = subprocess.run(
-                        [executable],
-                        input=stdin_text,
-                        capture_output=True,
-                        text=True,
-                        timeout=10,
-                    )
-
-                    return AnalyzeCodeResponse(
-                        snapshots=[],
-                        total_steps=0,
-                        stdout=run_result.stdout,
-                        stderr=run_result.stderr,
-                        execution_mode="output_only",
-                        message="Executed with stdin input in output-only mode.",
-                    )
-
-                # Prefer timeline mode, but fall back to a normal run when LLDB tracing fails.
-                try:
-                    snapshots = collect_execution_timeline(
-                        executable=executable,
-                        max_steps=150,
-                        delay_seconds=0.0,
-                        auto_mode=True,
-                        backend="lldb",
-                        stdin_path=stdin_file,
-                    )
-                except Exception as timeline_error:
-                    run_result = subprocess.run(
-                        [executable],
-                        input=stdin_text,
-                        capture_output=True,
-                        text=True,
-                        timeout=10,
-                    )
-
-                    fallback_stderr = run_result.stderr
-                    fallback_message = (
-                        "Timeline capture is not available for this program. "
-                        "Showing normal program output instead."
-                    )
-                    if str(timeline_error):
-                        fallback_stderr = (
-                            f"{fallback_stderr}\n\nTimeline fallback reason: {timeline_error}".strip()
-                        )
-
-                    return AnalyzeCodeResponse(
-                        snapshots=[],
-                        total_steps=0,
-                        stdout=run_result.stdout,
-                        stderr=fallback_stderr,
-                        execution_mode="output_only",
-                        message=fallback_message,
-                    )
-
-                # Run the program once to capture its actual stdout/stderr
-                try:
-                    run_for_output = subprocess.run(
-                        [executable],
-                        input=stdin_text,
-                        capture_output=True,
-                        text=True,
-                        timeout=10,
-                    )
-                    captured_stdout = run_for_output.stdout
-                    captured_stderr = run_for_output.stderr
-                except Exception:
-                    captured_stdout = ""
-                    captured_stderr = ""
-
-                # Convert to response format
-                response_snapshots = []
-                for snapshot in snapshots:
-                    response_snapshots.append(
-                        ExecutionSnapshot(
-                            step=snapshot.step,
-                            location={
-                                "file": snapshot.location.file,
-                                "line": snapshot.location.line,
-                                "function": snapshot.location.function,
-                            },
-                            variables=snapshot.variables,
-                            changed_variables=list(snapshot.changed_variables),
-                        )
-                    )
-
-                return AnalyzeCodeResponse(
-                    snapshots=response_snapshots,
-                    total_steps=len(response_snapshots),
-                    stdout=captured_stdout,
-                    stderr=captured_stderr,
-                    execution_mode="timeline",
-                    message="",
-                )
-
-            finally:
-                # Cleanup
-                if os.path.exists(source_file):
-                    os.remove(source_file)
-                if os.path.exists(stdin_file):
-                    os.remove(stdin_file)
-                if os.path.exists(executable):
-                    os.remove(executable)
-
+            return AnalyzeCodeResponse(
+                session_id=started.session_id,
+                status=started.status,
+                cursor=max(started.cursor, 0) if snapshots else -1,
+                total_recorded_steps=total_steps,
+                snapshots=snapshots,
+                total_steps=total_steps,
+                execution_mode="incremental",
+                message="Session started. Click Next to fetch each new step.",
+            )
         except HTTPException:
             raise
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+        except Exception as error:
+            raise HTTPException(status_code=500, detail=f"Analysis failed: {error}") from error
+
+    @app.post("/analyze/{session_id}/step", response_model=AnalyzeStepResponse, tags=["analysis"])
+    def analyze_step(session_id: str, request: AnalyzeStepRequest):
+        direction = (request.direction or "next").strip().lower()
+        if direction not in {"next", "back"}:
+            raise HTTPException(status_code=400, detail="Direction must be either 'next' or 'back'")
+
+        try:
+            if direction == "next":
+                accepted, message, record, _created_new_step = session_manager.step_next(session_id)
+            else:
+                accepted, message, record = session_manager.step_back(session_id)
+
+            return AnalyzeStepResponse(
+                session_id=record.session_id,
+                accepted=accepted,
+                status=record.status,
+                cursor=record.cursor,
+                total_recorded_steps=len(record.history or []),
+                snapshot=_to_execution_snapshot(record.state),
+                message=message or "",
+            )
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except Exception as error:
+            raise HTTPException(status_code=500, detail=f"Step failed: {error}") from error
 
     app.include_router(sessions_router)
     return app

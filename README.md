@@ -39,9 +39,11 @@ Compile (clang++ or g++)
     ↓
 LLDB Debugger (step-by-step execution)
     ↓
-Collect Snapshots (variables at each step)
+Start Session + Store First Snapshot
     ↓
-API Response (JSON snapshots)
+`Next` / `Back` API calls fetch one step at a time
+  ↓
+Optional MongoDB persistence for code + history metadata
     ↓
 React Frontend (visualization & playback)
 ```
@@ -190,19 +192,27 @@ You can now view the app in your browser at:
 
 #### Running Code
 1. Click **"Analyze & Run"** button in the header
-2. Backend compiles and executes the code
-3. Snapshots appear on the right showing:
+2. Backend compiles and starts a debug session
+3. Click **Next ▶** to fetch each step from the API in real time
+4. Execution state appears on the right showing:
    - Current line (➤ arrow)
    - Variables at that step
    - Step count and progress bar
    - Plain-English explanation
 
 #### Controls
-- **⏮ Restart** — Go to first step
-- **▶ / ⏸ Play/Pause** — Auto-play or manual stepping
-- **◀ Back / Next ▶** — Manual step navigation
-- **🐢 Speed Slider** — Adjust playback speed (Very Slow to Very Fast)
+- **◀ Back / Next ▶** — API-driven manual step navigation
+- **Timeline click** — Jump among already-recorded steps
 - **✏️ Edit Code** — Exit playback, switch to editing mode
+
+### Optional MongoDB persistence
+If you want to persist input code + step history metadata, set:
+
+```bash
+export MONGO_CONNECTION_STRING="mongodb+srv://..."
+export MONGO_DB_NAME="flowviz"                 # optional
+export MONGO_COLLECTION_NAME="execution_sessions"  # optional
+```
 
 #### Loading Examples
 Click any example button:

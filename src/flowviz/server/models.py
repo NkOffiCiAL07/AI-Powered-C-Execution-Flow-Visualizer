@@ -121,3 +121,42 @@ class ErrorResponse(BaseModel):
     error_code: str
     message: str
     details: list[str] = Field(default_factory=list)
+
+
+class AnalyzeCodeRequest(BaseModel):
+    code: str
+    stdin: str = ""
+
+
+class AnalyzeStepRequest(BaseModel):
+    direction: str = Field(default="next")
+
+
+class ExecutionSnapshot(BaseModel):
+    step: int
+    location: dict
+    variables: dict
+    changed_variables: list
+
+
+class AnalyzeCodeResponse(BaseModel):
+    session_id: str
+    status: SessionStatus
+    cursor: int = 0
+    total_recorded_steps: int = 0
+    snapshots: list[ExecutionSnapshot] = Field(default_factory=list)
+    total_steps: int = 0
+    stdout: str = ""
+    stderr: str = ""
+    execution_mode: str = "timeline"
+    message: str = ""
+
+
+class AnalyzeStepResponse(BaseModel):
+    session_id: str
+    accepted: bool = True
+    status: SessionStatus
+    cursor: int
+    total_recorded_steps: int
+    snapshot: ExecutionSnapshot | None = None
+    message: str = ""

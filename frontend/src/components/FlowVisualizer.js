@@ -39,70 +39,36 @@ function stepEmoji(snapshot, stepIndex) {
   return "✏️";
 }
 
-function getLastPlayableLine(code) {
-  const lines = (code || "").split("\n");
-
-  for (let index = lines.length - 1; index >= 0; index -= 1) {
-    const trimmedLine = lines[index].trim();
-
-    if (trimmedLine && trimmedLine !== "{" && trimmedLine !== "}") {
-      return index + 1;
-    }
-  }
-
-  return 1;
-}
-
-export default function FlowVisualizer({ result, loading, onLineChange, code }) {
+export default function FlowVisualizer({
+  result,
+  loading,
+  stepLoading,
+  onLineChange,
+  onNext,
+  onBack,
+}) {
   const [currentStep, setCurrentStep] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(true);
-  const [animationSpeed, setAnimationSpeed] = useState(1500);
 
   const snapshots = useMemo(() => result?.snapshots || [], [result]);
-  const stopLine = getLastPlayableLine(code);
-  const stopStep = snapshots.findIndex(
-    (snapshot) => snapshot.location?.line >= stopLine
-  );
-  const maxStep = stopStep >= 0 ? stopStep : Math.max(0, snapshots.length - 1);
-  const visibleSnapshots = useMemo(
-    () => snapshots.slice(0, maxStep + 1),
-    [snapshots, maxStep]
-  );
+  const cursorFromServer = typeof result?.cursor === "number" ? result.cursor : 0;
+  const visibleSnapshots = useMemo(() => snapshots, [snapshots]);
   const totalSteps = visibleSnapshots.length;
   const safeCurrentStep = Math.min(currentStep, Math.max(0, totalSteps - 1));
+  const atEnd = safeCurrentStep >= Math.max(0, totalSteps - 1) && result?.status === "exited";
 
   useEffect(() => {
-    setCurrentStep(0);
-    setIsAnimating(true);
+    if (result == null) {
+      setCurrentStep(0);
+      return;
+    }
+    setCurrentStep(Math.max(0, cursorFromServer));
   }, [result]);
 
   useEffect(() => {
     if (snapshots.length === 0) return;
 
-    setCurrentStep((prev) => Math.min(prev, maxStep));
-  }, [snapshots, maxStep]);
-
-  useEffect(() => {
-    if (!isAnimating || totalSteps === 0 || safeCurrentStep >= maxStep) return;
-
-    const timer = setTimeout(() => {
-      setCurrentStep((prev) => {
-        const next = Math.min(prev + 1, maxStep);
-        if (next >= maxStep) {
-          return maxStep;
-        }
-        return next;
-      });
-    }, animationSpeed);
-
-    return () => clearTimeout(timer);
-  }, [isAnimating, safeCurrentStep, totalSteps, maxStep, animationSpeed]);
-
-  useEffect(() => {
-    if (isAnimating && totalSteps > 0 && safeCurrentStep >= maxStep) {
-      setIsAnimating(false);
-    }
-  }, [isAnimating, totalSteps, safeCurrentStep, maxStep]);
+    setCurrentStep((prev) => Math.min(prev, Math.max(0, snapshots.length - 1)));
+  }, [snapshots]);
 
   useEffect(() => {
     if (totalSteps > 0) {
@@ -140,39 +106,26 @@ export default function FlowVisualizer({ result, loading, onLineChange, code }) 
   const emoji = stepEmoji(snap, safeCurrentStep);
   const progressPct = Math.round(((safeCurrentStep + 1) / totalSteps) * 100);
 
-  const speedLabel =
-    animationSpeed >= 2000 ? "Very Slow" :
-    animationSpeed >= 1200 ? "Slow" :
-    animationSpeed >= 700  ? "Normal" :
-    animationSpeed >= 350  ? "Fast" : "Very Fast";
-
   return (
     <div className="flow-visualizer">
       <div className="flow-controls">
         <div className="control-group">
-          <button className="control-btn" onClick={() => { setCurrentStep(0); setIsAnimating(true); }}>
-            ⏮ Restart
-          </button>
-          <button className="control-btn primary" onClick={() => setIsAnimating(!isAnimating)}>
-            {isAnimating ? "⏸ Pause" : "▶ Play"}
-          </button>
-          <button className="control-btn" onClick={() => { setIsAnimating(false); setCurrentStep(Math.max(0, safeCurrentStep - 1)); }} disabled={safeCurrentStep === 0}>
+          <button
+            className="control-btn"
+            onClick={() => onBack && onBack()}
+            disabled={stepLoading || safeCurrentStep === 0}
+          >
             ◀ Back
           </button>
-          <button className="control-btn" onClick={() => { setIsAnimating(false); setCurrentStep(Math.min(maxStep, safeCurrentStep + 1)); }} disabled={safeCurrentStep === maxStep}>
+          <button
+            className="control-btn primary"
+            onClick={() => onNext && onNext()}
+            disabled={stepLoading || atEnd}
+          >
             Next ▶
           </button>
         </div>
-        <div className="control-group">
-          <span className="speed-label">🐢 Speed: <strong>{speedLabel}</strong></span>
-          <input
-            type="range" min="200" max="3000" step="100"
-            value={3200 - animationSpeed}
-            onChange={(e) => setAnimationSpeed(3200 - parseInt(e.target.value))}
-            className="speed-slider"
-          />
-          <span className="speed-label">🐇</span>
-        </div>
+        {stepLoading && <div className="control-group">Fetching next step...</div>}
       </div>
 
       <div className="step-indicator">
@@ -210,7 +163,11 @@ export default function FlowVisualizer({ result, loading, onLineChange, code }) 
       <ExecutionTimeline
         snapshots={visibleSnapshots}
         currentStep={safeCurrentStep}
-        onStepClick={(i) => { setIsAnimating(false); setCurrentStep(i); }}
+        onStepClick={(i) => {
+          if (i <= (result?.cursor ?? 0)) {
+            setCurrentStep(i);
+          }
+        }}
       />
     </div>
   );
