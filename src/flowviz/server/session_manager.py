@@ -351,13 +351,40 @@ class SessionManager:
                 return True, None, record
 
             self._refresh_state(record, increment_step=True)
-            if self._should_finalize_after_user_code(record):
-                finalize_output = controller.exec_continue()
-                if controller.has_error(finalize_output):
-                    record.status = SessionStatus.ERROR
-                    return False, controller.get_error_message(finalize_output), record
+
+            # Direct check: if we ended up on a negative/zero line or unknown
+            # file, the program has stepped out of user code — discard the
+            # garbage snapshot, finalise, and report completion.
+            left_user_code = False
+            if record.state and (
+                record.state.location.line <= 0
+                or record.state.location.file == "unknown"
+            ):
+                left_user_code = True
+            elif self._should_finalize_after_user_code(record):
+                left_user_code = True
+
+            if left_user_code:
+                # Remove the garbage/system snapshot we just recorded
+                if record.history:
+                    record.history.pop()
+                    record.cursor = max(0, len(record.history) - 1)
+                    record.state = record.history[-1] if record.history else record.state
+
+                try:
+                    controller.exec_continue()
+                except Exception:
+                    pass
                 record.status = SessionStatus.EXITED
                 record.completed = True
+                self._execution_store.update_cursor(
+                    session_id=record.session_id,
+                    status=record.status,
+                    cursor=record.cursor,
+                    total_recorded_steps=len(record.history or []),
+                )
+                return False, "Execution completed", record
+
             self._execution_store.update_cursor(
                 session_id=record.session_id,
                 status=record.status,

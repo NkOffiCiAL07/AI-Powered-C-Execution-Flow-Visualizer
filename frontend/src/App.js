@@ -169,7 +169,8 @@ function App() {
         if (!prev) return prev;
         const nextSnapshots = [...(prev.snapshots || [])];
 
-        if (response.snapshot && response.cursor >= 0) {
+        // Only update snapshots if the step was accepted
+        if (response.accepted && response.snapshot && response.cursor >= 0) {
           if (response.cursor < nextSnapshots.length) {
             nextSnapshots[response.cursor] = response.snapshot;
           } else if (response.cursor === nextSnapshots.length) {
@@ -180,10 +181,11 @@ function App() {
         return {
           ...prev,
           status: response.status,
-          cursor: response.cursor,
+          cursor: response.accepted ? response.cursor : prev.cursor,
           snapshots: nextSnapshots,
           total_steps: response.total_recorded_steps,
           total_recorded_steps: response.total_recorded_steps,
+          accepted: response.accepted,
           message: response.message || prev.message || "",
         };
       });
@@ -194,6 +196,8 @@ function App() {
     } catch (err) {
       if (err.name === "AbortError") return;
       setError(err.message || "Step failed");
+      // Mark accepted as false so play loop stops
+      setAnalysisResult((prev) => prev ? { ...prev, accepted: false } : prev);
     } finally {
       setStepLoading(false);
       stepAbortControllerRef.current = null;

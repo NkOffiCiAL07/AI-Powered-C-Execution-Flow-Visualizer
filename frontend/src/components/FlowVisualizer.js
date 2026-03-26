@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import "../styles/FlowVisualizer.css";
 import VariableTracker from "./VariableTracker";
 import ExecutionTimeline from "./ExecutionTimeline";
@@ -8,6 +8,10 @@ function buildExplanation(snapshot, prevSnapshot, stepIndex) {
   const changed = snapshot.changed_variables || [];
   const vars = snapshot.variables || {};
   const prevVars = prevSnapshot?.variables || {};
+
+  if (line <= 0) {
+    return `The program has finished executing! 🎉`;
+  }
 
   if (stepIndex === 0) {
     return `The program starts! We are on line ${line}. Nothing has happened yet — we are just getting ready to run.`;
@@ -48,13 +52,26 @@ export default function FlowVisualizer({
   onBack,
 }) {
   const [currentStep, setCurrentStep] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(1000);
+  const playingRef = useRef(false);
+  const speedRef = useRef(1000);
+  const onNextRef = useRef(onNext);
+  const timerRef = useRef(null);
+  onNextRef.current = onNext;
 
   const snapshots = useMemo(() => result?.snapshots || [], [result]);
   const cursorFromServer = typeof result?.cursor === "number" ? result.cursor : 0;
   const visibleSnapshots = useMemo(() => snapshots, [snapshots]);
   const totalSteps = visibleSnapshots.length;
   const safeCurrentStep = Math.min(currentStep, Math.max(0, totalSteps - 1));
-  const atEnd = safeCurrentStep >= Math.max(0, totalSteps - 1) && result?.status === "exited";
+  const statusStr = result?.status || "";
+  const lastAccepted = result?.accepted !== false;
+  const atEnd = safeCurrentStep >= Math.max(0, totalSteps - 1) && (statusStr === "exited" || statusStr === "error");
+  const statusRef = useRef(statusStr);
+  statusRef.current = statusStr;
+  const lastAcceptedRef = useRef(lastAccepted);
+  lastAcceptedRef.current = lastAccepted;
 
   useEffect(() => {
     if (result == null) {
@@ -66,7 +83,6 @@ export default function FlowVisualizer({
 
   useEffect(() => {
     if (snapshots.length === 0) return;
-
     setCurrentStep((prev) => Math.min(prev, Math.max(0, snapshots.length - 1)));
   }, [snapshots]);
 
@@ -78,6 +94,79 @@ export default function FlowVisualizer({
       onLineChange(null);
     }
   }, [safeCurrentStep, totalSteps, visibleSnapshots, onLineChange]);
+
+  // When stepLoading transitions from true → false while playing, schedule next
+  const prevStepLoadingRef = useRef(stepLoading);
+  useEffect(() => {
+    const wasLoading = prevStepLoadingRef.current;
+    prevStepLoadingRef.current = stepLoading;
+
+    // Only act when a step just finished (true → false) and we're playing
+    if (wasLoading && !stepLoading && playingRef.current) {
+      // Check if program has ended or last step was rejected — stop playing
+      if (statusRef.current === "exited" || statusRef.current === "error" || !lastAcceptedRef.current) {
+        playingRef.current = false;
+        setPlaying(false);
+        return;
+      }
+
+      timerRef.current = setTimeout(() => {
+        if (!playingRef.current) return;
+        if (statusRef.current === "exited" || statusRef.current === "error" || !lastAcceptedRef.current) {
+          playingRef.current = false;
+          setPlaying(false);
+          return;
+        }
+        if (onNextRef.current) onNextRef.current();
+      }, speedRef.current);
+    }
+  }, [stepLoading]);
+
+  // Stop when result is cleared (new analysis or code edit), NOT on step updates
+  const prevSessionRef = useRef(result?.session_id);
+  useEffect(() => {
+    const newSession = result?.session_id;
+    if (prevSessionRef.current && prevSessionRef.current !== newSession) {
+      playingRef.current = false;
+      setPlaying(false);
+    }
+    prevSessionRef.current = newSession;
+  }, [result?.session_id]);
+
+  // Stop when atEnd becomes true
+  useEffect(() => {
+    if (atEnd && playingRef.current) {
+      playingRef.current = false;
+      setPlaying(false);
+    }
+  }, [atEnd]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  // Keep speedRef in sync
+  useEffect(() => { speedRef.current = speed; }, [speed]);
+
+  const handlePlay = useCallback(() => {
+    if (atEnd) return;
+    playingRef.current = true;
+    setPlaying(true);
+    // Kick off the first step immediately
+    if (onNextRef.current) onNextRef.current();
+  }, [atEnd]);
+
+  const handlePause = useCallback(() => {
+    playingRef.current = false;
+    setPlaying(false);
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
 
   if (loading) {
     return (
@@ -112,18 +201,47 @@ export default function FlowVisualizer({
         <div className="control-group">
           <button
             className="control-btn"
-            onClick={() => onBack && onBack()}
-            disabled={stepLoading || safeCurrentStep === 0}
+            onClick={() => { handlePause(); onBack && onBack(); }}
+            disabled={stepLoading || safeCurrentStep === 0 || playing}
           >
             ◀ Back
           </button>
           <button
+            className="control-btn play-btn"
+            onClick={handlePlay}
+            disabled={stepLoading || atEnd || playing}
+            title="Play"
+          >
+            ▶ Play
+          </button>
+          <button
+            className="control-btn pause-btn"
+            onClick={handlePause}
+            disabled={!playing}
+            title="Pause"
+          >
+            ⏸ Pause
+          </button>
+          <button
             className="control-btn primary"
-            onClick={() => onNext && onNext()}
-            disabled={stepLoading || atEnd}
+            onClick={() => { handlePause(); onNext && onNext(); }}
+            disabled={stepLoading || atEnd || playing}
           >
             Next ▶
           </button>
+        </div>
+        <div className="control-group">
+          <span className="speed-label">Speed:</span>
+          <input
+            type="range"
+            className="speed-slider"
+            min="200"
+            max="2000"
+            step="100"
+            value={2200 - speed}
+            onChange={(e) => setSpeed(2200 - Number(e.target.value))}
+          />
+          <span className="speed-label">{speed}ms</span>
         </div>
         {stepLoading && <div className="control-group">Fetching next step...</div>}
       </div>
