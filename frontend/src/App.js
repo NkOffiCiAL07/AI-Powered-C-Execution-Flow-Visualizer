@@ -4,7 +4,7 @@ import FlowVisualizer from "./components/FlowVisualizer";
 import OutputPanel from "./components/OutputPanel";
 import Header from "./components/Header";
 import CppEditorPage from "./components/CppEditorPage";
-import { analyzeCode, stepAnalyzeSession } from "./services/api";
+import { analyzeCode, runCode, stepAnalyzeSession } from "./services/api";
 import "./App.css";
 import "./styles/CppEditorPage.css";
 
@@ -92,8 +92,12 @@ function App() {
   const [activeTab, setActiveTab] = useState("flow");
   const [selectedExample, setSelectedExample] = useState("simple");
   const [currentLine, setCurrentLine] = useState(null);
+  const [runResult, setRunResult] = useState(null);
+  const [runLoading, setRunLoading] = useState(false);
+  const [runError, setRunError] = useState(null);
   const abortControllerRef = useRef(null);
   const stepAbortControllerRef = useRef(null);
+  const runAbortControllerRef = useRef(null);
 
   useEffect(() => {
     return () => {
@@ -102,6 +106,9 @@ function App() {
       }
       if (stepAbortControllerRef.current) {
         stepAbortControllerRef.current.abort();
+      }
+      if (runAbortControllerRef.current) {
+        runAbortControllerRef.current.abort();
       }
     };
   }, []);
@@ -120,6 +127,13 @@ function App() {
     const codeToAnalyze = typeof codeOverride === "string" ? codeOverride : code;
     if (!codeToAnalyze.trim()) {
       setError("Please enter some C++ code before analyzing.");
+      return;
+    }
+
+    // Warn if code uses cin/scanf but no stdin input is provided
+    const usesInput = /\b(cin\s*>>|getline\s*\(|scanf\s*\()/.test(codeToAnalyze);
+    if (usesInput && !programInput.trim()) {
+      setError("Your code reads input (cin/scanf/getline) but no input was provided. Please add input in the Program Input box below.");
       return;
     }
 
@@ -142,6 +156,42 @@ function App() {
     } finally {
       setLoading(false);
       abortControllerRef.current = null;
+    }
+  }, [code, programInput]);
+
+  const handleRun = useCallback(async () => {
+    if (!code.trim()) {
+      setRunError("Please enter some C++ code before running.");
+      return;
+    }
+
+    // Warn if code uses cin/scanf but no stdin input is provided
+    const usesInput = /\b(cin\s*>>|getline\s*\(|scanf\s*\()/.test(code);
+    if (usesInput && !programInput.trim()) {
+      setRunError("Your code reads input (cin/scanf/getline) but no input was provided. Please add input in the Input box.");
+      return;
+    }
+
+    if (runAbortControllerRef.current) {
+      runAbortControllerRef.current.abort();
+    }
+    runAbortControllerRef.current = new AbortController();
+
+    setRunLoading(true);
+    setRunError(null);
+    setRunResult(null);
+    try {
+      const result = await runCode(code, programInput, runAbortControllerRef.current.signal);
+      if (!result.success) {
+        setRunError(result.compile_error || result.stderr || "Compilation failed");
+      }
+      setRunResult(result);
+    } catch (err) {
+      if (err.name === "AbortError") return;
+      setRunError(err.message || "Run failed");
+    } finally {
+      setRunLoading(false);
+      runAbortControllerRef.current = null;
     }
   }, [code, programInput]);
 
@@ -222,6 +272,8 @@ function App() {
             setAnalysisResult(null);
             setError(null);
             setStepLoading(false);
+            setRunResult(null);
+            setRunError(null);
           }}
           programInput={programInput}
           onProgramInputChange={(value) => {
@@ -230,11 +282,13 @@ function App() {
             setAnalysisResult(null);
             setError(null);
             setStepLoading(false);
+            setRunResult(null);
+            setRunError(null);
           }}
-          onRun={handleAnalyze}
-          loading={loading}
-          error={error}
-          result={analysisResult}
+          onRun={handleRun}
+          loading={runLoading}
+          error={runError}
+          result={runResult}
         />
       ) : (
       <main className="app-main">

@@ -14,8 +14,8 @@ export default function CppEditorPage({
 }) {
   const stdout = result?.stdout || "";
   const stderr = result?.stderr || "";
-  const mode = result?.execution_mode || "-";
-  const steps = result?.total_steps ?? 0;
+  const exitCode = result?.exit_code;
+  const success = result?.success;
 
   return (
     <main className="editor-page-main">
@@ -59,7 +59,7 @@ export default function CppEditorPage({
         <div className="editor-page-card output-card">
           <div className="editor-page-subhead">
             <h3>Output</h3>
-            <span>Mode: {mode} | Steps: {steps}</span>
+            {result && <span>Exit: {exitCode}{success ? " ✓" : " ✗"}</span>}
           </div>
 
           {error && (

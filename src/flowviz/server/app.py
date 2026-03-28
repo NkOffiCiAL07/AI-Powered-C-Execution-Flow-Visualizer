@@ -33,6 +33,8 @@ from flowviz.server.models import (
     CreateSessionRequest,
     DebugBackend,
     ExecutionSnapshot,
+    RunCodeRequest,
+    RunCodeResponse,
     SessionSettings,
     SessionStatus,
     SourceFile,
@@ -171,6 +173,59 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=404, detail=str(error)) from error
         except Exception as error:
             raise HTTPException(status_code=500, detail=f"Step failed: {error}") from error
+
+    @app.post("/run", response_model=RunCodeResponse, tags=["run"])
+    def run_code(request: RunCodeRequest):
+        import subprocess
+        import tempfile
+        from pathlib import Path
+
+        if not request.code or not request.code.strip():
+            raise HTTPException(status_code=400, detail="No C++ code provided")
+
+        wrapped_code = _prepare_cpp_code(request.code)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            src_path = Path(tmpdir) / "main.cpp"
+            exe_path = Path(tmpdir) / "program"
+            src_path.write_text(wrapped_code)
+
+            # Compile
+            compile_proc = subprocess.run(
+                ["clang++", "-std=c++17", "-O0", "-o", str(exe_path), str(src_path)],
+                capture_output=True, text=True, timeout=15,
+            )
+            if compile_proc.returncode != 0:
+                return RunCodeResponse(
+                    success=False,
+                    compile_error=compile_proc.stderr.strip(),
+                    stdout="",
+                    stderr="",
+                    exit_code=compile_proc.returncode,
+                )
+
+            # Run
+            try:
+                run_proc = subprocess.run(
+                    [str(exe_path)],
+                    input=request.stdin or "",
+                    capture_output=True, text=True,
+                    timeout=10,
+                )
+                return RunCodeResponse(
+                    success=True,
+                    stdout=run_proc.stdout,
+                    stderr=run_proc.stderr,
+                    exit_code=run_proc.returncode,
+                )
+            except subprocess.TimeoutExpired:
+                return RunCodeResponse(
+                    success=False,
+                    compile_error="",
+                    stdout="",
+                    stderr="Program timed out (10s limit)",
+                    exit_code=-1,
+                )
 
     app.include_router(sessions_router)
     return app

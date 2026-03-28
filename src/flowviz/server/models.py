@@ -123,6 +123,19 @@ class ErrorResponse(BaseModel):
     details: list[str] = Field(default_factory=list)
 
 
+class RunCodeRequest(BaseModel):
+    code: str
+    stdin: str = ""
+
+
+class RunCodeResponse(BaseModel):
+    success: bool
+    stdout: str = ""
+    stderr: str = ""
+    compile_error: str = ""
+    exit_code: int = 0
+
+
 class AnalyzeCodeRequest(BaseModel):
     code: str
     stdin: str = ""
