@@ -1,3 +1,7 @@
+/* ═══════════════════════════════════════
+   OutputPanel – execution detail table
+   ═══════════════════════════════════════ */
+
 .output-panel {
   display: flex;
   flex-direction: column;
@@ -12,13 +16,13 @@
   justify-content: center;
   height: 100%;
   min-height: 250px;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   font-size: 13px;
   gap: 10px;
 }
 
 .output-header {
-  padding: 12px 14px;
+  padding: 12px 16px;
   background-color: var(--bg-card);
   border-bottom: 1px solid var(--border);
   position: sticky;
@@ -27,20 +31,22 @@
 }
 
 .output-header h3 {
-  margin: 0 0 6px 0;
-  font-size: 13px;
+  margin: 0 0 4px 0;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
 .output-summary {
   margin: 0;
   font-size: 11px;
-  color: var(--text-secondary);
+  color: var(--text-muted);
 }
 
 .output-summary strong {
-  color: var(--accent-blue);
+  color: var(--accent-blue-bright);
 }
 
 .output-table-container {
@@ -60,28 +66,31 @@
   position: sticky;
   top: 0;
   background-color: var(--bg-card);
-  border-bottom: 1px solid var(--border);
   z-index: 10;
 }
 
 .output-table th {
   padding: 8px 10px;
   text-align: left;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   font-weight: 600;
   text-transform: uppercase;
   font-size: 9px;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
 }
 
 .output-row {
-  border: 1px solid var(--border);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.15s;
 }
 
 .output-row:hover {
-  background-color: var(--bg-card);
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.output-row + .output-row {
+  border-top: 1px solid var(--border);
 }
 
 .output-row.expanded {
@@ -91,15 +100,10 @@
 .output-row td {
   padding: 8px 10px;
   color: var(--text-primary);
-  border-right: 1px solid var(--border);
-}
-
-.output-row td:last-child {
-  border-right: none;
 }
 
 .step-cell {
-  color: var(--accent-blue);
+  color: var(--accent-blue-bright);
   font-weight: 600;
   width: 60px;
 }
@@ -130,16 +134,17 @@
 
 .changed-badge {
   display: inline-block;
-  background-color: var(--accent-orange);
+  background: var(--accent-orange);
   color: var(--bg-primary);
-  padding: 2px 6px;
-  border-radius: 3px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
   font-weight: 600;
-  font-size: 10px;
+  font-size: 9px;
+  text-transform: uppercase;
 }
 
 .no-change {
-  color: var(--text-secondary);
+  color: var(--text-muted);
 }
 
 .expanded-row td {
@@ -148,9 +153,11 @@
 }
 
 .expanded-content {
-  padding: 12px;
+  padding: 14px;
   background-color: var(--bg-card);
   border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin: 0 8px 8px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
@@ -158,9 +165,9 @@
 
 .expanded-section h4 {
   margin: 0 0 8px 0;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -173,9 +180,9 @@
 
 .expanded-section code {
   background-color: var(--bg-primary);
-  padding: 2px 4px;
+  padding: 2px 6px;
   border-radius: 3px;
-  color: var(--accent-blue);
+  color: var(--accent-blue-bright);
   font-size: 11px;
   word-break: break-word;
 }
@@ -183,22 +190,24 @@
 .variables-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .variable-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px;
+  padding: 5px 8px;
   background-color: var(--bg-primary);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
 }
 
 .variable-item .var-name {
   font-weight: 600;
-  color: var(--accent-blue);
+  color: var(--accent-blue-bright);
   min-width: 80px;
+  font-size: 11px;
 }
 
 .variable-item .var-value code {
@@ -213,4 +222,5 @@
   margin-left: auto;
   color: var(--accent-green);
   font-weight: 600;
+  font-size: 10px;
 }

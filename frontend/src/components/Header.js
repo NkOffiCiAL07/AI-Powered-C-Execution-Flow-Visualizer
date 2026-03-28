@@ -5,8 +5,10 @@ export default function Header({ onAnalyze, loading, view, onSwitchView }) {
   return (
     <header className="header">
       <div className="header-content">
-        <h1 className="header-title">🚀 C++ Execution Flow Visualizer</h1>
-        <p className="header-subtitle">Debug C++ programs step-by-step with real-time variable tracking</p>
+        <h1 className="header-title">
+          <span className="logo-icon">C+</span>
+          FlowViz
+        </h1>
       </div>
 
       <div className="header-actions">

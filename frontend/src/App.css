@@ -1,3 +1,7 @@
+/* ═══════════════════════════════════════
+   App – seamless panel layout
+   ═══════════════════════════════════════ */
+
 .app {
   display: flex;
   flex-direction: column;
@@ -11,19 +15,18 @@
   display: flex;
   flex: 1;
   overflow: hidden;
-  gap: 16px;
-  padding: 16px;
+  /* seamless panels: 1px gap shows bg-primary as divider */
+  gap: 1px;
+  background-color: var(--border-strong);
 }
 
+/* ── Editor panel ── */
 .editor-section {
   flex: 0.4;
   display: flex;
   flex-direction: column;
   background-color: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .editor-section .code-editor {
@@ -34,7 +37,7 @@
 .stdin-panel {
   border-top: 1px solid var(--border);
   background-color: var(--bg-card);
-  padding: 12px 16px 16px;
+  padding: 14px 16px 16px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -50,13 +53,15 @@
 
 .stdin-header h3 {
   margin: 0;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
 }
 
 .stdin-header span {
-  color: var(--text-secondary);
+  color: var(--text-muted);
   font-size: 11px;
 }
 
@@ -64,114 +69,123 @@
   min-height: 96px;
   resize: vertical;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background-color: var(--bg-primary);
   color: var(--text-primary);
   font-family: var(--font-mono);
   font-size: 12px;
   line-height: 1.5;
   padding: 12px;
+  transition: border-color 0.2s;
 }
 
 .stdin-textarea:focus {
   outline: none;
   border-color: var(--accent-blue);
+  box-shadow: 0 0 0 2px var(--accent-blue-glow);
 }
 
 .stdin-textarea::placeholder {
-  color: var(--text-secondary);
+  color: var(--text-muted);
 }
 
+/* ── Visualizer panel ── */
 .visualizer-section {
   flex: 0.6;
   display: flex;
   flex-direction: column;
   background-color: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .section-header {
-  padding: 16px;
+  padding: 0;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 0;
   background-color: var(--bg-card);
 }
 
 .section-header h2 {
   margin: 0;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
+  padding: 0 16px;
 }
 
 .examples-buttons {
   display: flex;
-  gap: 8px;
+  gap: 4px;
   flex-wrap: wrap;
+  padding: 8px 12px;
 }
 
 .example-btn {
-  padding: 8px 12px;
+  padding: 6px 14px;
   background-color: transparent;
-  color: var(--accent-blue);
-  border: 1px solid var(--accent-blue);
-  border-radius: 6px;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
   cursor: pointer;
   font-size: 12px;
   font-weight: 500;
-  transition: all 0.2s ease;
+  transition: all 0.25s var(--ease-out);
   font-family: var(--font-sans);
 }
 
 .example-btn:hover {
-  background-color: rgba(59, 130, 246, 0.1);
-  border-color: var(--accent-blue);
+  color: var(--text-primary);
+  background-color: var(--bg-hover);
+  border-color: var(--border-strong);
 }
 
 .example-btn.active {
-  background-color: var(--accent-blue);
+  background: var(--gradient-brand);
   color: white;
-  border-color: var(--accent-blue);
+  border-color: transparent;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
 }
 
+/* ── Tabs ── */
 .tab-bar {
   display: flex;
   gap: 0;
-  border-bottom: 1px solid var(--border);
+  height: 48px;
+  align-items: stretch;
 }
 
 .tab {
-  padding: 12px 16px;
+  padding: 0 20px;
   background: transparent;
   border: none;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
   border-bottom: 2px solid transparent;
-  transition: all 0.2s ease;
+  transition: all 0.2s var(--ease-out);
   font-family: var(--font-sans);
   position: relative;
 }
 
 .tab:hover {
-  color: var(--text-primary);
+  color: var(--text-secondary);
+  background-color: rgba(255, 255, 255, 0.02);
 }
 
 .tab.active {
-  color: var(--accent-blue);
+  color: var(--accent-blue-bright);
   border-bottom-color: var(--accent-blue);
 }
 
+/* ── Error banner ── */
 .error-banner {
-  background-color: rgba(239, 68, 68, 0.15);
+  background-color: rgba(239, 68, 68, 0.08);
   border-left: 3px solid var(--accent-red);
   padding: 12px 16px;
   display: flex;
@@ -184,6 +198,7 @@
   white-space: pre-wrap;
   word-break: break-word;
   font-family: var(--font-mono);
+  animation: slideDown 0.25s var(--ease-out);
 }
 
 .error-banner > span {
@@ -193,7 +208,7 @@
 @keyframes slideDown {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-8px);
   }
   to {
     opacity: 1;
@@ -208,16 +223,17 @@
   cursor: pointer;
   font-size: 16px;
   padding: 0;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
 }
 
 .error-dismiss:hover {
-  transform: scale(1.15);
+  background-color: rgba(239, 68, 68, 0.15);
 }
 
 #panel-flow,

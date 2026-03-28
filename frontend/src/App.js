@@ -190,7 +190,7 @@ function App() {
         };
       });
 
-      if (!response.accepted && response.message) {
+      if (!response.accepted && response.message && response.status !== "exited") {
         setError(response.message);
       }
     } catch (err) {

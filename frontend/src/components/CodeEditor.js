@@ -85,14 +85,24 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest 
     monaco.editor.defineTheme("flowviz-dark", {
       base: "vs-dark",
       inherit: true,
-      rules: [],
+      rules: [
+        { token: "keyword", foreground: "c678dd" },
+        { token: "string", foreground: "98c379" },
+        { token: "number", foreground: "d19a66" },
+        { token: "comment", foreground: "5c6078", fontStyle: "italic" },
+        { token: "type", foreground: "e5c07b" },
+      ],
       colors: {
-        "editor.background": "#1a1a1a",
-        "editor.lineHighlightBackground": "#242424",
-        "editorLineNumber.foreground": "#666666",
-        "editorLineNumber.activeForeground": "#ffffff",
-        "editor.selectionBackground": "#264f78",
-        "editor.inactiveSelectionBackground": "#3a3d41",
+        "editor.background": "#0f1117",
+        "editor.foreground": "#e8eaed",
+        "editor.lineHighlightBackground": "#1c1f2e",
+        "editorLineNumber.foreground": "#5c6078",
+        "editorLineNumber.activeForeground": "#818cf8",
+        "editor.selectionBackground": "#6366f133",
+        "editor.inactiveSelectionBackground": "#6366f11a",
+        "editorCursor.foreground": "#818cf8",
+        "editorIndentGuide.background": "#ffffff08",
+        "editorIndentGuide.activeBackground": "#ffffff15",
       },
     });
 

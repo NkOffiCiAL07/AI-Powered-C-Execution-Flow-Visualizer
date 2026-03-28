@@ -1,3 +1,7 @@
+/* ═══════════════════════════════════════
+   CodeEditor – Monaco wrapper & playback viewer
+   ═══════════════════════════════════════ */
+
 .code-editor {
   display: flex;
   flex-direction: column;
@@ -6,10 +10,10 @@
 }
 
 .editor-hint {
-  padding: 12px 16px;
+  padding: 10px 16px;
   background-color: var(--bg-card);
-  color: var(--text-primary);
-  font-size: 13px;
+  color: var(--text-muted);
+  font-size: 12px;
   font-weight: 500;
   border-bottom: 1px solid var(--border);
 }
@@ -27,9 +31,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 14px;
+  padding: 8px 14px;
   border-bottom: 1px solid var(--border);
-  background-color: #202020;
+  background-color: var(--bg-card);
 }
 
 .editor-language-pill {
@@ -37,18 +41,18 @@
   align-items: center;
   justify-content: center;
   min-width: 42px;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background-color: rgba(59, 130, 246, 0.15);
-  color: var(--accent-blue);
-  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  background: var(--accent-blue-glow);
+  color: var(--accent-blue-bright);
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
 .editor-toolbar-tip {
-  color: var(--text-secondary);
+  color: var(--text-muted);
   font-size: 11px;
   text-align: right;
 }
@@ -58,7 +62,7 @@
   min-height: 260px;
 }
 
-/* Playback viewer */
+/* ── Playback viewer ── */
 .code-viewer {
   flex: 1;
   overflow-y: auto;
@@ -72,19 +76,14 @@
 .code-line {
   display: flex;
   align-items: center;
-  padding: 4px 8px;
-  transition: background 0.2s ease;
+  padding: 3px 8px;
+  transition: background 0.2s var(--ease-out);
   border-left: 3px solid transparent;
 }
 
 .code-line.active-line {
-  background-color: rgba(59, 130, 246, 0.15);
+  background-color: rgba(99, 102, 241, 0.1);
   border-left-color: var(--accent-blue);
-}
-
-@keyframes lineGlow {
-  from { box-shadow: none; }
-  to { box-shadow: none; }
 }
 
 .line-arrow {
@@ -92,24 +91,27 @@
   width: 24px;
   min-width: 24px;
   text-align: center;
-  color: var(--accent-blue);
-  font-size: 16px;
+  color: var(--accent-blue-bright);
+  font-size: 14px;
   font-weight: 600;
 }
 
-.line-number {
+/* scoped .line-number inside code-line to avoid conflict with FlowVisualizer */
+.code-line .line-number {
   display: inline-block;
   width: 36px;
   min-width: 36px;
   text-align: right;
   padding-right: 12px;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   font-size: 12px;
   user-select: none;
+  background: none;
+  border-radius: 0;
 }
 
 .code-line.active-line .line-number {
-  color: var(--accent-blue);
+  color: var(--accent-blue-bright);
   font-weight: 600;
 }
 
@@ -125,42 +127,44 @@
 
 /* ── Bottom info bar ── */
 .editor-info {
-  padding: 10px 16px;
+  padding: 8px 16px;
   background-color: var(--bg-card);
   border-top: 1px solid var(--border);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
   display: flex;
   gap: 16px;
 }
 
 .line-count,
 .char-count {
-  color: var(--accent-blue);
+  color: var(--accent-blue-bright);
   font-weight: 600;
+  font-family: var(--font-mono);
 }
 
-/* Edit Code Button */
+/* ── Edit Code Button ── */
 .edit-code-btn {
   background-color: transparent;
-  color: var(--accent-blue);
-  border: 1px solid var(--accent-blue);
-  border-radius: 5px;
-  padding: 6px 12px;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 5px 14px;
   cursor: pointer;
   font-size: 12px;
-  font-weight: 600;
-  transition: all 0.2s ease;
+  font-weight: 500;
+  transition: all 0.2s var(--ease-out);
   font-family: var(--font-sans);
 }
 
 .edit-code-btn:hover {
-  background-color: rgba(59, 130, 246, 0.1);
-  border-color: var(--accent-blue);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  background-color: var(--bg-hover);
 }
 
 .edit-code-btn:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
 }
 

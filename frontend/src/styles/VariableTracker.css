@@ -1,3 +1,7 @@
+/* ═══════════════════════════════════════
+   VariableTracker – card-based variable display
+   ═══════════════════════════════════════ */
+
 .variable-tracker {
   display: flex;
   flex-direction: column;
@@ -9,11 +13,11 @@
 
 .tracker-header {
   font-weight: 600;
-  color: var(--text-primary);
-  font-size: 14px;
+  color: var(--text-muted);
+  font-size: 11px;
   margin: 0;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.5px;
 }
 
 /* ── Bubble particles ── */
@@ -25,7 +29,7 @@
   height: 100%;
   pointer-events: none;
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   z-index: 10;
 }
 
@@ -45,9 +49,9 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  background-color: var(--accent-blue);
-  border-radius: 16px;
-  padding: 5px 10px;
+  background: var(--gradient-brand);
+  border-radius: var(--radius-full);
+  padding: 5px 12px;
   white-space: nowrap;
   animation: floatUpLabel 1.2s ease-out forwards;
   border: none;
@@ -55,6 +59,7 @@
   justify-content: center;
   z-index: 20;
   font-size: 11px;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
 }
 
 .bubble-var {
@@ -67,7 +72,7 @@
 .bubble-eq {
   font-size: 11px;
   font-weight: 600;
-  color: white;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .bubble-val {
@@ -116,7 +121,7 @@
   align-items: center;
   justify-content: center;
   height: 120px;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   font-size: 13px;
   font-weight: 400;
 }
@@ -127,26 +132,38 @@
 
 .variables-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
   padding: 0;
 }
 
 .variable-card {
-  background: linear-gradient(135deg, rgba(78, 204, 163, 0.1) 0%, rgba(88, 166, 255, 0.1) 100%);
-  border: 3px solid var(--accent-blue);
-  border-radius: 12px;
-  padding: 16px;
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 14px 14px 18px;
   position: relative;
-  transition: all 0.3s ease;
-  animation: slideIn 0.3s ease-out;
-  box-shadow: 0 4px 20px rgba(88, 166, 255, 0.15);
+  transition: all 0.25s var(--ease-out);
+  animation: slideIn 0.3s var(--ease-out);
+}
+
+/* subtle left accent */
+.variable-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--accent-blue);
+  transition: background 0.3s;
 }
 
 @keyframes slideIn {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-8px);
   }
   to {
     opacity: 1;
@@ -155,36 +172,38 @@
 }
 
 .variable-card:hover {
-  border-color: var(--accent-blue);
-  box-shadow: 0 4px 12px rgba(88, 166, 255, 0.1);
+  border-color: var(--border-strong);
+  background-color: var(--bg-hover);
 }
 
 .variable-card.changed {
-  border-color: var(--accent-orange);
-  background: linear-gradient(135deg, rgba(209, 153, 34, 0.2) 0%, rgba(248, 81, 73, 0.1) 100%);
-  box-shadow: 0 4px 20px rgba(209, 153, 34, 0.25);
+  border-color: rgba(245, 158, 11, 0.3);
+  background-color: rgba(245, 158, 11, 0.05);
+}
+
+.variable-card.changed::before {
+  background: var(--accent-orange);
 }
 
 .variable-card.flashing {
-  animation: flash 0.8s ease-out;
+  animation: flash 0.6s ease-out;
 }
 
 @keyframes flash {
-  0%   { background: rgba(78, 204, 163, 0.05);  border-color: var(--accent-blue);   box-shadow: none; }
-  25%  { background: rgba(78, 204, 163, 0.35);  border-color: #4ecca3;              box-shadow: 0 0 30px rgba(78, 204, 163, 0.6), 0 0 60px rgba(78, 204, 163, 0.3); transform: scale(1.05); }
-  75%  { background: rgba(209, 153, 34, 0.2);   border-color: var(--accent-orange);  box-shadow: 0 0 20px rgba(209, 153, 34, 0.5); }
-  100% { background: rgba(209, 153, 34, 0.12);  border-color: var(--accent-orange); box-shadow: none; transform: scale(1); }
+  0%   { background-color: var(--bg-elevated); border-color: var(--border); }
+  30%  { background-color: rgba(99, 102, 241, 0.12); border-color: var(--accent-blue); }
+  70%  { background-color: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.3); }
+  100% { background-color: rgba(245, 158, 11, 0.05); border-color: rgba(245, 158, 11, 0.3); }
 }
 
 .var-name {
   display: block;
   font-family: var(--font-mono);
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 700;
-  color: var(--accent-blue);
-  margin-bottom: 12px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  color: var(--accent-blue-bright);
+  margin-bottom: 8px;
+  letter-spacing: 0.3px;
 }
 
 .var-value {
@@ -194,71 +213,72 @@
 
 .var-value code {
   background-color: var(--bg-primary);
-  color: #4ecca3;
-  padding: 10px 12px;
-  border-radius: 8px;
+  color: var(--accent-green);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
   font-family: var(--font-mono);
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 700;
   word-break: break-word;
   display: block;
-  line-height: 1.6;
-  border-left: 4px solid #4ecca3;
+  line-height: 1.5;
+  border: 1px solid var(--border);
 }
 
 .var-change {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 500;
   color: var(--text-secondary);
   padding-top: 8px;
   border-top: 1px solid var(--border);
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .change-arrow {
-  color: #4ecca3;
+  color: var(--accent-green);
   font-weight: 900;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .prev-value {
   font-family: var(--font-mono);
   color: var(--accent-orange);
   background-color: var(--bg-primary);
-  padding: 3px 6px;
+  padding: 2px 6px;
   border-radius: 4px;
   text-decoration: line-through;
-  opacity: 0.8;
+  opacity: 0.7;
+  font-size: 11px;
 }
 
 .next-value {
   font-family: var(--font-mono);
-  color: #4ecca3;
+  color: var(--accent-green);
   background-color: var(--bg-primary);
-  padding: 3px 6px;
+  padding: 2px 6px;
   border-radius: 4px;
   font-weight: 700;
+  font-size: 11px;
 }
 
 .change-badge {
   position: absolute;
   top: 8px;
   right: 8px;
-  background: linear-gradient(135deg, #d29922, #f85149);
+  background: linear-gradient(135deg, var(--accent-orange), #ef4444);
   color: white;
-  font-size: 11px;
-  font-weight: 800;
-  padding: 4px 8px;
-  border-radius: 8px;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  animation: badgePulse 0.7s ease-out infinite alternate;
 }
 
 @keyframes badgePulse {
-  from { transform: scale(1);   box-shadow: 0 0 0 0 rgba(209, 153, 34, 0.6); }
-  to   { transform: scale(1.1); box-shadow: 0 0 12px 4px rgba(209, 153, 34, 0.3); }
+  from { transform: scale(1); }
+  to   { transform: scale(1.05); }
 }

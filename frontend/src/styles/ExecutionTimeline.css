@@ -1,8 +1,12 @@
+/* ═══════════════════════════════════════
+   ExecutionTimeline – horizontal step dots
+   ═══════════════════════════════════════ */
+
 .execution-timeline {
   background-color: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -10,11 +14,11 @@
 
 .timeline-header {
   font-weight: 600;
-  font-size: 12px;
-  color: var(--text-primary);
+  font-size: 11px;
+  color: var(--text-muted);
   margin: 0;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.5px;
 }
 
 .timeline-container {
@@ -29,7 +33,6 @@
 }
 .timeline-container::-webkit-scrollbar-track {
   background: transparent;
-  border-radius: 2px;
 }
 .timeline-container::-webkit-scrollbar-thumb {
   background: var(--accent-blue);
@@ -38,7 +41,7 @@
 
 .timeline-track {
   display: flex;
-  gap: 4px;
+  gap: 3px;
   padding: 4px 2px;
   min-width: min-content;
   align-items: flex-end;
@@ -51,40 +54,42 @@
   gap: 3px;
   cursor: pointer;
   flex-shrink: 0;
-  transition: transform 0.2s;
-  min-width: 40px;
+  transition: all 0.2s var(--ease-out);
+  min-width: 36px;
+  padding: 4px 2px;
+  border-radius: var(--radius-sm);
 }
 
 .timeline-step:hover {
-  transform: translateY(-2px);
+  background-color: rgba(255, 255, 255, 0.03);
 }
 
 .step-dot {
   position: relative;
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background-color: var(--bg-primary);
-  border: 1.5px solid var(--border);
-  transition: all 0.2s ease;
+  background-color: var(--bg-elevated);
+  border: 1.5px solid var(--border-strong);
+  transition: all 0.2s var(--ease-out);
 }
 
 .step-dot-pulse {
   position: absolute;
-  inset: -3px;
+  inset: -4px;
   border-radius: 50%;
-  background: rgba(59, 130, 246, 0.3);
-  animation: dotPulse 1s ease-in-out infinite;
+  background: rgba(99, 102, 241, 0.25);
+  animation: dotPulse 1.2s ease-in-out infinite;
 }
 
 @keyframes dotPulse {
   0%, 100% {
     transform: scale(1);
-    opacity: 0.6;
+    opacity: 0.5;
   }
   50% {
-    transform: scale(1.4);
-    opacity: 0.2;
+    transform: scale(1.5);
+    opacity: 0.1;
   }
 }
 
@@ -94,20 +99,20 @@
 }
 
 .timeline-step.active .step-dot {
-  width: 12px;
-  height: 12px;
-  background: var(--accent-blue);
-  border-color: var(--accent-blue);
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+  width: 10px;
+  height: 10px;
+  background: var(--accent-blue-bright);
+  border-color: var(--accent-blue-bright);
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
 }
 
 .step-label {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   text-align: center;
-  max-width: 48px;
+  max-width: 44px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -116,15 +121,19 @@
 .timeline-step.past .step-label {
   color: var(--accent-blue);
 }
-.timeline-step.active .step-label { color: var(--accent-blue); font-weight: 800; }
+
+.timeline-step.active .step-label {
+  color: var(--accent-blue-bright);
+  font-weight: 700;
+}
 
 .timeline-legend {
   display: flex;
   gap: 16px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
 }
 
-.legend-past    { color: #4ecca3; }
-.legend-current { color: var(--accent-blue); }
-.legend-future  { color: var(--text-secondary); }
+.legend-past    { color: var(--accent-blue); }
+.legend-current { color: var(--accent-blue-bright); }
+.legend-future  { color: var(--text-muted); }
