@@ -1,7 +1,9 @@
 import React from "react";
 import "../styles/Header.css";
+import { useTheme } from "../theme";
 
 export default function Header({ onAnalyze, loading, view, onSwitchView }) {
+  const { theme, toggleTheme } = useTheme();
   return (
     <header className="header">
       <div className="header-content">
@@ -12,6 +14,13 @@ export default function Header({ onAnalyze, loading, view, onSwitchView }) {
       </div>
 
       <div className="header-actions">
+        <button
+          className="theme-toggle-btn"
+          onClick={toggleTheme}
+          title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+        >
+          {theme === "dark" ? "🌙" : "☀️"}
+        </button>
         <div className="header-view-switch" role="tablist" aria-label="Page view switch">
           <button
             className={`view-switch-btn ${view === "visualizer" ? "active" : ""}`}

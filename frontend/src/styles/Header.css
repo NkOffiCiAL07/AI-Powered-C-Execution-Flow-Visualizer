@@ -70,6 +70,33 @@
   gap: 12px;
 }
 
+/* ── Theme toggle button ── */
+.theme-toggle-btn {
+  border: none;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 20px;
+  border-radius: var(--radius-full);
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--gradient-brand);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.18);
+}
+
+.theme-toggle-btn:active {
+  filter: brightness(0.95);
+}
+
 /* ── View switcher ── */
 .header-view-switch {
   display: flex;
