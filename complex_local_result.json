@@ -1,0 +1,28 @@
+{
+  "compiled": true,
+  "compile_stderr": "",
+  "snapshot_count": 74,
+  "first_line": 23,
+  "last_line": 43,
+  "functions": [
+    "main"
+  ],
+  "tail_lines": [
+    43,
+    43,
+    43,
+    43,
+    43,
+    43,
+    43,
+    43,
+    43,
+    43
+  ],
+  "last_variables": {
+    "values": "size=3 {",
+    "total": "12",
+    "label": "\"even\""
+  },
+  "error": null
+}
