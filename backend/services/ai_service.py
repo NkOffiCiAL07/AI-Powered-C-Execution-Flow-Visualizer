@@ -3,26 +3,30 @@
 import os
 import re
 import json
+import logging
+from typing import Any, Dict, Optional
 
+logger = logging.getLogger(__name__)
 
-def analyze_c_code(c_code: str, trace_result: dict = None) -> dict:
+def analyze_c_code(c_code: str, trace_result: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Analyze C code and return flow, explanation, and variables."""
     api_key = os.getenv("OPENAI_API_KEY")
 
     if api_key:
         try:
             return _ai_analysis(c_code, trace_result, api_key)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"OpenAI analysis failed, falling back to basic analysis: {e}")
 
     # Fallback: rule-based analysis
     return _basic_analysis(c_code, trace_result)
 
 
-def _ai_analysis(c_code: str, trace_result: dict, api_key: str) -> dict:
+def _ai_analysis(c_code: str, trace_result: Optional[Dict[str, Any]], api_key: str) -> Dict[str, Any]:
     """Use OpenAI API for analysis."""
-    import openai
-    openai.api_key = api_key
+    from openai import OpenAI
+    
+    client = OpenAI(api_key=api_key)
 
     prompt = f"""Analyze this C code and return a JSON object with:
 - "flow": array of objects with "step", "line", "description"
@@ -34,21 +38,28 @@ Code:
 {c_code}
 ```"""
 
-    response = openai.chat.completions.create(
+    response = client.chat.completions.create(
         model=os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
         messages=[{"role": "user", "content": prompt}],
         temperature=0.3,
     )
 
     content = response.choices[0].message.content
+    if not content:
+        raise ValueError("Received empty content from OpenAI")
+
     # Try to extract JSON from the response
     json_match = re.search(r'\{[\s\S]*\}', content)
     if json_match:
-        return json.loads(json_match.group())
+        try:
+            return json.loads(json_match.group())
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse JSON from AI response: {e}")
+            
     return {"flow": [], "explanation": content, "variables": []}
 
 
-def _basic_analysis(c_code: str, trace_result: dict = None) -> dict:
+def _basic_analysis(c_code: str, trace_result: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Rule-based fallback analysis."""
     lines = c_code.splitlines()
     flow = []

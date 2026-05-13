@@ -4,9 +4,12 @@ import os
 import subprocess
 import tempfile
 import re
+import logging
+from typing import Any, Dict, List
 
+logger = logging.getLogger(__name__)
 
-def compile_and_trace(c_code: str, user_input: str = "") -> dict:
+def compile_and_trace(c_code: str, user_input: str = "") -> Dict[str, Any]:
     """Compile C code, run it, and return output + basic trace."""
     with tempfile.TemporaryDirectory() as tmpdir:
         src_path = os.path.join(tmpdir, "program.c")
@@ -21,6 +24,7 @@ def compile_and_trace(c_code: str, user_input: str = "") -> dict:
             capture_output=True, text=True,
         )
         if compile_result.returncode != 0:
+            logger.error(f"Compilation failed: {compile_result.stderr.strip()}")
             return {"error": compile_result.stderr.strip()}
 
         # Run normally to get output
@@ -33,7 +37,11 @@ def compile_and_trace(c_code: str, user_input: str = "") -> dict:
             )
             output = run_result.stdout
         except subprocess.TimeoutExpired:
+            logger.warning("Program execution timed out")
             return {"error": "Program timed out (10s limit)"}
+        except Exception as e:
+            logger.error(f"Execution error: {e}")
+            return {"error": f"Execution error: {str(e)}"}
 
         # Run under LLDB for trace
         lldb_commands = "\n".join([
@@ -50,7 +58,14 @@ def compile_and_trace(c_code: str, user_input: str = "") -> dict:
                 timeout=15,
             )
             trace_raw = lldb_result.stdout
-        except (subprocess.TimeoutExpired, FileNotFoundError):
+        except subprocess.TimeoutExpired:
+            logger.warning("LLDB trace timed out")
+            trace_raw = ""
+        except FileNotFoundError:
+            logger.warning("LLDB not found on system")
+            trace_raw = ""
+        except Exception as e:
+            logger.error(f"LLDB error: {e}")
             trace_raw = ""
 
         return {
@@ -59,7 +74,7 @@ def compile_and_trace(c_code: str, user_input: str = "") -> dict:
         }
 
 
-def _parse_trace(raw: str) -> list:
+def _parse_trace(raw: str) -> List[Dict[str, Any]]:
     """Minimal trace parser."""
     steps = []
     loc_pattern = re.compile(r'at\s+(\S+?):(\d+)')

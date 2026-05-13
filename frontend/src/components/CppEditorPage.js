@@ -1,5 +1,6 @@
 import React from "react";
 import CodeEditor from "./CodeEditor";
+import FunctionHelper from "./FunctionHelper";
 import "../styles/CppEditorPage.css";
 
 export default function CppEditorPage({
@@ -16,6 +17,10 @@ export default function CppEditorPage({
   const stderr = result?.stderr || "";
   const exitCode = result?.exit_code;
   const success = result?.success;
+
+  const handleAddCode = (newSnippet) => {
+    onCodeChange(code + newSnippet);
+  };
 
   return (
     <main className="editor-page-main">
@@ -41,6 +46,8 @@ export default function CppEditorPage({
         >
           {loading ? "Running..." : "Compile & Run"}
         </button>
+
+        <FunctionHelper onAddCode={handleAddCode} />
 
         <div className="editor-page-card input-card">
           <div className="editor-page-subhead">

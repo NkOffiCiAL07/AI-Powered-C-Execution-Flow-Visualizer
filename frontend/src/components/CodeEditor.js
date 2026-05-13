@@ -45,6 +45,21 @@ const cppSnippets = [
     documentation: "Insert a cout statement",
     insertText: 'cout << ${1:value} << endl;',
   },
+  {
+    label: "function",
+    documentation: "Insert a function definition",
+    insertText: [
+      "${1:int} ${2:functionName}(${3:int arg}) {",
+      "    ${4:// body}",
+      "    return ${5:0};",
+      "}"
+    ].join("\n"),
+  },
+  {
+    label: "call",
+    documentation: "Insert a function call",
+    insertText: "${1:functionName}(${2:args});",
+  },
 ];
 /* eslint-enable no-template-curly-in-string */
 

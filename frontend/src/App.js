@@ -4,6 +4,7 @@ import FlowVisualizer from "./components/FlowVisualizer";
 import OutputPanel from "./components/OutputPanel";
 import Header from "./components/Header";
 import CppEditorPage from "./components/CppEditorPage";
+import FunctionHelper from "./components/FunctionHelper";
 import { analyzeCode, runCode, stepAnalyzeSession } from "./services/api";
 import "./App.css";
 import "./styles/CppEditorPage.css";
@@ -75,6 +76,22 @@ int main() {
         cout << "fib(" << current << ")=" << fib << " label=" << label << endl;
     }
     cout << "total=" << total << endl;
+    return 0;
+}`,
+  functionCall: `#include <iostream>
+using namespace std;
+
+int addNumbers(int a, int b) {
+    int result = a + b;
+    return result;
+}
+
+int main() {
+    int x = 10;
+    int y = 20;
+    cout << "Calling function..." << endl;
+    int sum = addNumbers(x, y);
+    cout << "Sum: " << sum << endl;
     return 0;
 }`,
 };
@@ -320,6 +337,12 @@ function App() {
               >
                 🔢 Fibonacci
               </button>
+              <button
+                className={`example-btn ${selectedExample === "functionCall" ? "active" : ""}`}
+                onClick={() => handleLoadExample("functionCall")}
+              >
+                🧩 Function Call
+              </button>
             </div>
           </div>
           <CodeEditor
@@ -328,6 +351,11 @@ function App() {
             currentLine={currentLine}
             onEditRequest={() => { setCurrentLine(null); setAnalysisResult(null); }}
           />
+          {!currentLine && (
+            <div style={{ marginTop: "20px" }}>
+              <FunctionHelper onAddCode={(newSnippet) => setCode(code + newSnippet)} />
+            </div>
+          )}
           <div className="stdin-panel">
             <div className="stdin-header">
               <h3>Program Input</h3>
