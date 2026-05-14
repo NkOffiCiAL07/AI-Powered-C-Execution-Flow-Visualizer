@@ -3,12 +3,13 @@ import CodeEditor from "./components/CodeEditor";
 import FlowVisualizer from "./components/FlowVisualizer";
 import OutputPanel from "./components/OutputPanel";
 import Header from "./components/Header";
+import AiExplanation from "./components/AiExplanation";
 import CppEditorPage from "./components/CppEditorPage";
 import LandingPage from "./components/LandingPage";
 import DocsPage from "./components/DocsPage";
 import PricingPage from "./components/PricingPage";
 import CommunityPage from "./components/CommunityPage";
-import { analyzeCode, runCode, stepAnalyzeSession } from "./services/api";
+import { analyzeCode, runCode, stepAnalyzeSession, explainCode } from "./services/api";
 import "./App.css";
 import "./styles/CppEditorPage.css";
 
@@ -110,12 +111,15 @@ function App() {
   const [stepLoading, setStepLoading] = useState(false);
   const [view, setView] = useState("landing");
   const [activeTab, setActiveTab] = useState("flow");
+  const [aiExplanation, setAiExplanation] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
   const [selectedExample, setSelectedExample] = useState("simple");
   const [currentLine, setCurrentLine] = useState(null);
   const [runResult, setRunResult] = useState(null);
   const [runLoading, setRunLoading] = useState(false);
   const [runError, setRunError] = useState(null);
   const abortControllerRef = useRef(null);
+  const aiAbortControllerRef = useRef(null);
   const stepAbortControllerRef = useRef(null);
   const runAbortControllerRef = useRef(null);
 
@@ -123,6 +127,9 @@ function App() {
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
+      }
+      if (aiAbortControllerRef.current) {
+        aiAbortControllerRef.current.abort();
       }
       if (stepAbortControllerRef.current) {
         stepAbortControllerRef.current.abort();
@@ -133,12 +140,39 @@ function App() {
     };
   }, []);
 
+  const handleExplain = useCallback(async () => {
+    if (!code.trim()) {
+      setError("Please enter some C++ code before explaining.");
+      return;
+    }
+
+    if (aiAbortControllerRef.current) {
+      aiAbortControllerRef.current.abort();
+    }
+    aiAbortControllerRef.current = new AbortController();
+
+    setAiLoading(true);
+    setError(null);
+    setActiveTab("ai");
+    try {
+      const result = await explainCode(code, aiAbortControllerRef.current.signal);
+      setAiExplanation(result);
+    } catch (err) {
+      if (err.name === "AbortError") return;
+      setError(err.message || "Explanation failed");
+    } finally {
+      setAiLoading(false);
+      aiAbortControllerRef.current = null;
+    }
+  }, [code]);
+
   const handleLoadExample = (exampleKey) => {
     setSelectedExample(exampleKey);
     const newCode = EXAMPLE_CODES[exampleKey];
     setCode(newCode);
     setCurrentLine(null);
     setAnalysisResult(null);
+    setAiExplanation(null);
     setError(null);
     setStepLoading(false);
   };
@@ -374,6 +408,16 @@ function App() {
                     Execution Flow
                   </button>
                   <button
+                    className={`tab ${activeTab === "ai" ? "active" : ""}`}
+                    onClick={() => setActiveTab("ai")}
+                    role="tab"
+                    id="tab-ai"
+                    aria-selected={activeTab === "ai"}
+                    aria-controls="panel-ai"
+                  >
+                    AI Insights
+                  </button>
+                  <button
                     className={`tab ${activeTab === "output" ? "active" : ""}`}
                     onClick={() => setActiveTab("output")}
                     role="tab"
@@ -411,6 +455,10 @@ function App() {
                     onBack={() => handleStep("back")}
                   />
                 </div>
+              ) : activeTab === "ai" ? (
+                <div id="panel-ai" role="tabpanel" aria-labelledby="tab-ai">
+                  <AiExplanation data={aiExplanation} loading={aiLoading} />
+                </div>
               ) : (
                 <div id="panel-output" role="tabpanel" aria-labelledby="tab-output">
                   <OutputPanel result={analysisResult} loading={loading} />
@@ -429,7 +477,9 @@ function App() {
       {view !== "landing" && (
         <Header
           onAnalyze={handleAnalyze}
+          onExplain={handleExplain}
           loading={loading}
+          aiLoading={aiLoading}
           view={view}
           onSwitchView={setView}
         />

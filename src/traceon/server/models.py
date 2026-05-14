@@ -175,3 +175,14 @@ class AnalyzeStepResponse(BaseModel):
     total_recorded_steps: int
     snapshot: ExecutionSnapshot | None = None
     message: str = ""
+
+
+class ExplainCodeRequest(BaseModel):
+    code: str
+
+
+class ExplainCodeResponse(BaseModel):
+    explanation: str
+    time_complexity: str
+    space_complexity: str
+    key_points: list[str] = Field(default_factory=list)

@@ -2,7 +2,7 @@ import React from "react";
 import "../styles/Header.css";
 import { useTheme } from "../theme";
 
-export default function Header({ onAnalyze, loading, view, onSwitchView }) {
+export default function Header({ onAnalyze, onExplain, loading, aiLoading, view, onSwitchView }) {
   const { theme, toggleTheme } = useTheme();
   return (
     <header className="header">
@@ -51,13 +51,22 @@ export default function Header({ onAnalyze, loading, view, onSwitchView }) {
         </button>
 
         {view === "visualizer" && (
-          <button
-            className={`analyze-btn ${loading ? "loading" : ""}`}
-            onClick={onAnalyze}
-            disabled={loading}
-          >
-            {loading ? "Analyzing..." : "Analyze & Run"}
-          </button>
+          <>
+            <button
+              className={`explain-btn ${aiLoading ? "loading" : ""}`}
+              onClick={onExplain}
+              disabled={aiLoading || loading}
+            >
+              {aiLoading ? "Thinking..." : "Explain Code"}
+            </button>
+            <button
+              className={`analyze-btn ${loading ? "loading" : ""}`}
+              onClick={onAnalyze}
+              disabled={loading || aiLoading}
+            >
+              {loading ? "Analyzing..." : "Analyze & Run"}
+            </button>
+          </>
         )}
         <a href="#" className="sign-in-link">Sign In</a>
       </div>

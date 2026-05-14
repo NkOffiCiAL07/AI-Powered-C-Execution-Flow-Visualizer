@@ -25,6 +25,7 @@ def _load_local_env() -> None:
 _load_local_env()
 
 from traceon.server.api import router as sessions_router, session_manager
+from traceon.server.ai_service import explain_code_ai
 from traceon.server.models import (
     AnalyzeCodeRequest,
     AnalyzeCodeResponse,
@@ -34,6 +35,8 @@ from traceon.server.models import (
     CreateSessionRequest,
     DebugBackend,
     ExecutionSnapshot,
+    ExplainCodeRequest,
+    ExplainCodeResponse,
     RunCodeRequest,
     RunCodeResponse,
     SessionSettings,
@@ -229,6 +232,16 @@ def create_app() -> FastAPI:
                     stderr="Program timed out (10s limit)",
                     exit_code=-1,
                 )
+
+    @app.post("/explain", response_model=ExplainCodeResponse, tags=["analysis"])
+    def explain_code(request: ExplainCodeRequest):
+        if not request.code or not request.code.strip():
+            raise HTTPException(status_code=400, detail="No C++ code provided")
+
+        try:
+            return explain_code_ai(request.code)
+        except Exception as error:
+            raise HTTPException(status_code=500, detail=f"AI explanation failed: {error}") from error
 
     app.include_router(sessions_router)
     return app

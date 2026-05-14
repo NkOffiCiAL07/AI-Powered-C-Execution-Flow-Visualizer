@@ -157,6 +157,36 @@
   box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
 }
 
+/* ── Explain button ── */
+.explain-btn {
+  padding: 8px 20px;
+  background: rgba(221, 183, 255, 0.1);
+  border: 1px solid rgba(221, 183, 255, 0.4);
+  border-radius: var(--radius-full);
+  color: #ddb7ff;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.25s var(--ease-out);
+  white-space: nowrap;
+  font-family: var(--font-sans);
+  box-shadow: 0 0 10px rgba(221, 183, 255, 0.1);
+}
+
+.explain-btn:hover:not(:disabled) {
+  background: rgba(221, 183, 255, 0.2);
+  border-color: #ddb7ff;
+  box-shadow: 0 0 15px rgba(221, 183, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.explain-btn:disabled,
+.explain-btn.loading {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* ── Analyze button ── */
 .analyze-btn {
   padding: 9px 22px;
