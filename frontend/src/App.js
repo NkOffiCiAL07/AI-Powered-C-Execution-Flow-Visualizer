@@ -311,7 +311,7 @@ function App() {
       <main className="app-main">
         <section className="editor-section">
           <div className="section-header">
-            <h2>📝 Your Code</h2>
+            <h2>Your Code</h2>
             <div className="examples-selector-container">
               <span className="selector-label">Examples:</span>
               <select 
@@ -322,8 +322,8 @@ function App() {
                 <option value="simple">Simple Math</option>
                 <option value="counting">Counting Loop</option>
                 <option value="ifStatement">If Statement</option>
-                <option value="fibonacci">🔢 Fibonacci</option>
-                <option value="functionCall">🧩 Function Call</option>
+                <option value="fibonacci">Fibonacci</option>
+                <option value="functionCall">Function Call</option>
               </select>
             </div>
           </div>
@@ -380,7 +380,7 @@ function App() {
           {error && (
             <div className="error-banner">
               <span>
-                ⚠️ <strong>Error:</strong> {error}
+                <strong>Error:</strong> {error}
               </span>
               <button
                 className="error-dismiss"

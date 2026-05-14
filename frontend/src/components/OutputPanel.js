@@ -45,7 +45,7 @@ export default function OutputPanel({ result, loading }) {
   return (
     <div className="output-panel">
       <div className="output-header">
-        <h3>📋 Execution Details</h3>
+        <h3>Execution Details</h3>
         <p className="output-summary">
           Total Steps: <strong>{result.snapshots.length}</strong>
         </p>

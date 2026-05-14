@@ -167,9 +167,9 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest 
     return (
       <div className="code-editor">
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", backgroundColor: "var(--bg-card)", borderBottom: "1px solid var(--border)" }}>
-          <span style={{ fontSize: "13px", color: "var(--text-primary)" }}>▶ Playing — currently on line {currentLine}</span>
+          <span style={{ fontSize: "13px", color: "var(--text-primary)" }}>Playing — currently on line {currentLine}</span>
           <button className="edit-code-btn" onClick={onEditRequest}>
-            ✏️ Edit Code
+            Edit Code
           </button>
         </div>
         <div className="code-viewer">

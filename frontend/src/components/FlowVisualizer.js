@@ -10,7 +10,7 @@ function buildExplanation(snapshot, prevSnapshot, stepIndex) {
   const prevVars = prevSnapshot?.variables || {};
 
   if (line <= 0) {
-    return `The program has finished executing! 🎉`;
+    return `The program has finished executing!`;
   }
 
   if (stepIndex === 0) {
@@ -34,13 +34,7 @@ function buildExplanation(snapshot, prevSnapshot, stepIndex) {
 }
 
 function stepEmoji(snapshot, stepIndex) {
-  if (stepIndex === 0) return "🚀";
-  const changed = snapshot.changed_variables || [];
-  if (changed.length === 0) return "👣";
-  const name = changed[0];
-  const val = snapshot.variables?.[name];
-  if (typeof val === "string" && val.includes('"')) return "💬";
-  return "✏️";
+  return null;
 }
 
 export default function FlowVisualizer({
@@ -241,7 +235,6 @@ export default function FlowVisualizer({
   const snap = visibleSnapshots[safeCurrentStep];
   const prevSnap = safeCurrentStep > 0 ? visibleSnapshots[safeCurrentStep - 1] : null;
   const explanation = buildExplanation(snap, prevSnap, safeCurrentStep);
-  const emoji = stepEmoji(snap, safeCurrentStep);
   const progressPct = Math.round(((safeCurrentStep + 1) / totalSteps) * 100);
 
   return (
@@ -324,7 +317,6 @@ export default function FlowVisualizer({
       </div>
 
       <div className="explanation-box">
-        <div className="explanation-emoji">{emoji}</div>
         <div className="explanation-text">
           <div className="explanation-label">What is happening?</div>
           <div className="explanation-body">{explanation}</div>
@@ -332,7 +324,7 @@ export default function FlowVisualizer({
       </div>
 
       <div className="var-section-label">
-        📦 Variable Boxes — active in <span className="active-function-pill">{snap.location.function}</span>
+        Variable Boxes — active in <span className="active-function-pill">{snap.location.function}</span>
         {Object.keys(snap.variables || {}).length === 0 && (
           <span className="no-vars"> (no variables yet)</span>
         )}
@@ -347,7 +339,7 @@ export default function FlowVisualizer({
 
       {snap.call_stack && snap.call_stack.length > 1 && (
         <div className="call-stack-section">
-          <div className="var-section-label">📚 Call Stack — active functions</div>
+          <div className="var-section-label">Call Stack — active functions</div>
           <div className="call-stack-list">
             {snap.call_stack.map((frame, i) => (
               <div key={i} className={`call-stack-frame ${i === 0 ? "active" : ""}`}>
