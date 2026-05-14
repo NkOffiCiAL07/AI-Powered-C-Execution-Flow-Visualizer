@@ -103,6 +103,7 @@ int main() {
 const DEFAULT_CODE = EXAMPLE_CODES.simple;
 
 function App() {
+  const [user, setUser] = useState(null);
   const [code, setCode] = useState(DEFAULT_CODE);
   const [programInput, setProgramInput] = useState("");
   const [analysisResult, setAnalysisResult] = useState(null);
@@ -124,6 +125,12 @@ function App() {
   const runAbortControllerRef = useRef(null);
 
   useEffect(() => {
+    // Check for existing session
+    const savedUser = localStorage.getItem("traceon_user");
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -139,6 +146,18 @@ function App() {
       }
     };
   }, []);
+
+  const handleLogin = (userData) => {
+    setUser(userData);
+    localStorage.setItem("traceon_user", JSON.stringify(userData));
+    setView("editor");
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem("traceon_user");
+    setView("landing");
+  };
 
   const handleExplain = useCallback(async () => {
     if (!code.trim()) {
@@ -310,9 +329,14 @@ function App() {
   }, [analysisResult]);
 
   const renderView = () => {
+    // Access control: only landing page allowed if not logged in
+    if (!user && view !== "landing") {
+      return <LandingPage onStart={() => setView("editor")} onSwitchView={setView} onLogin={handleLogin} />;
+    }
+
     switch (view) {
       case "landing":
-        return <LandingPage onStart={() => setView("editor")} onSwitchView={setView} />;
+        return <LandingPage onStart={() => setView("editor")} onSwitchView={setView} onLogin={handleLogin} />;
       case "docs":
         return <DocsPage />;
       case "pricing":
@@ -482,6 +506,8 @@ function App() {
           aiLoading={aiLoading}
           view={view}
           onSwitchView={setView}
+          user={user}
+          onLogout={handleLogout}
         />
       )}
       {renderView()}

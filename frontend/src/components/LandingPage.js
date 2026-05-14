@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
+import LoginModal from './LoginModal';
 
-const LandingPage = ({ onStart, onSwitchView }) => {
+const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
   return (
     <div className="bg-[#050507] text-on-surface selection:bg-primary/30 min-h-screen relative overflow-x-hidden font-sans">
       {/* Dynamic Background Layer */}
@@ -33,10 +35,16 @@ const LandingPage = ({ onStart, onSwitchView }) => {
           </nav>
 
           <div className="flex items-center gap-6">
-            <button className="hidden md:block text-xs font-bold uppercase tracking-[0.2em] text-on-surface-variant hover:text-primary transition-all">
+            <button 
+              className="hidden md:block text-xs font-bold uppercase tracking-[0.2em] text-on-surface-variant hover:text-primary transition-all"
+              onClick={() => setIsLoginOpen(true)}
+            >
               Sign In
             </button>
-            <button className="bg-primary text-on-primary px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest shadow-[0_0_20px_rgba(168,85,247,0.4)] hover:scale-105 active:scale-95 transition-all">
+            <button 
+              className="bg-primary text-on-primary px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest shadow-[0_0_20px_rgba(168,85,247,0.4)] hover:scale-105 active:scale-95 transition-all"
+              onClick={() => setIsLoginOpen(true)}
+            >
               Launch App
             </button>
           </div>
@@ -70,7 +78,7 @@ const LandingPage = ({ onStart, onSwitchView }) => {
           <div className="animate-fade-up opacity-0" style={{ animationDelay: '0.7s', animationFillMode: 'forwards' }}>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-8">
               <button 
-                onClick={onStart}
+                onClick={() => setIsLoginOpen(true)}
                 className="group relative bg-white text-black px-12 py-5 rounded-2xl font-black uppercase tracking-widest transition-all hover:bg-primary hover:text-on-primary hover:shadow-[0_0_40px_rgba(168,85,247,0.6)] active:scale-95"
               >
                 Start Visualization
@@ -213,6 +221,12 @@ const LandingPage = ({ onStart, onSwitchView }) => {
           <span>SaaS Ultra v6.0 // PROD_BUILD</span>
         </div>
       </footer>
+
+      <LoginModal 
+        isOpen={isLoginOpen} 
+        onClose={() => setIsLoginOpen(false)} 
+        onLogin={onLogin} 
+      />
     </div>
   );
 };
