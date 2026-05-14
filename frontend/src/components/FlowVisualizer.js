@@ -168,6 +168,40 @@ export default function FlowVisualizer({
     }
   }, []);
 
+  // Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Don't trigger if user is typing in an input or textarea
+      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+
+      switch (e.key) {
+        case 'ArrowRight':
+          if (!stepLoading && !atEnd && !playingRef.current) {
+            if (onNextRef.current) onNextRef.current();
+          }
+          break;
+        case 'ArrowLeft':
+          if (!stepLoading && safeCurrentStep > 0 && !playingRef.current) {
+            if (onBack) onBack();
+          }
+          break;
+        case ' ': // Spacebar
+          e.preventDefault(); // Prevent page scroll
+          if (playingRef.current) {
+            handlePause();
+          } else if (!atEnd) {
+            handlePlay();
+          }
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [stepLoading, atEnd, safeCurrentStep, handlePlay, handlePause, onBack]);
+
   if (loading) {
     return (
       <div className="flow-visualizer-loading">
@@ -203,31 +237,33 @@ export default function FlowVisualizer({
             className="control-btn"
             onClick={() => { handlePause(); onBack && onBack(); }}
             disabled={stepLoading || safeCurrentStep === 0 || playing}
+            title="Go back one step (Left Arrow)"
           >
-            ◀ Back
+            ◀ Back <span style={{fontSize: "10px", opacity: 0.6, marginLeft: "4px"}}>[←]</span>
           </button>
           <button
             className="control-btn play-btn"
             onClick={handlePlay}
             disabled={stepLoading || atEnd || playing}
-            title="Play"
+            title="Play automatically (Space)"
           >
-            ▶ Play
+            ▶ Play <span style={{fontSize: "10px", opacity: 0.6, marginLeft: "4px"}}>[Spc]</span>
           </button>
           <button
             className="control-btn pause-btn"
             onClick={handlePause}
             disabled={!playing}
-            title="Pause"
+            title="Pause playback (Space)"
           >
-            ⏸ Pause
+            ⏸ Pause <span style={{fontSize: "10px", opacity: 0.6, marginLeft: "4px"}}>[Spc]</span>
           </button>
           <button
             className="control-btn primary"
             onClick={() => { handlePause(); onNext && onNext(); }}
             disabled={stepLoading || atEnd || playing}
+            title="Go to next step (Right Arrow)"
           >
-            Next ▶
+            Next ▶ <span style={{fontSize: "10px", opacity: 0.6, marginLeft: "4px"}}>[→]</span>
           </button>
         </div>
         <div className="control-group">

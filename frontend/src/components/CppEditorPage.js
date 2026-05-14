@@ -39,13 +39,15 @@ export default function CppEditorPage({
       </section>
 
       <section className="editor-page-right">
-        <button
-          className={`editor-run-btn ${loading ? "loading" : ""}`}
-          onClick={() => onRun()}
-          disabled={loading}
-        >
-          {loading ? "Running..." : "Compile & Run"}
-        </button>
+        <div className="editor-page-card" style={{ padding: "16px", display: "flex", justifyContent: "center" }}>
+          <button
+            className={`editor-run-btn ${loading ? "loading" : ""}`}
+            onClick={() => onRun()}
+            disabled={loading}
+          >
+            {loading ? "Running..." : "Compile & Run"}
+          </button>
+        </div>
 
         <FunctionHelper onAddCode={handleAddCode} />
 
