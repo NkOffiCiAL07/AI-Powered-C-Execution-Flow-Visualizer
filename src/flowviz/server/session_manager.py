@@ -205,7 +205,7 @@ class SessionManager:
         )
         return record
 
-    def step_next(self, session_id: str) -> tuple[bool, str | None, _SessionRecord, bool]:
+    def step_next(self, session_id: str, step_type: CommandType = CommandType.STEP_OVER) -> tuple[bool, str | None, _SessionRecord, bool]:
         record = self._require_session(session_id)
         history = record.history or []
         max_steps = max(1, record.request.settings.max_steps)
@@ -239,7 +239,7 @@ class SessionManager:
         if record.completed or record.status == SessionStatus.EXITED:
             return False, "Execution already completed", record, False
 
-        accepted, message, record = self.apply_command(session_id, CommandType.STEP_OVER)
+        accepted, message, record = self.apply_command(session_id, step_type)
         return accepted, message, record, accepted
 
     def step_back(self, session_id: str) -> tuple[bool, str | None, _SessionRecord]:

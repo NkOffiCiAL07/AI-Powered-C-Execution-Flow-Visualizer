@@ -177,12 +177,22 @@ export default function FlowVisualizer({
       switch (e.key) {
         case 'ArrowRight':
           if (!stepLoading && !atEnd && !playingRef.current) {
-            if (onNextRef.current) onNextRef.current();
+            if (onNextRef.current) onNextRef.current("step_over");
           }
           break;
         case 'ArrowLeft':
           if (!stepLoading && safeCurrentStep > 0 && !playingRef.current) {
             if (onBack) onBack();
+          }
+          break;
+        case 'ArrowDown':
+          if (!stepLoading && !atEnd && !playingRef.current) {
+            if (onNextRef.current) onNextRef.current("step_in");
+          }
+          break;
+        case 'ArrowUp':
+          if (!stepLoading && !atEnd && !playingRef.current) {
+            if (onNextRef.current) onNextRef.current("step_out");
           }
           break;
         case ' ': // Spacebar
@@ -259,11 +269,27 @@ export default function FlowVisualizer({
           </button>
           <button
             className="control-btn primary"
-            onClick={() => { handlePause(); onNext && onNext(); }}
+            onClick={() => { handlePause(); onNext && onNext("step_over"); }}
             disabled={stepLoading || atEnd || playing}
-            title="Go to next step (Right Arrow)"
+            title="Go to next line (Right Arrow)"
           >
             Next ▶ <span style={{fontSize: "10px", opacity: 0.6, marginLeft: "4px"}}>[→]</span>
+          </button>
+          <button
+            className="control-btn accent"
+            onClick={() => { handlePause(); onNext && onNext("step_in"); }}
+            disabled={stepLoading || atEnd || playing}
+            title="Step into function (Down Arrow)"
+          >
+            Step In ↓ <span style={{fontSize: "10px", opacity: 0.6, marginLeft: "4px"}}>[↓]</span>
+          </button>
+          <button
+            className="control-btn secondary"
+            onClick={() => { handlePause(); onNext && onNext("step_out"); }}
+            disabled={stepLoading || atEnd || playing}
+            title="Step out of function (Up Arrow)"
+          >
+            Step Out ↑ <span style={{fontSize: "10px", opacity: 0.6, marginLeft: "4px"}}>[↑]</span>
           </button>
         </div>
         <div className="control-group">
@@ -301,7 +327,7 @@ export default function FlowVisualizer({
       </div>
 
       <div className="var-section-label">
-        📦 Variable Boxes — each box stores a number or value
+        📦 Variable Boxes — active in <span className="active-function-pill">{snap.location.function}</span>
         {Object.keys(snap.variables || {}).length === 0 && (
           <span className="no-vars"> (no variables yet)</span>
         )}
@@ -313,6 +339,21 @@ export default function FlowVisualizer({
           previousSnapshot={prevSnap}
         />
       </div>
+
+      {snap.call_stack && snap.call_stack.length > 1 && (
+        <div className="call-stack-section">
+          <div className="var-section-label">📚 Call Stack — active functions</div>
+          <div className="call-stack-list">
+            {snap.call_stack.map((frame, i) => (
+              <div key={i} className={`call-stack-frame ${i === 0 ? "active" : ""}`}>
+                <span className="frame-index">#{frame.index}</span>
+                <span className="frame-func">{frame.function}</span>
+                <span className="frame-loc">{frame.file.split('/').pop()}:{frame.line}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <ExecutionTimeline
         snapshots={visibleSnapshots}

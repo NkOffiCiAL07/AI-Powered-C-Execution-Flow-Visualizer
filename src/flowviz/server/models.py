@@ -143,6 +143,7 @@ class AnalyzeCodeRequest(BaseModel):
 
 class AnalyzeStepRequest(BaseModel):
     direction: str = Field(default="next")
+    step_type: CommandType | None = None
 
 
 class ExecutionSnapshot(BaseModel):
@@ -150,6 +151,7 @@ class ExecutionSnapshot(BaseModel):
     location: dict
     variables: dict
     changed_variables: list
+    call_stack: list[StackFrameDTO] = Field(default_factory=list)
 
 
 class AnalyzeCodeResponse(BaseModel):

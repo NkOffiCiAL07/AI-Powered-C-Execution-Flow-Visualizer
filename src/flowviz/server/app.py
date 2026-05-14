@@ -83,6 +83,7 @@ def _to_execution_snapshot(state) -> ExecutionSnapshot | None:
         },
         variables=state.variables,
         changed_variables=list(state.changed_variables),
+        call_stack=state.call_stack,
     )
 
 
@@ -154,9 +155,11 @@ def create_app() -> FastAPI:
         if direction not in {"next", "back"}:
             raise HTTPException(status_code=400, detail="Direction must be either 'next' or 'back'")
 
+        step_type = request.step_type or CommandType.STEP_OVER
+
         try:
             if direction == "next":
-                accepted, message, record, _created_new_step = session_manager.step_next(session_id)
+                accepted, message, record, _created_new_step = session_manager.step_next(session_id, step_type)
             else:
                 accepted, message, record = session_manager.step_back(session_id)
 

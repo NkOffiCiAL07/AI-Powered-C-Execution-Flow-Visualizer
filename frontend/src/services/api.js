@@ -60,7 +60,7 @@ export async function runCode(code, stdin, signal) {
   return response.json();
 }
 
-export async function stepAnalyzeSession(sessionId, direction, signal) {
+export async function stepAnalyzeSession(sessionId, direction, stepType, signal) {
   let response;
   try {
     response = await fetch(`${API_BASE_URL}/analyze/${sessionId}/step`, {
@@ -68,7 +68,7 @@ export async function stepAnalyzeSession(sessionId, direction, signal) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ direction }),
+      body: JSON.stringify({ direction, step_type: stepType }),
       signal,
     });
   } catch (err) {

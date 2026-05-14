@@ -4,7 +4,6 @@ import FlowVisualizer from "./components/FlowVisualizer";
 import OutputPanel from "./components/OutputPanel";
 import Header from "./components/Header";
 import CppEditorPage from "./components/CppEditorPage";
-import FunctionHelper from "./components/FunctionHelper";
 import { analyzeCode, runCode, stepAnalyzeSession } from "./services/api";
 import "./App.css";
 import "./styles/CppEditorPage.css";
@@ -212,7 +211,7 @@ function App() {
     }
   }, [code, programInput]);
 
-  const handleStep = useCallback(async (direction) => {
+  const handleStep = useCallback(async (direction, stepType) => {
     if (!analysisResult?.session_id) {
       return;
     }
@@ -229,6 +228,7 @@ function App() {
       const response = await stepAnalyzeSession(
         analysisResult.session_id,
         direction,
+        stepType,
         stepAbortControllerRef.current.signal
       );
 
@@ -351,11 +351,6 @@ function App() {
             currentLine={currentLine}
             onEditRequest={() => { setCurrentLine(null); setAnalysisResult(null); }}
           />
-          {!currentLine && (
-            <div style={{ marginTop: "20px" }}>
-              <FunctionHelper onAddCode={(newSnippet) => setCode(code + newSnippet)} />
-            </div>
-          )}
           <div className="stdin-panel">
             <div className="stdin-header">
               <h3>Program Input</h3>
@@ -422,7 +417,7 @@ function App() {
                 stepLoading={stepLoading}
                 onLineChange={setCurrentLine}
                 code={code}
-                onNext={() => handleStep("next")}
+                onNext={(stepType) => handleStep("next", stepType)}
                 onBack={() => handleStep("back")}
               />
             </div>
