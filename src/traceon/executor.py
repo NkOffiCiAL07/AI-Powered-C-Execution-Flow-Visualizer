@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import time
 
-from flowviz.gdb_controller import GdbMIController
-from flowviz.lldb_controller import LLDBController
-from flowviz.models import SourceLocation, StateSnapshot
+from traceon.gdb_controller import GdbMIController
+from traceon.lldb_controller import LLDBController
+from traceon.models import SourceLocation, StateSnapshot
 
 
 def collect_execution_timeline(
@@ -74,12 +74,16 @@ def collect_execution_timeline(
                 line=current_line,
                 function=current_function,
             )
+            
+            call_stack = controller.call_stack()
+
             snapshots.append(
                 StateSnapshot(
                     step=step_number,
                     location=location,
                     variables=variables,
                     changed_variables=changed,
+                    call_stack=call_stack,
                 )
             )
 

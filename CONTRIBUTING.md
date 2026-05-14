@@ -1,6 +1,6 @@
 # 🤝 Contributing Guide
 
-Thank you for your interest in contributing to the AI-Powered C++ Code Flow Visualizer! This document provides guidelines for contributing to the project.
+Thank you for your interest in contributing to the Traceon! This document provides guidelines for contributing to the project.
 
 ---
 
@@ -93,7 +93,7 @@ npm start
 
 ### Backend Changes
 
-**Location:** `src/flowviz/`
+**Location:** `src/traceon/`
 
 #### Key Files
 - `server/app.py` — FastAPI application & `/analyze` endpoint
@@ -110,7 +110,7 @@ npm start
 
 2. **Implement changes:**
    ```python
-   # In src/flowviz/server/app.py
+   # In src/traceon/server/app.py
    @app.post("/new-endpoint")
    def new_endpoint(request: NewRequest):
        # Your code here

@@ -73,7 +73,7 @@ export default function FlowVisualizer({
       return;
     }
     setCurrentStep(Math.max(0, cursorFromServer));
-  }, [result]);
+  }, [result, cursorFromServer]);
 
   useEffect(() => {
     if (snapshots.length === 0) return;

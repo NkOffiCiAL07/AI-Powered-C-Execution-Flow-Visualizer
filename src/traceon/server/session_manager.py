@@ -8,9 +8,9 @@ import subprocess
 import tempfile
 from uuid import uuid4
 
-from flowviz.lldb_controller import LLDBController
-from flowviz.server.mongo_store import MongoExecutionStore
-from flowviz.server.models import (
+from traceon.lldb_controller import LLDBController
+from traceon.server.mongo_store import MongoExecutionStore
+from traceon.server.models import (
     CommandType,
     CompileSessionResponse,
     CreateSessionRequest,
@@ -82,7 +82,7 @@ class SessionManager:
 
         self._cleanup_runtime(record)
 
-        work_dir = Path(tempfile.mkdtemp(prefix=f"flowviz_{record.session_id}_"))
+        work_dir = Path(tempfile.mkdtemp(prefix=f"traceon_{record.session_id}_"))
         source_path = work_dir / record.request.source.file_name
         source_path.write_text(record.request.source.code)
         stdin_path = work_dir / "stdin.txt"

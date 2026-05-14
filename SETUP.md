@@ -108,8 +108,8 @@ venv\Scripts\activate
 #### Option B: Using Conda
 
 ```bash
-conda create -n flowviz python=3.9
-conda activate flowviz
+conda create -n traceon python=3.9
+conda activate traceon
 ```
 
 ### Step 3: Install Backend Dependencies
@@ -249,7 +249,7 @@ If `run_server.py` doesn't work, start manually:
 source venv/bin/activate
 
 # Set environment variable and run
-PYTHONPATH=src python -m uvicorn src.flowviz.server.app:app --host 0.0.0.0 --port 8000 --reload
+PYTHONPATH=src python -m uvicorn src.traceon.server.app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ### Option 3: Docker (Optional)
@@ -258,10 +258,10 @@ If you prefer containerization:
 
 ```bash
 # Build image
-docker build -t flowviz .
+docker build -t traceon .
 
 # Run container
-docker run -p 8000:8000 -p 3000:3000 flowviz
+docker run -p 8000:8000 -p 3000:3000 traceon
 ```
 
 ---
@@ -313,7 +313,7 @@ lsof -i :8000
 kill -9 <PID>
 
 # Or use different port
-PYTHONPATH=src python -m uvicorn src.flowviz.server.app:app --port 8001
+PYTHONPATH=src python -m uvicorn src.traceon.server.app:app --port 8001
 ```
 
 #### "ModuleNotFoundError: No module named 'fastapi'"
@@ -375,7 +375,7 @@ npm start
 
 #### Frontend can't connect to backend
 1. Make sure backend is running on `http://localhost:8000`
-2. Check CORS settings in `src/flowviz/server/app.py`
+2. Check CORS settings in `src/traceon/server/app.py`
 3. Check browser console for errors (F12 → Console)
 4. Verify API URL in `frontend/src/services/api.js`
 
@@ -404,7 +404,7 @@ curl -X POST http://localhost:8000/analyze \
 │   ├── package.json
 │   └── ...
 ├── src/
-│   └── flowviz/
+│   └── traceon/
 │       └── ...
 ├── examples/
 ├── README.md
@@ -421,7 +421,7 @@ curl -X POST http://localhost:8000/analyze \
 ### Making Changes to Backend
 
 1. Backend auto-reloads with `--reload` flag
-2. Make changes to files in `src/flowviz/`
+2. Make changes to files in `src/traceon/`
 3. Refresh browser to see changes
 
 ### Making Changes to Frontend

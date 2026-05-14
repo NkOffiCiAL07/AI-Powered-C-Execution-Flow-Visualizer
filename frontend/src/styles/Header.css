@@ -38,26 +38,15 @@
   margin: 0;
   font-size: 20px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: #ddb7ff; /* primary from design */
   display: flex;
   align-items: center;
   gap: 8px;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.5px;
 }
 
-.logo-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: var(--gradient-brand);
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-weight: 800;
-  color: white;
-  font-family: var(--font-mono);
-  letter-spacing: -0.5px;
+.brand-text {
+  text-shadow: 0 0 10px rgba(221, 183, 255, 0.4);
 }
 
 .header-subtitle {
@@ -68,6 +57,45 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.header-nav {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .header-nav {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-right: 0;
+  }
+}
+
+.nav-link {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+}
+
+.nav-link:hover {
+  color: var(--primary);
+}
+
+.nav-link.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
 }
 
 /* ── Theme toggle button ── */
@@ -179,7 +207,6 @@
 .analyze-btn.loading {
   color: transparent;
 }
-
 .analyze-btn.loading::after {
   content: "";
   position: absolute;
@@ -195,7 +222,21 @@
   animation: spin 0.6s linear infinite;
 }
 
+.sign-in-link {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 8px 12px;
+  transition: color 0.2s;
+}
+
+.sign-in-link:hover {
+  color: var(--primary);
+}
+
 @keyframes spin {
+...
   to {
     transform: rotate(360deg);
   }

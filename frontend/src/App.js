@@ -4,6 +4,10 @@ import FlowVisualizer from "./components/FlowVisualizer";
 import OutputPanel from "./components/OutputPanel";
 import Header from "./components/Header";
 import CppEditorPage from "./components/CppEditorPage";
+import LandingPage from "./components/LandingPage";
+import DocsPage from "./components/DocsPage";
+import PricingPage from "./components/PricingPage";
+import CommunityPage from "./components/CommunityPage";
 import { analyzeCode, runCode, stepAnalyzeSession } from "./services/api";
 import "./App.css";
 import "./styles/CppEditorPage.css";
@@ -104,7 +108,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [stepLoading, setStepLoading] = useState(false);
-  const [view, setView] = useState("editor");
+  const [view, setView] = useState("landing");
   const [activeTab, setActiveTab] = useState("flow");
   const [selectedExample, setSelectedExample] = useState("simple");
   const [currentLine, setCurrentLine] = useState(null);
@@ -271,146 +275,166 @@ function App() {
     }
   }, [analysisResult]);
 
+  const renderView = () => {
+    switch (view) {
+      case "landing":
+        return <LandingPage onStart={() => setView("editor")} onSwitchView={setView} />;
+      case "docs":
+        return <DocsPage />;
+      case "pricing":
+        return <PricingPage />;
+      case "community":
+        return <CommunityPage />;
+      case "editor":
+        return (
+          <CppEditorPage
+            code={code}
+            onCodeChange={(newCode) => {
+              setCode(newCode);
+              setCurrentLine(null);
+              setAnalysisResult(null);
+              setError(null);
+              setStepLoading(false);
+              setRunResult(null);
+              setRunError(null);
+            }}
+            programInput={programInput}
+            onProgramInputChange={(value) => {
+              setProgramInput(value);
+              setCurrentLine(null);
+              setAnalysisResult(null);
+              setError(null);
+              setStepLoading(false);
+              setRunResult(null);
+              setRunError(null);
+            }}
+            onRun={handleRun}
+            loading={runLoading}
+            error={runError}
+            result={runResult}
+          />
+        );
+      case "visualizer":
+        return (
+          <main className="app-main">
+            <section className="editor-section">
+              <div className="section-header">
+                <h2>Your Code</h2>
+                <div className="examples-selector-container">
+                  <span className="selector-label">Examples:</span>
+                  <select 
+                    className="example-dropdown"
+                    value={selectedExample}
+                    onChange={(e) => handleLoadExample(e.target.value)}
+                  >
+                    <option value="simple">Simple Math</option>
+                    <option value="counting">Counting Loop</option>
+                    <option value="ifStatement">If Statement</option>
+                    <option value="fibonacci">Fibonacci</option>
+                    <option value="functionCall">Function Call</option>
+                  </select>
+                </div>
+              </div>
+              <CodeEditor
+                code={code}
+                onChange={(newCode) => { setCode(newCode); setCurrentLine(null); setAnalysisResult(null); }}
+                currentLine={currentLine}
+                onEditRequest={() => { setCurrentLine(null); setAnalysisResult(null); }}
+              />
+              <div className="stdin-panel">
+                <div className="stdin-header">
+                  <h3>Program Input</h3>
+                  <span>Optional stdin for `cin` or `getline`</span>
+                </div>
+                <textarea
+                  className="stdin-textarea"
+                  value={programInput}
+                  onChange={(event) => {
+                    setProgramInput(event.target.value);
+                    setCurrentLine(null);
+                    setAnalysisResult(null);
+                    setStepLoading(false);
+                  }}
+                  placeholder={"Example:\n5\n10\nhello"}
+                  spellCheck="false"
+                />
+              </div>
+            </section>
+            <section className="visualizer-section">
+              <div className="section-header">
+                <div className="tab-bar" role="tablist" aria-label="View tabs">
+                  <button
+                    className={`tab ${activeTab === "flow" ? "active" : ""}`}
+                    onClick={() => setActiveTab("flow")}
+                    role="tab"
+                    id="tab-flow"
+                    aria-selected={activeTab === "flow"}
+                    aria-controls="panel-flow"
+                  >
+                    Execution Flow
+                  </button>
+                  <button
+                    className={`tab ${activeTab === "output" ? "active" : ""}`}
+                    onClick={() => setActiveTab("output")}
+                    role="tab"
+                    id="tab-output"
+                    aria-selected={activeTab === "output"}
+                    aria-controls="panel-output"
+                  >
+                    Output & Details
+                  </button>
+                </div>
+              </div>
+              {error && (
+                <div className="error-banner">
+                  <span>
+                    <strong>Error:</strong> {error}
+                  </span>
+                  <button
+                    className="error-dismiss"
+                    onClick={() => setError(null)}
+                    aria-label="Dismiss error"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+              {activeTab === "flow" ? (
+                <div id="panel-flow" role="tabpanel" aria-labelledby="tab-flow">
+                  <FlowVisualizer
+                    result={analysisResult}
+                    loading={loading}
+                    stepLoading={stepLoading}
+                    onLineChange={setCurrentLine}
+                    code={code}
+                    onNext={(stepType) => handleStep("next", stepType)}
+                    onBack={() => handleStep("back")}
+                  />
+                </div>
+              ) : (
+                <div id="panel-output" role="tabpanel" aria-labelledby="tab-output">
+                  <OutputPanel result={analysisResult} loading={loading} />
+                </div>
+              )}
+            </section>
+          </main>
+        );
+      default:
+        return <LandingPage onStart={() => setView("editor")} onSwitchView={setView} />;
+    }
+  };
+
   return (
     <div className="app">
-      <Header
-        onAnalyze={handleAnalyze}
-        loading={loading}
-        view={view}
-        onSwitchView={setView}
-      />
-
-      {view === "editor" ? (
-        <CppEditorPage
-          code={code}
-          onCodeChange={(newCode) => {
-            setCode(newCode);
-            setCurrentLine(null);
-            setAnalysisResult(null);
-            setError(null);
-            setStepLoading(false);
-            setRunResult(null);
-            setRunError(null);
-          }}
-          programInput={programInput}
-          onProgramInputChange={(value) => {
-            setProgramInput(value);
-            setCurrentLine(null);
-            setAnalysisResult(null);
-            setError(null);
-            setStepLoading(false);
-            setRunResult(null);
-            setRunError(null);
-          }}
-          onRun={handleRun}
-          loading={runLoading}
-          error={runError}
-          result={runResult}
+      {view !== "landing" && (
+        <Header
+          onAnalyze={handleAnalyze}
+          loading={loading}
+          view={view}
+          onSwitchView={setView}
         />
-      ) : (
-      <main className="app-main">
-        <section className="editor-section">
-          <div className="section-header">
-            <h2>Your Code</h2>
-            <div className="examples-selector-container">
-              <span className="selector-label">Examples:</span>
-              <select 
-                className="example-dropdown"
-                value={selectedExample}
-                onChange={(e) => handleLoadExample(e.target.value)}
-              >
-                <option value="simple">Simple Math</option>
-                <option value="counting">Counting Loop</option>
-                <option value="ifStatement">If Statement</option>
-                <option value="fibonacci">Fibonacci</option>
-                <option value="functionCall">Function Call</option>
-              </select>
-            </div>
-          </div>
-          <CodeEditor
-            code={code}
-            onChange={(newCode) => { setCode(newCode); setCurrentLine(null); setAnalysisResult(null); }}
-            currentLine={currentLine}
-            onEditRequest={() => { setCurrentLine(null); setAnalysisResult(null); }}
-          />
-          <div className="stdin-panel">
-            <div className="stdin-header">
-              <h3>Program Input</h3>
-              <span>Optional stdin for `cin` or `getline`</span>
-            </div>
-            <textarea
-              className="stdin-textarea"
-              value={programInput}
-              onChange={(event) => {
-                setProgramInput(event.target.value);
-                setCurrentLine(null);
-                setAnalysisResult(null);
-                setStepLoading(false);
-              }}
-              placeholder={"Example:\n5\n10\nhello"}
-              spellCheck="false"
-            />
-          </div>
-        </section>
-        <section className="visualizer-section">
-          <div className="section-header">
-            <div className="tab-bar" role="tablist" aria-label="View tabs">
-              <button
-                className={`tab ${activeTab === "flow" ? "active" : ""}`}
-                onClick={() => setActiveTab("flow")}
-                role="tab"
-                id="tab-flow"
-                aria-selected={activeTab === "flow"}
-                aria-controls="panel-flow"
-              >
-                Execution Flow
-              </button>
-              <button
-                className={`tab ${activeTab === "output" ? "active" : ""}`}
-                onClick={() => setActiveTab("output")}
-                role="tab"
-                id="tab-output"
-                aria-selected={activeTab === "output"}
-                aria-controls="panel-output"
-              >
-                Output & Details
-              </button>
-            </div>
-          </div>
-          {error && (
-            <div className="error-banner">
-              <span>
-                <strong>Error:</strong> {error}
-              </span>
-              <button
-                className="error-dismiss"
-                onClick={() => setError(null)}
-                aria-label="Dismiss error"
-              >
-                ✕
-              </button>
-            </div>
-          )}
-          {activeTab === "flow" ? (
-            <div id="panel-flow" role="tabpanel" aria-labelledby="tab-flow">
-              <FlowVisualizer
-                result={analysisResult}
-                loading={loading}
-                stepLoading={stepLoading}
-                onLineChange={setCurrentLine}
-                code={code}
-                onNext={(stepType) => handleStep("next", stepType)}
-                onBack={() => handleStep("back")}
-              />
-            </div>
-          ) : (
-            <div id="panel-output" role="tabpanel" aria-labelledby="tab-output">
-              <OutputPanel result={analysisResult} loading={loading} />
-            </div>
-          )}
-        </section>
-      </main>
       )}
+      {renderView()}
     </div>
   );
 }

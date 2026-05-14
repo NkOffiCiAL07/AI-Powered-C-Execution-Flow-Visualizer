@@ -5,12 +5,12 @@ import argparse
 from rich.console import Console
 from rich.table import Table
 
-from flowviz.executor import collect_execution_timeline
+from traceon.executor import collect_execution_timeline
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="flowviz",
+        prog="traceon",
         description="Step through a C++ executable with LLDB/GDB and show variable flow.",
     )
     parser.add_argument("executable", help="Path to compiled C++ executable (built with -g)")

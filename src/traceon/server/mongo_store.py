@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import os
 import importlib
+import logging
 from datetime import datetime, timezone
 from typing import Any
 
-from flowviz.server.models import LiveExecutionStateDTO, SessionStatus
+from traceon.server.models import LiveExecutionStateDTO, SessionStatus
+
+logger = logging.getLogger(__name__)
 
 
 class MongoExecutionStore:
@@ -15,19 +18,24 @@ class MongoExecutionStore:
 
         mongo_uri = os.getenv("MONGO_CONNECTION_STRING") or os.getenv("MONGO_URI")
         if not mongo_uri:
+            logger.info("MongoDB persistence is disabled (no connection string provided)")
             return
 
         try:
             pymongo = importlib.import_module("pymongo")
             MongoClient = getattr(pymongo, "MongoClient")
 
-            db_name = os.getenv("MONGO_DB_NAME", "flowviz")
+            db_name = os.getenv("MONGO_DB_NAME", "traceon")
             collection_name = os.getenv("MONGO_COLLECTION_NAME", "execution_sessions")
+            
+            logger.info(f"Connecting to MongoDB at {db_name}.{collection_name}...")
             client = MongoClient(mongo_uri, serverSelectionTimeoutMS=3000)
             self._collection = client[db_name][collection_name]
             client.admin.command("ping")
             self._enabled = True
-        except Exception:
+            logger.info("Successfully connected to MongoDB")
+        except Exception as e:
+            logger.warning(f"Failed to enable MongoDB persistence: {e}")
             self._collection = None
             self._enabled = False
 

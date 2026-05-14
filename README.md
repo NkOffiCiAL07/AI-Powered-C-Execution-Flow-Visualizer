@@ -149,7 +149,7 @@ npm list react
 python run_server.py
 
 # Or with explicit port
-PYTHONPATH=src python -m uvicorn src.flowviz.server.app:app --host 0.0.0.0 --port 8000 --reload
+PYTHONPATH=src python -m uvicorn src.traceon.server.app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 **Expected output:**
@@ -212,7 +212,7 @@ If you want to persist input code + step history metadata, set:
 
 ```bash
 export MONGO_CONNECTION_STRING="mongodb+srv://..."
-export MONGO_DB_NAME="flowviz"                 # optional
+export MONGO_DB_NAME="traceon"                 # optional
 export MONGO_COLLECTION_NAME="execution_sessions"  # optional
 ```
 
@@ -261,7 +261,7 @@ Click any example button:
 │   └── package-lock.json
 │
 ├── src/                               # Python backend
-│   └── flowviz/
+│   └── traceon/
 │       ├── __init__.py
 │       ├── cli.py                    # CLI interface
 │       ├── executor.py               # Execution controller
@@ -347,7 +347,7 @@ lsof -i :8000
 kill -9 <PID>
 
 # Or use different ports
-PYTHONPATH=src python -m uvicorn src.flowviz.server.app:app --port 8001
+PYTHONPATH=src python -m uvicorn src.traceon.server.app:app --port 8001
 # Update frontend API_BASE_URL in src/services/api.js
 ```
 

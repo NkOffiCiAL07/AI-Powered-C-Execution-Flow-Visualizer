@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "src"))
 
-from flowviz.executor import collect_execution_timeline
+from traceon.executor import collect_execution_timeline
 
 source_file = ROOT / "complex_test.cpp"
 executable = ROOT / "build" / "complex_test_exec"

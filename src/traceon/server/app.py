@@ -24,8 +24,8 @@ def _load_local_env() -> None:
 
 _load_local_env()
 
-from flowviz.server.api import router as sessions_router, session_manager
-from flowviz.server.models import (
+from traceon.server.api import router as sessions_router, session_manager
+from traceon.server.models import (
     AnalyzeCodeRequest,
     AnalyzeCodeResponse,
     AnalyzeStepRequest,

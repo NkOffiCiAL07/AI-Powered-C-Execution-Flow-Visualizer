@@ -14,3 +14,4 @@ class StateSnapshot:
     location: SourceLocation
     variables: dict[str, str] = field(default_factory=dict)
     changed_variables: set[str] = field(default_factory=set)
+    call_stack: list[tuple[int, str, str, int]] = field(default_factory=list)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
 
-from flowviz.server.models import (
+from traceon.server.models import (
     CommandResponse,
     CompileSessionRequest,
     CompileSessionResponse,
@@ -13,7 +13,7 @@ from flowviz.server.models import (
     SessionSummaryResponse,
     StartSessionResponse,
 )
-from flowviz.server.session_manager import SessionManager
+from traceon.server.session_manager import SessionManager
 
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])

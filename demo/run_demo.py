@@ -7,7 +7,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from flowviz.executor import collect_execution_timeline
+from traceon.executor import collect_execution_timeline
 
 
 def main():

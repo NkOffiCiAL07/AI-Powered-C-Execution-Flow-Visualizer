@@ -1,4 +1,4 @@
-from flowviz.cli import main
+from traceon.cli import main
 
 
 if __name__ == "__main__":
