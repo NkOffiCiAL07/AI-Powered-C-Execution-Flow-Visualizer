@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# C Execution Flow Visualizer - Full Stack Setup and Start Script
+# Traceon - AI-Powered C++ Code Flow Visualizer
 
 set -e
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_DIR"
 
-echo "🚀 C Execution Flow Visualizer - Full Stack Setup"
+echo "🚀 Traceon - Full Stack Setup"
 echo "=================================================="
 echo ""
 

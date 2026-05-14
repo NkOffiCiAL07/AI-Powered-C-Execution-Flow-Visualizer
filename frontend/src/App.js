@@ -312,37 +312,19 @@ function App() {
         <section className="editor-section">
           <div className="section-header">
             <h2>📝 Your Code</h2>
-            <div className="examples-buttons">
-              <button
-                className={`example-btn ${selectedExample === "simple" ? "active" : ""}`}
-                onClick={() => handleLoadExample("simple")}
+            <div className="examples-selector-container">
+              <span className="selector-label">Examples:</span>
+              <select 
+                className="example-dropdown"
+                value={selectedExample}
+                onChange={(e) => handleLoadExample(e.target.value)}
               >
-                Simple Math
-              </button>
-              <button
-                className={`example-btn ${selectedExample === "counting" ? "active" : ""}`}
-                onClick={() => handleLoadExample("counting")}
-              >
-                Counting Loop
-              </button>
-              <button
-                className={`example-btn ${selectedExample === "ifStatement" ? "active" : ""}`}
-                onClick={() => handleLoadExample("ifStatement")}
-              >
-                If Statement
-              </button>
-              <button
-                className={`example-btn ${selectedExample === "fibonacci" ? "active" : ""}`}
-                onClick={() => handleLoadExample("fibonacci")}
-              >
-                🔢 Fibonacci
-              </button>
-              <button
-                className={`example-btn ${selectedExample === "functionCall" ? "active" : ""}`}
-                onClick={() => handleLoadExample("functionCall")}
-              >
-                🧩 Function Call
-              </button>
+                <option value="simple">Simple Math</option>
+                <option value="counting">Counting Loop</option>
+                <option value="ifStatement">If Statement</option>
+                <option value="fibonacci">🔢 Fibonacci</option>
+                <option value="functionCall">🧩 Function Call</option>
+              </select>
             </div>
           </div>
           <CodeEditor

@@ -8,8 +8,8 @@ export default function Header({ onAnalyze, loading, view, onSwitchView }) {
     <header className="header">
       <div className="header-content">
         <h1 className="header-title">
-          <span className="logo-icon">C+</span>
-          FlowViz
+          <span className="logo-icon">T+</span>
+          Traceon
         </h1>
       </div>
 

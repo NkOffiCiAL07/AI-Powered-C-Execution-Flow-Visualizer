@@ -171,8 +171,13 @@ export default function FlowVisualizer({
   // Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Don't trigger if user is typing in an input or textarea
-      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+      // Don't trigger if user is typing in an input, textarea, or contentEditable element
+      const isEditable = e.target.tagName === 'INPUT' || 
+                         e.target.tagName === 'TEXTAREA' || 
+                         e.target.isContentEditable ||
+                         e.target.closest('.monaco-editor');
+      
+      if (isEditable) return;
 
       switch (e.key) {
         case 'ArrowRight':

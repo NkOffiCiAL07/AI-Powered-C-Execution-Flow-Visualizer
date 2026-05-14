@@ -1,6 +1,6 @@
 # 🛠️ Setup & Installation Guide
 
-Complete step-by-step guide to set up and run the AI-Powered C++ Code Flow Visualizer on your machine.
+Complete step-by-step guide to set up and run Traceon (AI-Powered C++ Code Flow Visualizer) on your machine.
 
 ---
 

@@ -1,4 +1,4 @@
-# 🚀 AI-Powered C++ Code Flow Visualizer
+# 🚀 Traceon: AI-Powered C++ Code Flow Visualizer
 
 An intelligent debugging and visualization tool that automatically executes C/C++ programs step-by-step using LLDB debugger and presents execution flow with variable tracking in a beautiful, interactive web UI.
 
@@ -11,7 +11,9 @@ An intelligent debugging and visualization tool that automatically executes C/C+
 ### 🎯 Core Capabilities
 - ✅ **Compile Any C/C++ Code** — Auto-wraps snippets without main()
 - ✅ **Step-by-Step Execution** — Trace through code line by line
+- ✅ **Interactive Debugging** — **Step In**, **Step Out**, and **Step Over** support
 - ✅ **Real-Time Variable Tracking** — See all variables and their values
+- ✅ **Live Call Stack** — Visualize the function hierarchy as you step
 - ✅ **Execution Timeline** — Click any step to jump directly to it
 - ✅ **Beautiful Web UI** — Modern, responsive interface with animations
 - ✅ **Edit Code Anytime** — Switch between playback and edit modes

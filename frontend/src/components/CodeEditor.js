@@ -98,7 +98,7 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest 
   const completionProviderRef = useRef(null);
 
   const handleEditorMount = (editor, monaco) => {
-    monaco.editor.defineTheme("flowviz-dark", {
+    monaco.editor.defineTheme("traceon-dark", {
       base: "vs-dark",
       inherit: true,
       rules: [
@@ -147,7 +147,7 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest 
       });
     }
 
-    monaco.editor.setTheme("flowviz-dark");
+    monaco.editor.setTheme("traceon-dark");
     editor.focus();
   };
 
@@ -214,7 +214,7 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest 
           onChange={(value) => onChange(value ?? "")}
           onMount={handleEditorMount}
           options={editorOptions}
-          theme="flowviz-dark"
+          theme="traceon-dark"
         />
       </div>
       <div className="editor-info">
