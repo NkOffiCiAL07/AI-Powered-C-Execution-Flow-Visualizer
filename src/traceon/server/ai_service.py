@@ -2,56 +2,61 @@ import os
 import re
 import json
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 from traceon.server.models import ExplainCodeResponse
 
 logger = logging.getLogger(__name__)
 
+
 def explain_code_ai(code: str) -> ExplainCodeResponse:
     """Analyze C++ code and return explanation, complexities, and key points."""
-    api_key = os.getenv("OPENAI_API_KEY")
+    api_key = os.getenv("ANTHROPIC_API_KEY")
 
     if api_key:
         try:
-            return _ai_explanation(code, api_key)
+            return _claude_explanation(code, api_key)
         except Exception as e:
-            logger.warning(f"OpenAI explanation failed, falling back to basic analysis: {e}")
+            logger.warning(f"Claude explanation failed, falling back to static analysis: {e}")
 
-    # Fallback: basic analysis
-    return _basic_explanation(code)
+    return _static_explanation(code)
 
 
-def _ai_explanation(code: str, api_key: str) -> ExplainCodeResponse:
-    """Use OpenAI API for deep code explanation."""
-    from openai import OpenAI
-    
-    client = OpenAI(api_key=api_key)
+def _claude_explanation(code: str, api_key: str) -> ExplainCodeResponse:
+    """Use Anthropic Claude API for deep code explanation."""
+    import anthropic
 
-    prompt = f"""Analyze this C++ code and provide a detailed explanation.
+    client = anthropic.Anthropic(api_key=api_key)
+
+    prompt = f"""Analyze this C++ code and provide a structured explanation.
 Return a JSON object with exactly these keys:
-- "explanation": a clear, high-level summary of what the code does.
-- "time_complexity": the Big O time complexity with a brief justification.
+- "explanation": a clear 2-3 sentence summary of what the code does and its purpose.
+- "time_complexity": the Big O time complexity with a brief justification (e.g. "O(n²) — nested loops each iterate over n elements").
 - "space_complexity": the Big O space complexity with a brief justification.
-- "key_points": a list of 3-5 important technical observations about the implementation (e.g. use of recursion, memory management, specific algorithms).
+- "key_points": a list of 3-5 important technical observations (e.g. algorithm used, data structures, edge cases, memory management, performance characteristics).
+
+Return ONLY the raw JSON object. Do not include markdown code fences or any other text.
 
 Code:
 ```cpp
 {code}
 ```"""
 
-    response = client.chat.completions.create(
-        model=os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
+    message = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=1024,
         messages=[
-            {"role": "system", "content": "You are an expert C++ instructor and software architect."},
-            {"role": "user", "content": prompt}
+            {
+                "role": "user",
+                "content": prompt,
+            }
         ],
-        temperature=0.2,
-        response_format={"type": "json_object"}
     )
 
-    content = response.choices[0].message.content
-    if not content:
-        raise ValueError("Received empty content from OpenAI")
+    content = message.content[0].text.strip()
+    # Strip markdown code fences if the model adds them anyway
+    if content.startswith("```"):
+        content = re.sub(r"^```(?:json)?\n?", "", content)
+        content = re.sub(r"\n?```$", "", content)
 
     try:
         data = json.loads(content)
@@ -59,32 +64,147 @@ Code:
             explanation=data.get("explanation", ""),
             time_complexity=data.get("time_complexity", "Unknown"),
             space_complexity=data.get("space_complexity", "Unknown"),
-            key_points=data.get("key_points", [])
+            key_points=data.get("key_points", []),
         )
     except (json.JSONDecodeError, KeyError) as e:
-        logger.error(f"Failed to parse JSON from AI response: {e}")
+        logger.error(f"Failed to parse JSON from Claude response: {e}\nRaw: {content[:300]}")
         raise ValueError(f"Invalid AI response format: {e}")
 
 
-def _basic_explanation(code: str) -> ExplainCodeResponse:
-    """Rule-based fallback explanation when AI is unavailable."""
-    lines = code.splitlines()
-    has_loops = any("for" in line or "while" in line for line in lines)
-    has_recursion = re.search(r'(\w+)\s*\(.*\)\s*\{[\s\S]*\1\s*\(', code) is not None
-    
-    explanation = f"This is a C++ program with {len(lines)} lines of code."
-    if has_loops:
-        explanation += " It contains iteration blocks (loops)."
+def _detect_nested_loops(code: str) -> bool:
+    """Detect nested loops, including braceless forms like: for(...) for(...)."""
+    # Pattern 1: braceless — a loop keyword immediately followed by another
+    # (only whitespace/newlines/simple statements between them)
+    if re.search(
+        r'\b(?:for|while|do)\s*\([^)]*\)\s*\n?\s*(?:for|while|do)\s*\(',
+        code
+    ):
+        return True
+    # Pattern 2: braced — loop keyword inside a block that's itself inside a loop
+    loop_re = re.compile(r'\b(?:for|while|do)\s*\(')
+    loop_depths: list[int] = []
+    depth = 0
+    for ch in code:
+        if ch == '{':
+            depth += 1
+        elif ch == '}':
+            depth -= 1
+    # Re-scan tracking position
+    depth = 0
+    for i, ch in enumerate(code):
+        if ch == '{':
+            depth += 1
+        elif ch == '}':
+            depth -= 1
+        elif loop_re.match(code, i):
+            loop_depths.append(depth)
+    return len(loop_depths) >= 2 and len(set(loop_depths)) > 1
+
+
+def _static_explanation(code: str) -> ExplainCodeResponse:
+    """Static analysis fallback used when no API key is configured."""
+    lines = [l for l in code.splitlines() if l.strip()]
+
+    has_loops = bool(re.search(r'\b(for|while|do)\s*\(', code))
+    has_nested_loops = _detect_nested_loops(code)
+    has_vectors = bool(re.search(r'\bvector\s*<', code))
+    has_recursion = _detect_recursion(code)
+    has_pointers = bool(re.search(r'[*&]\s*\w+\s*[;,=\)]', code))
+    has_classes = bool(re.search(r'\bclass\s+\w+', code))
+    has_templates = bool(re.search(r'\btemplate\s*<', code))
+    function_names = re.findall(r'\b\w+\s+(\w+)\s*\([^)]*\)\s*\{', code)
+
+    # Complexity estimation
+    if has_nested_loops:
+        time_c = "O(n²) — nested loops detected"
+    elif has_loops and has_recursion:
+        time_c = "O(n log n) or worse — combination of loops and recursion"
+    elif has_recursion:
+        time_c = "O(2ⁿ) or O(n) — depends on recursion depth and branching"
+    elif has_loops:
+        time_c = "O(n) — single loop iterating over input"
+    else:
+        time_c = "O(1) — no loops or recursion detected"
+
     if has_recursion:
-        explanation += " It appears to use recursion."
-        
+        space_c = "O(n) — recursive call stack"
+    elif has_vectors:
+        space_c = "O(n) — dynamic container allocation"
+    else:
+        space_c = "O(1) — fixed stack variables"
+
+    # Build key points
+    key_points = []
+    if has_classes:
+        key_points.append("Uses object-oriented design with class definitions.")
+    if has_templates:
+        key_points.append("Uses C++ templates for generic programming.")
+    if has_recursion:
+        key_points.append(f"Recursive function(s) detected: {', '.join(function_names[:3]) or 'unknown'}.")
+    if has_nested_loops:
+        key_points.append("Contains nested loops — watch for O(n²) or worse performance on large inputs.")
+    elif has_loops:
+        key_points.append("Uses iterative constructs (for/while loops).")
+    if has_vectors:
+        key_points.append("Uses std::vector for dynamic array storage.")
+    if has_pointers:
+        key_points.append("Uses pointers or references — manual memory awareness required.")
+    if not key_points:
+        key_points.append("Straightforward procedural logic with no complex control flow.")
+    key_points.append(f"Source spans {len(lines)} non-empty lines.")
+
     return ExplainCodeResponse(
-        explanation=explanation,
-        time_complexity="O(n) - Estimated (loops detected)" if has_loops else "O(1) - Estimated",
-        space_complexity="O(n) - Estimated (recursion detected)" if has_recursion else "O(1) - Estimated",
-        key_points=[
-            f"Code consists of {len(lines)} lines.",
-            "Uses standard C++ syntax.",
-            "AI features are currently disabled or unavailable."
-        ]
+        explanation=_build_summary(code, has_loops, has_recursion, has_classes, function_names),
+        time_complexity=time_c,
+        space_complexity=space_c,
+        key_points=key_points[:5],
     )
+
+
+def _detect_recursion(code: str) -> bool:
+    """Detect genuine recursive calls (function calls itself within its own body)."""
+    # Extract function definitions: name + body
+    func_pattern = re.compile(
+        r'\b(?:int|void|bool|float|double|string|auto)\s+(\w+)\s*\([^)]*\)\s*\{',
+    )
+    for match in func_pattern.finditer(code):
+        func_name = match.group(1)
+        if func_name in ("main",):
+            continue
+        # Find the body of this function (simple brace counting)
+        body_start = match.end()
+        depth = 1
+        pos = body_start
+        while pos < len(code) and depth > 0:
+            if code[pos] == '{':
+                depth += 1
+            elif code[pos] == '}':
+                depth -= 1
+            pos += 1
+        body = code[body_start:pos - 1]
+        # Check if the function calls itself inside its own body
+        if re.search(r'\b' + re.escape(func_name) + r'\s*\(', body):
+            return True
+    return False
+
+
+def _build_summary(code: str, has_loops: bool, has_recursion: bool,
+                   has_classes: bool, function_names: list) -> str:
+    parts = []
+    if has_classes:
+        parts.append("This C++ program defines classes and uses object-oriented patterns.")
+    elif function_names and len(function_names) > 1:
+        shown = ", ".join(function_names[:3])
+        parts.append(f"This C++ program defines multiple functions ({shown}) to solve its task.")
+    else:
+        parts.append("This is a C++ program.")
+
+    if has_recursion:
+        parts.append("It uses recursion as a core control-flow strategy.")
+    elif has_loops:
+        parts.append("It uses iterative loops to process data.")
+
+    if not parts[1:]:
+        parts.append("It performs a series of sequential operations.")
+
+    return " ".join(parts)

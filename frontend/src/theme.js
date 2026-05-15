@@ -17,10 +17,12 @@ export function ThemeProvider({ children }) {
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("theme", theme);
-    if (theme === themes.light) {
-      document.body.classList.add("light-theme");
-    } else {
+    if (theme === themes.dark) {
+      document.body.classList.add("dark-theme");
       document.body.classList.remove("light-theme");
+    } else {
+      document.body.classList.remove("dark-theme");
+      document.body.classList.add("light-theme");
     }
   }, [theme]);
 
