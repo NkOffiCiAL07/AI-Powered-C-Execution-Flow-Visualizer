@@ -247,23 +247,17 @@ export default function FlowVisualizer({
             disabled={stepLoading || safeCurrentStep === 0 || playing}
             title="Go back one step (Left Arrow)"
           >
-            ◀ Back <span style={{fontSize: "10px", opacity: 0.6, marginLeft: "4px"}}>[←]</span>
+            <span className="material-symbols-outlined">chevron_left</span>
+            Back
           </button>
           <button
-            className="control-btn play-btn"
-            onClick={handlePlay}
-            disabled={stepLoading || atEnd || playing}
-            title="Play automatically (Space)"
+            className={`control-btn ${playing ? 'pause-btn' : 'play-btn'}`}
+            onClick={playing ? handlePause : handlePlay}
+            disabled={stepLoading || atEnd}
+            title={playing ? "Pause playback (Space)" : "Play automatically (Space)"}
           >
-            ▶ Play <span style={{fontSize: "10px", opacity: 0.6, marginLeft: "4px"}}>[Spc]</span>
-          </button>
-          <button
-            className="control-btn pause-btn"
-            onClick={handlePause}
-            disabled={!playing}
-            title="Pause playback (Space)"
-          >
-            ⏸ Pause <span style={{fontSize: "10px", opacity: 0.6, marginLeft: "4px"}}>[Spc]</span>
+            <span className="material-symbols-outlined">{playing ? 'pause' : 'play_arrow'}</span>
+            {playing ? 'Pause' : 'Play'}
           </button>
           <button
             className="control-btn primary"
@@ -271,23 +265,26 @@ export default function FlowVisualizer({
             disabled={stepLoading || atEnd || playing}
             title="Go to next line (Right Arrow)"
           >
-            Next ▶ <span style={{fontSize: "10px", opacity: 0.6, marginLeft: "4px"}}>[→]</span>
+            Next
+            <span className="material-symbols-outlined">chevron_right</span>
           </button>
           <button
-            className="control-btn accent"
+            className="control-btn"
             onClick={() => { handlePause(); onNext && onNext("step_in"); }}
             disabled={stepLoading || atEnd || playing}
             title="Step into function (Down Arrow)"
           >
-            Step In ↓ <span style={{fontSize: "10px", opacity: 0.6, marginLeft: "4px"}}>[↓]</span>
+            <span className="material-symbols-outlined">south</span>
+            In
           </button>
           <button
-            className="control-btn secondary"
+            className="control-btn"
             onClick={() => { handlePause(); onNext && onNext("step_out"); }}
             disabled={stepLoading || atEnd || playing}
             title="Step out of function (Up Arrow)"
           >
-            Step Out ↑ <span style={{fontSize: "10px", opacity: 0.6, marginLeft: "4px"}}>[↑]</span>
+            <span className="material-symbols-outlined">north</span>
+            Out
           </button>
         </div>
         <div className="control-group">

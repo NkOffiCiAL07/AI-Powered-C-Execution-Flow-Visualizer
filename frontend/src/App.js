@@ -9,7 +9,7 @@ import LandingPage from "./components/LandingPage";
 import DocsPage from "./components/DocsPage";
 import PricingPage from "./components/PricingPage";
 import CommunityPage from "./components/CommunityPage";
-import { analyzeCode, runCode, stepAnalyzeSession, explainCode } from "./services/api";
+import { analyzeCode, runCode, stepAnalyzeSession, explainCode, API_BASE_URL } from "./services/api";
 import "./App.css";
 import "./styles/CppEditorPage.css";
 
@@ -119,10 +119,28 @@ function App() {
   const [runResult, setRunResult] = useState(null);
   const [runLoading, setRunLoading] = useState(false);
   const [runError, setRunError] = useState(null);
+  const [serverDown, setServerDown] = useState(false);
+  const [serverChecking, setServerChecking] = useState(false);
   const abortControllerRef = useRef(null);
   const aiAbortControllerRef = useRef(null);
   const stepAbortControllerRef = useRef(null);
   const runAbortControllerRef = useRef(null);
+
+  const checkServer = useCallback(async () => {
+    setServerChecking(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/health`, { signal: AbortSignal.timeout(4000) });
+      if (res.ok) setServerDown(false);
+      else setServerDown(true);
+    } catch {
+      setServerDown(true);
+    } finally {
+      setServerChecking(false);
+    }
+  }, []);
+
+  // Health-check on mount
+  useEffect(() => { checkServer(); }, [checkServer]);
 
   useEffect(() => {
     // Check for existing session
@@ -221,10 +239,12 @@ function App() {
     setAnalysisResult(null);
     try {
       const result = await analyzeCode(codeToAnalyze, programInput, abortControllerRef.current.signal);
+      setServerDown(false);
       setAnalysisResult(result);
       setActiveTab("flow");
     } catch (err) {
       if (err.name === "AbortError") return;
+      if (err.message?.includes("Cannot connect")) setServerDown(true);
       setError(err.message || "Analysis failed");
     } finally {
       setLoading(false);
@@ -255,12 +275,14 @@ function App() {
     setRunResult(null);
     try {
       const result = await runCode(code, programInput, runAbortControllerRef.current.signal);
+      setServerDown(false);
       if (!result.success) {
         setRunError(result.compile_error || result.stderr || "Compilation failed");
       }
       setRunResult(result);
     } catch (err) {
       if (err.name === "AbortError") return;
+      if (err.message?.includes("Cannot connect")) setServerDown(true);
       setRunError(err.message || "Run failed");
     } finally {
       setRunLoading(false);
@@ -509,6 +531,29 @@ function App() {
           user={user}
           onLogout={handleLogout}
         />
+      )}
+      {serverDown && view !== "landing" && (
+        <div className="server-down-banner" role="alert">
+          <div className="server-down-inner">
+            <span className="server-down-icon material-symbols-outlined">wifi_off</span>
+            <div className="server-down-text">
+              <strong>Backend server is not running.</strong>
+              <span> Start it with:</span>
+              <code className="server-down-cmd">source venv/bin/activate &amp;&amp; python run_server.py</code>
+            </div>
+          </div>
+          <button
+            className="server-retry-btn"
+            onClick={checkServer}
+            disabled={serverChecking}
+            title="Check again"
+          >
+            <span className={`material-symbols-outlined${serverChecking ? " spin" : ""}`}>
+              {serverChecking ? "sync" : "refresh"}
+            </span>
+            {serverChecking ? "Checking…" : "Retry"}
+          </button>
+        </div>
       )}
       {renderView()}
     </div>

@@ -47,10 +47,10 @@ const AiExplanation = ({ data, loading }) => {
 
   return (
     <div className="ai-explanation-container">
-      {/* Overview Section */}
-      <div className="ai-card ai-overview-card">
+      {/* Overview */}
+      <div className="ai-card">
         <div className="card-header">
-          <h3><span className="material-symbols-outlined">auto_awesome</span> Architectural Overview</h3>
+          <h3><span className="material-symbols-outlined">analytics</span> Overview</h3>
           <button 
             className={`copy-btn ${copied ? 'copied' : ''}`} 
             onClick={handleCopy}
@@ -61,47 +61,41 @@ const AiExplanation = ({ data, loading }) => {
             </span>
           </button>
         </div>
-        <div className="card-content">
-          <p className="explanation-text">{data.explanation}</p>
-        </div>
+        <p className="explanation-text">{data.explanation}</p>
       </div>
 
-      {/* Complexity Grid */}
+      {/* Complexity */}
       <div className="ai-metrics-grid">
         <div className={`ai-card metric-card ${getComplexityClass(data.time_complexity)}`}>
           <div className="metric-header">
-            <span className="material-symbols-outlined">timer</span>
-            <h4>Time Complexity</h4>
+            <span className="material-symbols-outlined">schedule</span>
+            Time
           </div>
           <div className="metric-value">{data.time_complexity}</div>
-          <div className="metric-footer">Worst-case runtime estimate</div>
         </div>
 
         <div className={`ai-card metric-card ${getComplexityClass(data.space_complexity)}`}>
           <div className="metric-header">
             <span className="material-symbols-outlined">memory</span>
-            <h4>Space Complexity</h4>
+            Space
           </div>
           <div className="metric-value">{data.space_complexity}</div>
-          <div className="metric-footer">Maximum memory footprint</div>
         </div>
       </div>
 
-      {/* Key Points Section */}
-      <div className="ai-card ai-points-card">
+      {/* Key Observations */}
+      <div className="ai-card">
         <div className="card-header">
-          <h3><span className="material-symbols-outlined">tips_and_updates</span> Critical Observations</h3>
+          <h3><span className="material-symbols-outlined">list_alt</span> Observations</h3>
         </div>
-        <div className="card-content">
-          <ul className="modern-points-list">
-            {data.key_points.map((point, index) => (
-              <li key={index} style={{ '--index': index }}>
-                <div className="point-indicator"></div>
-                <span className="point-text">{point}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <ul className="modern-points-list">
+          {data.key_points.map((point, index) => (
+            <li key={index} style={{ '--index': index }}>
+              <div className="point-indicator"></div>
+              <span className="point-text">{point}</span>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

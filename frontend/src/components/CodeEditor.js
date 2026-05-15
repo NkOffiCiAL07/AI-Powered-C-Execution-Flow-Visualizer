@@ -98,27 +98,30 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest 
   const completionProviderRef = useRef(null);
 
   const handleEditorMount = (editor, monaco) => {
-    monaco.editor.defineTheme("traceon-dark", {
-      base: "vs-dark",
+    monaco.editor.defineTheme("traceon-light", {
+      base: "vs",
       inherit: true,
       rules: [
-        { token: "keyword", foreground: "c678dd" },
-        { token: "string", foreground: "98c379" },
-        { token: "number", foreground: "d19a66" },
-        { token: "comment", foreground: "5c6078", fontStyle: "italic" },
-        { token: "type", foreground: "e5c07b" },
+        { token: "keyword",   foreground: "7C3AED" },
+        { token: "string",    foreground: "2D6A4F" },
+        { token: "number",    foreground: "B45309" },
+        { token: "comment",   foreground: "9CA3AF", fontStyle: "italic" },
+        { token: "type",      foreground: "B45309" },
+        { token: "delimiter", foreground: "5A4A3C" },
+        { token: "operator",  foreground: "C96A48" },
       ],
       colors: {
-        "editor.background": "#0f1117",
-        "editor.foreground": "#e8eaed",
-        "editor.lineHighlightBackground": "#1c1f2e",
-        "editorLineNumber.foreground": "#5c6078",
-        "editorLineNumber.activeForeground": "#818cf8",
-        "editor.selectionBackground": "#6366f133",
-        "editor.inactiveSelectionBackground": "#6366f11a",
-        "editorCursor.foreground": "#818cf8",
-        "editorIndentGuide.background": "#ffffff08",
-        "editorIndentGuide.activeBackground": "#ffffff15",
+        "editor.background":               "#F7F3EE",
+        "editor.foreground":               "#1A1310",
+        "editor.lineHighlightBackground":  "#EDE8E010",
+        "editorLineNumber.foreground":     "#B0A090",
+        "editorLineNumber.activeForeground": "#C96A48",
+        "editor.selectionBackground":      "#C96A4828",
+        "editor.inactiveSelectionBackground": "#C96A4814",
+        "editorCursor.foreground":         "#C96A48",
+        "editorIndentGuide.background":    "#00000010",
+        "editorIndentGuide.activeBackground": "#00000020",
+        "editorWhitespace.foreground":     "#00000015",
       },
     });
 
@@ -147,7 +150,7 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest 
       });
     }
 
-    monaco.editor.setTheme("traceon-dark");
+    monaco.editor.setTheme("traceon-light");
     editor.focus();
   };
 
@@ -214,7 +217,7 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest 
           onChange={(value) => onChange(value ?? "")}
           onMount={handleEditorMount}
           options={editorOptions}
-          theme="traceon-dark"
+          theme="traceon-light"
         />
       </div>
       <div className="editor-info">

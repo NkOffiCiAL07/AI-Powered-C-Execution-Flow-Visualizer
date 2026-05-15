@@ -23,6 +23,7 @@ export default function CppEditorPage({
         <div className="editor-page-card editor-card">
           <div className="editor-page-head">
             <h2>C++ Code Editor</h2>
+            {loading && <div className="loader-dots"><span>.</span><span>.</span><span>.</span></div>}
           </div>
           <CodeEditor
             code={code}
@@ -39,27 +40,32 @@ export default function CppEditorPage({
           onClick={() => onRun()}
           disabled={loading}
         >
-          {loading ? "Running..." : "Compile & Run"}
+          <span className="material-symbols-outlined">{loading ? 'sync' : 'play_arrow'}</span>
+          {loading ? "Initializing..." : "Compile & Run"}
         </button>
 
         <div className="editor-page-card input-card">
           <div className="editor-page-subhead">
-            <h3>Input</h3>
-            <span>stdin for cin / getline</span>
+            <h3>Program Input</h3>
+            <span>stdin / cin</span>
           </div>
           <textarea
             className="editor-input-textarea"
             value={programInput}
             onChange={(event) => onProgramInputChange(event.target.value)}
-            placeholder={"Example:\n5 7\n"}
+            placeholder={"Enter input values here..."}
             spellCheck="false"
           />
         </div>
 
         <div className="editor-page-card output-card">
           <div className="editor-page-subhead">
-            <h3>Output</h3>
-            {result && <span>Exit: {exitCode}{success ? " ✓" : " ✗"}</span>}
+            <h3>Execution Output</h3>
+            {result && (
+              <div className={`status-pill ${success ? 'success' : 'error'}`}>
+                {success ? 'SUCCESS' : 'FAILED'} (Exit: {exitCode})
+              </div>
+            )}
           </div>
 
           {error && (

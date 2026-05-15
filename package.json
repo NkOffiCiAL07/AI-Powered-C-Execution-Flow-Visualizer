@@ -1,0 +1,14 @@
+{
+  "name": "traceon",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-powered C/C++ execution flow visualizer",
+  "scripts": {
+    "dev:backend": "./venv/bin/python run_server.py",
+    "dev:frontend": "cd frontend && npm start",
+    "dev": "npm run dev:backend & sleep 2 && npm run dev:frontend",
+    "start": "npm run dev",
+    "setup": "bash setup.sh",
+    "build": "cd frontend && npm run build"
+  }
+}

@@ -1,285 +1,209 @@
 /* ═══════════════════════════════════════
-   Header – glass-morphism top bar
+   Header – Claude-inspired warm dark bar
    ═══════════════════════════════════════ */
 
 .header {
-  height: 64px;
-  background-color: rgba(22, 25, 34, 0.85);
+  height: 52px;
+  background-color: rgba(250, 249, 247, 0.94);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
-  padding: 0 24px;
+  padding: 0 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
   position: relative;
   z-index: 100;
-}
-
-/* gradient accent line at bottom */
-.header::after {
-  content: "";
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: var(--gradient-brand);
-  opacity: 0.5;
-}
-
-.header-content {
-  flex: 1;
-  min-width: 0;
+  box-shadow: 0 1px 0 var(--border);
 }
 
 .header-title {
   margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-  color: #ddb7ff; /* primary from design */
   display: flex;
   align-items: center;
-  gap: 8px;
-  letter-spacing: -0.5px;
+  gap: 9px;
+  cursor: pointer;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.header-title .material-symbols-outlined {
+  font-size: 20px;
+  color: var(--primary);
 }
 
 .brand-text {
-  text-shadow: 0 0 10px rgba(221, 183, 255, 0.4);
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.4px;
+  color: var(--text-primary);
 }
 
-.header-subtitle {
-  display: none;
-}
-
+/* ── Center nav ── */
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex: 1;
-  justify-content: flex-end;
+  gap: 10px;
 }
 
 .header-nav {
   display: none;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
   .header-nav {
     display: flex;
     align-items: center;
-    gap: 24px;
+    gap: 2px;
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    margin-right: 0;
   }
 }
 
-.nav-link {
+/* nav-link is shared with LandingPage — redefine for header context only */
+.header .nav-link,
+.header-nav .nav-link {
   background: none;
   border: none;
   color: var(--text-muted);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  padding: 4px 0;
-  transition: all 0.2s;
-  border-bottom: 2px solid transparent;
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  transition: color 0.18s ease, background 0.18s ease;
+  line-height: 1;
 }
 
-.nav-link:hover {
+.header .nav-link:hover,
+.header-nav .nav-link:hover {
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+}
+
+.header .nav-link.active,
+.header-nav .nav-link.active {
   color: var(--primary);
-}
-
-.nav-link.active {
-  color: var(--primary);
-  border-bottom-color: var(--primary);
-}
-
-/* ── Theme toggle button ── */
-.theme-toggle-btn {
-  border: none;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-size: 20px;
-  border-radius: var(--radius-full);
-  padding: 6px 12px;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-  margin-right: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.theme-toggle-btn:hover {
-  background: var(--gradient-brand);
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.18);
-}
-
-.theme-toggle-btn:active {
-  filter: brightness(0.95);
+  background: var(--primary-glow);
 }
 
 /* ── View switcher ── */
 .header-view-switch {
   display: flex;
-  background-color: var(--bg-primary);
+  background-color: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius-full);
-  padding: 3px;
+  border-radius: var(--radius-md);
+  padding: 2px;
+  gap: 1px;
 }
 
 .view-switch-btn {
   border: none;
   background: transparent;
   color: var(--text-muted);
-  padding: 6px 16px;
-  border-radius: var(--radius-full);
+  padding: 4px 10px;
+  border-radius: calc(var(--radius-md) - 2px);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  font-family: var(--font-sans);
-  transition: all 0.25s var(--ease-out);
+  transition: all 0.18s ease;
+  letter-spacing: 0.01em;
 }
 
-.view-switch-btn:hover:not(.active) {
+.view-switch-btn:hover {
   color: var(--text-secondary);
+  background: var(--bg-hover);
 }
 
 .view-switch-btn.active {
-  background: var(--gradient-brand);
-  color: white;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
 }
 
-/* ── Explain button ── */
-.explain-btn {
-  padding: 8px 20px;
-  background: rgba(221, 183, 255, 0.1);
-  border: 1px solid rgba(221, 183, 255, 0.4);
-  border-radius: var(--radius-full);
-  color: #ddb7ff;
-  font-weight: 600;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.25s var(--ease-out);
-  white-space: nowrap;
-  font-family: var(--font-sans);
-  box-shadow: 0 0 10px rgba(221, 183, 255, 0.1);
-}
-
-.explain-btn:hover:not(:disabled) {
-  background: rgba(221, 183, 255, 0.2);
-  border-color: #ddb7ff;
-  box-shadow: 0 0 15px rgba(221, 183, 255, 0.2);
-  transform: translateY(-1px);
-}
-
-.explain-btn:disabled,
-.explain-btn.loading {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* ── Analyze button ── */
+/* ── Action Buttons ── */
 .analyze-btn {
-  padding: 9px 22px;
-  background: var(--gradient-brand);
+  padding: 6px 14px;
+  background: var(--primary);
   border: none;
-  border-radius: var(--radius-full);
-  color: white;
-  font-weight: 600;
-  font-size: 13px;
+  border-radius: var(--radius-md);
+  color: #fff;
+  font-weight: 700;
+  font-size: 11px;
   cursor: pointer;
-  transition: all 0.25s var(--ease-out);
-  white-space: nowrap;
-  font-family: var(--font-sans);
-  box-shadow: 0 2px 12px rgba(99, 102, 241, 0.25);
-  position: relative;
-  overflow: hidden;
-}
-
-.analyze-btn::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%);
-  opacity: 0;
-  transition: opacity 0.2s;
+  letter-spacing: 0.01em;
+  transition: opacity 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+  box-shadow: 0 2px 8px rgba(217, 119, 87, 0.28);
 }
 
 .analyze-btn:hover:not(:disabled) {
+  opacity: 0.9;
   transform: translateY(-1px);
-  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 4px 14px rgba(217, 119, 87, 0.38);
 }
 
-.analyze-btn:hover:not(:disabled)::before {
-  opacity: 1;
-}
-
-.analyze-btn:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.analyze-btn:disabled,
-.analyze-btn.loading {
-  opacity: 0.5;
+.analyze-btn:disabled {
+  opacity: 0.45;
   cursor: not-allowed;
-  transform: none;
 }
 
-.analyze-btn.loading {
-  color: transparent;
-}
-.analyze-btn.loading::after {
-  content: "";
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  top: 50%;
-  left: 50%;
-  margin-left: -8px;
-  margin-top: -8px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: white;
-  animation: spin 0.6s linear infinite;
+.explain-btn {
+  padding: 6px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.18s ease;
 }
 
-.sign-in-link {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-muted);
-  text-decoration: none;
-  padding: 8px 12px;
-  transition: color 0.2s;
-}
-
-.sign-in-link:hover {
+.explain-btn:hover:not(:disabled) {
+  background: var(--bg-elevated);
+  border-color: var(--border-accent);
   color: var(--primary);
 }
 
-@keyframes spin {
-...
-  to {
-    transform: rotate(360deg);
-  }
+.explain-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
-@media (max-width: 920px) {
-  .header {
-    height: auto;
-    padding: 12px 16px;
-    flex-wrap: wrap;
-  }
+.theme-toggle-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 15px;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: background 0.18s ease;
+  line-height: 1;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--bg-hover);
+}
+
+.sign-in-link {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: color 0.18s ease;
+}
+
+.sign-in-link:hover {
+  color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
   .header-actions {
-    width: 100%;
-    justify-content: space-between;
+    gap: 6px;
   }
 }
