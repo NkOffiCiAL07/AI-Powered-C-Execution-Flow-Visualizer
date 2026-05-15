@@ -10,22 +10,23 @@ logger = logging.getLogger(__name__)
 
 def explain_code_ai(code: str) -> ExplainCodeResponse:
     """Analyze C++ code and return explanation, complexities, and key points."""
-    api_key = os.getenv("ANTHROPIC_API_KEY")
+    api_key = os.getenv("GEMINI_API_KEY")
 
     if api_key:
         try:
-            return _claude_explanation(code, api_key)
+            return _gemini_explanation(code, api_key)
         except Exception as e:
-            logger.warning(f"Claude explanation failed, falling back to static analysis: {e}")
+            logger.warning(f"Gemini explanation failed, falling back to static analysis: {e}")
 
     return _static_explanation(code)
 
 
-def _claude_explanation(code: str, api_key: str) -> ExplainCodeResponse:
-    """Use Anthropic Claude API for deep code explanation."""
-    import anthropic
+def _gemini_explanation(code: str, api_key: str) -> ExplainCodeResponse:
+    """Use Google Gemini API for deep code explanation."""
+    from google import genai
+    from google.genai import types
 
-    client = anthropic.Anthropic(api_key=api_key)
+    client = genai.Client(api_key=api_key)
 
     prompt = f"""Analyze this C++ code and provide a structured explanation.
 Return a JSON object with exactly these keys:
@@ -41,18 +42,18 @@ Code:
 {code}
 ```"""
 
-    message = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=1024,
-        messages=[
-            {
-                "role": "user",
-                "content": prompt,
-            }
-        ],
+    response = client.models.generate_content(
+        model="gemini-2.0-flash-lite",
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json",
+            max_output_tokens=1024,
+            temperature=0.2,
+        ),
     )
 
-    content = message.content[0].text.strip()
+    content = response.text.strip()
+
     # Strip markdown code fences if the model adds them anyway
     if content.startswith("```"):
         content = re.sub(r"^```(?:json)?\n?", "", content)
@@ -67,7 +68,7 @@ Code:
             key_points=data.get("key_points", []),
         )
     except (json.JSONDecodeError, KeyError) as e:
-        logger.error(f"Failed to parse JSON from Claude response: {e}\nRaw: {content[:300]}")
+        logger.error(f"Failed to parse JSON from Gemini response: {e}\nRaw: {content[:300]}")
         raise ValueError(f"Invalid AI response format: {e}")
 
 
