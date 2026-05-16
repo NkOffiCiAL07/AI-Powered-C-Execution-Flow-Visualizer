@@ -69,9 +69,16 @@ export default function Header({ onAnalyze, onExplain, loading, aiLoading, view,
           </>
         )}
         {user ? (
-          <div className="user-profile-nav" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <img src={user.avatar} alt={user.name} style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--border)' }} />
-            <button className="sign-in-link" onClick={onLogout} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>Sign Out</button>
+          <div className="user-pill">
+            {user.avatar ? (
+              <img className="user-avatar" src={user.avatar} alt={user.name} />
+            ) : (
+              <span className="user-avatar-placeholder material-symbols-outlined">person</span>
+            )}
+            <span className="user-name">{user.name || 'Guest'}</span>
+            <button className="signout-btn" onClick={onLogout} title="Sign out">
+              <span className="material-symbols-outlined">logout</span>
+            </button>
           </div>
         ) : (
           <button className="sign-in-link" onClick={onSignIn}>Sign In</button>

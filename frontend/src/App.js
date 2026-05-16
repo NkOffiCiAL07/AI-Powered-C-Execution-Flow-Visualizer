@@ -141,8 +141,13 @@ function App() {
     }
   }, []);
 
-  // Health-check on mount
+  // Health-check on mount, then auto-retry every 8s while server is down
   useEffect(() => { checkServer(); }, [checkServer]);
+  useEffect(() => {
+    if (!serverDown) return;
+    const id = setInterval(checkServer, 8000);
+    return () => clearInterval(id);
+  }, [serverDown, checkServer]);
 
   // Only the editor/visualizer requires auth — redirect there if not signed in
   useEffect(() => {
