@@ -2,6 +2,14 @@ import React, { useEffect, useRef, useState } from "react";
 import "../styles/Header.css";
 import { useTheme } from "../theme";
 
+const THEME_OPTIONS = [
+  { value: "light",    label: "Light",    swatch: "#C96A48" },
+  { value: "dark",     label: "Dark",     swatch: "#D97757" },
+  { value: "ocean",    label: "Ocean",    swatch: "#58A6FF" },
+  { value: "forest",   label: "Forest",   swatch: "#57C87A" },
+  { value: "midnight", label: "Midnight", swatch: "#A855F7" },
+];
+
 const VIEW_OPTIONS = [
   { value: "visualizer", label: "Debugger", icon: "bug_report" },
   { value: "editor",     label: "Editor",   icon: "code"       },
@@ -38,7 +46,7 @@ function Dropdown({ trigger, children, align = "left" }) {
 }
 
 export default function Header({ view, onSwitchView, user, onLogout, onSignIn }) {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const inApp = view === "editor" || view === "visualizer";
   const currentView = VIEW_OPTIONS.find(o => o.value === view);
 
@@ -110,10 +118,27 @@ export default function Header({ view, onSwitchView, user, onLogout, onSignIn })
           </Dropdown>
         )}
 
-        {/* Theme toggle */}
-        <button className="theme-toggle-btn" onClick={toggleTheme} title={theme === "dark" ? "Light mode" : "Dark mode"} aria-label="Toggle theme">
-          <span className="material-symbols-outlined">{theme === "dark" ? "dark_mode" : "light_mode"}</span>
-        </button>
+        {/* Theme picker */}
+        <Dropdown
+          align="right"
+          trigger={(open) => (
+            <button className="theme-toggle-btn" title="Change theme" aria-label="Change theme" aria-expanded={open}>
+              <span className="material-symbols-outlined">palette</span>
+            </button>
+          )}
+        >
+          {(close) => THEME_OPTIONS.map(opt => (
+            <li key={opt.value}
+              className={`hdr-dropdown-item ${opt.value === theme ? "active" : ""}`}
+              role="menuitem"
+              onClick={() => { setTheme(opt.value); close(); }}
+            >
+              <span className="theme-swatch" style={{ background: opt.swatch }} />
+              {opt.label}
+              {opt.value === theme && <span className="material-symbols-outlined hdr-check">check</span>}
+            </li>
+          ))}
+        </Dropdown>
 
         {/* User */}
         {user ? (

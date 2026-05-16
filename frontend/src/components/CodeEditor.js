@@ -1,7 +1,17 @@
 import React, { useRef, useEffect } from "react";
 import Editor from "@monaco-editor/react";
 import "../styles/CodeEditor.css";
-import { useTheme, themes } from "../theme";
+import { useTheme, isDarkTheme } from "../theme";
+
+const monacoThemeName = (t) => {
+  switch (t) {
+    case "ocean":    return "traceon-ocean";
+    case "forest":   return "traceon-forest";
+    case "midnight": return "traceon-midnight";
+    case "dark":     return "traceon-dark";
+    default:         return "traceon-light";
+  }
+};
 
 /* eslint-disable no-template-curly-in-string */
 const cppSnippets = [
@@ -303,14 +313,13 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest,
   const completionProviderRef = useRef(null);
   const monacoRef = useRef(null);
   const { theme } = useTheme();
-  const isDark = theme === themes.dark;
+  const isDark = isDarkTheme(theme);
 
-  // Switch Monaco theme whenever app theme toggles
   useEffect(() => {
     if (monacoRef.current) {
-      monacoRef.current.editor.setTheme(isDark ? "traceon-dark" : "traceon-light");
+      monacoRef.current.editor.setTheme(monacoThemeName(theme));
     }
-  }, [isDark]);
+  }, [theme]);
 
   const handleEditorMount = (editor, monaco) => {
     monacoRef.current = monaco;
@@ -371,6 +380,75 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest,
       },
     });
 
+    monaco.editor.defineTheme("traceon-ocean", {
+      base: "vs-dark", inherit: true,
+      rules: [
+        { token: "keyword",   foreground: "FF7B72" },
+        { token: "string",    foreground: "A5D6FF" },
+        { token: "number",    foreground: "79C0FF" },
+        { token: "comment",   foreground: "8B949E", fontStyle: "italic" },
+        { token: "type",      foreground: "F0883E" },
+        { token: "operator",  foreground: "58A6FF" },
+      ],
+      colors: {
+        "editor.background":               "#0D1117",
+        "editor.foreground":               "#E6EDF3",
+        "editor.lineHighlightBackground":  "#161B2280",
+        "editorLineNumber.foreground":     "#3A414A",
+        "editorLineNumber.activeForeground": "#58A6FF",
+        "editor.selectionBackground":      "#58A6FF28",
+        "editorCursor.foreground":         "#58A6FF",
+        "editorIndentGuide.background":    "#FFFFFF08",
+        "editorIndentGuide.activeBackground": "#FFFFFF14",
+      },
+    });
+
+    monaco.editor.defineTheme("traceon-forest", {
+      base: "vs-dark", inherit: true,
+      rules: [
+        { token: "keyword",   foreground: "98E4A0" },
+        { token: "string",    foreground: "C3E8C3" },
+        { token: "number",    foreground: "FFD700" },
+        { token: "comment",   foreground: "4A6D4E", fontStyle: "italic" },
+        { token: "type",      foreground: "7DCFDA" },
+        { token: "operator",  foreground: "57C87A" },
+      ],
+      colors: {
+        "editor.background":               "#0D1A12",
+        "editor.foreground":               "#D4F1D7",
+        "editor.lineHighlightBackground":  "#13201980",
+        "editorLineNumber.foreground":     "#2A4230",
+        "editorLineNumber.activeForeground": "#57C87A",
+        "editor.selectionBackground":      "#57C87A28",
+        "editorCursor.foreground":         "#57C87A",
+        "editorIndentGuide.background":    "#FFFFFF08",
+        "editorIndentGuide.activeBackground": "#FFFFFF14",
+      },
+    });
+
+    monaco.editor.defineTheme("traceon-midnight", {
+      base: "vs-dark", inherit: true,
+      rules: [
+        { token: "keyword",   foreground: "C084FC" },
+        { token: "string",    foreground: "86EFAC" },
+        { token: "number",    foreground: "FCA5A5" },
+        { token: "comment",   foreground: "5A5275", fontStyle: "italic" },
+        { token: "type",      foreground: "818CF8" },
+        { token: "operator",  foreground: "A855F7" },
+      ],
+      colors: {
+        "editor.background":               "#0F0E17",
+        "editor.foreground":               "#E8E3F5",
+        "editor.lineHighlightBackground":  "#16141F80",
+        "editorLineNumber.foreground":     "#2E2A45",
+        "editorLineNumber.activeForeground": "#A855F7",
+        "editor.selectionBackground":      "#A855F728",
+        "editorCursor.foreground":         "#A855F7",
+        "editorIndentGuide.background":    "#FFFFFF08",
+        "editorIndentGuide.activeBackground": "#FFFFFF14",
+      },
+    });
+
     if (!completionProviderRef.current) {
       const makeProvider = (snippets) => ({
         provideCompletionItems(model, position) {
@@ -402,7 +480,7 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest,
       ];
     }
 
-    monaco.editor.setTheme(isDark ? "traceon-dark" : "traceon-light");
+    monaco.editor.setTheme(monacoThemeName(theme));
     editor.focus();
   };
 
@@ -471,7 +549,7 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest,
           onChange={(value) => onChange(value ?? "")}
           onMount={handleEditorMount}
           options={editorOptions}
-          theme={isDark ? "traceon-dark" : "traceon-light"}
+          theme={monacoThemeName(theme)}
         />
       </div>
       <div className="editor-info">

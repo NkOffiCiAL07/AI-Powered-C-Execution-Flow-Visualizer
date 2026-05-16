@@ -18,9 +18,10 @@
   box-shadow: 0 1px 0 var(--border);
 }
 
-.dark-theme .header {
-  background-color: rgba(35, 31, 28, 0.94);
-}
+.dark-theme .header     { background-color: rgba(35, 31, 28, 0.94); }
+.theme-ocean .header    { background-color: rgba(13, 17, 23, 0.94); }
+.theme-forest .header   { background-color: rgba(13, 26, 18, 0.94); }
+.theme-midnight .header { background-color: rgba(15, 14, 23, 0.94); }
 
 /* ── Left group ── */
 .header-left {
@@ -271,14 +272,16 @@
   align-items: center;
   justify-content: center;
 }
+.theme-toggle-btn .material-symbols-outlined { font-size: 18px; }
+.theme-toggle-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
 
-.theme-toggle-btn .material-symbols-outlined {
-  font-size: 18px;
-}
-
-.theme-toggle-btn:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
+/* ── Theme picker items ── */
+.theme-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(255,255,255,0.18);
 }
 
 .sign-in-link {

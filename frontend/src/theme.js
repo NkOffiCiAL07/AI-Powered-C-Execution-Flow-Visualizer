@@ -3,33 +3,41 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 const ThemeContext = createContext();
 
 export const themes = {
-  dark: "dark",
-  light: "light",
+  light:    "light",
+  dark:     "dark",
+  ocean:    "ocean",
+  forest:   "forest",
+  midnight: "midnight",
 };
 
+const ALL_THEME_CLASSES = ["light-theme", "dark-theme", "theme-ocean", "theme-forest", "theme-midnight"];
+const DARK_THEMES = new Set(["dark", "ocean", "forest", "midnight"]);
+
+export const isDarkTheme = (t) => DARK_THEMES.has(t);
+
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(() => {
+  const [theme, setThemeState] = useState(() => {
     const stored = localStorage.getItem("theme");
-    if (stored === themes.light || stored === themes.dark) return stored;
+    if (stored && themes[stored]) return stored;
     return window.matchMedia("(prefers-color-scheme: dark)").matches ? themes.dark : themes.light;
   });
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("theme", theme);
-    if (theme === themes.dark) {
+    document.body.classList.remove(...ALL_THEME_CLASSES);
+    if (DARK_THEMES.has(theme)) {
       document.body.classList.add("dark-theme");
-      document.body.classList.remove("light-theme");
+      if (theme !== "dark") document.body.classList.add(`theme-${theme}`);
     } else {
-      document.body.classList.remove("dark-theme");
       document.body.classList.add("light-theme");
     }
   }, [theme]);
 
-  const toggleTheme = () => setTheme((t) => (t === themes.dark ? themes.light : themes.dark));
+  const setTheme = (t) => setThemeState(t);
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );
