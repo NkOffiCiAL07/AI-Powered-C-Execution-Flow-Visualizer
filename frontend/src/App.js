@@ -144,6 +144,13 @@ function App() {
   // Health-check on mount
   useEffect(() => { checkServer(); }, [checkServer]);
 
+  // Redirect unauthenticated users back to landing view
+  useEffect(() => {
+    if (!user && view !== "landing") {
+      setView("landing");
+    }
+  }, [user, view]);
+
   useEffect(() => {
     const savedUser = localStorage.getItem("traceon_user");
     const savedToken = localStorage.getItem("traceon_auth_token");
