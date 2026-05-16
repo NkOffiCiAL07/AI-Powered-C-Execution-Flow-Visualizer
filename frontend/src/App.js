@@ -553,7 +553,7 @@ function App() {
           onSignIn={() => setShowLoginModal(true)}
         />
       )}
-      {serverDown && view !== "landing" && (
+      {serverDown && (view === "editor" || view === "visualizer") && (
         <div className="server-down-banner" role="alert">
           <div className="server-down-inner">
             <span className="server-down-icon material-symbols-outlined">wifi_off</span>
