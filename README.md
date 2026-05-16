@@ -1,432 +1,235 @@
-# 🚀 Traceon: AI-Powered C++ Code Flow Visualizer
+# Traceon — AI-Powered C++ Execution Flow Visualizer
 
-An intelligent debugging and visualization tool that automatically executes C/C++ programs step-by-step using LLDB debugger and presents execution flow with variable tracking in a beautiful, interactive web UI.
-
-**Live Step-Through Execution** • **Real-Time Variable Tracking** • **AI-Generated Explanations** • **Interactive Timeline**
+Traceon is a web-based debugger that steps through C/C++ programs line by line using LLDB, tracks every variable in real time, and uses Google Gemini to explain what the code is doing and why.
 
 ---
 
-## ✨ Features
+## What it does
 
-### 🎯 Core Capabilities
-- ✅ **Compile Any C/C++ Code** — Auto-wraps snippets without main()
-- ✅ **Step-by-Step Execution** — Trace through code line by line
-- ✅ **Interactive Debugging** — **Step In**, **Step Out**, and **Step Over** support
-- ✅ **Real-Time Variable Tracking** — See all variables and their values
-- ✅ **Live Call Stack** — Visualize the function hierarchy as you step
-- ✅ **Execution Timeline** — Click any step to jump directly to it
-- ✅ **Beautiful Web UI** — Modern, responsive interface with animations
-- ✅ **Edit Code Anytime** — Switch between playback and edit modes
-- ✅ **Multiple Examples** — Pre-loaded examples (Simple Math, Loops, Fibonacci)
-- ✅ **Auto-Format Errors** — Clear, helpful compilation error messages
-
-### 🎨 UI Enhancements
-- Modern gradient backgrounds and shadows
-- Smooth animations and transitions
-- Color-coded variable cards
-- Progress bar with visual feedback
-- Responsive layout (40% editor, 60% visualizer)
-- Bubble animations for variable changes
+- Compile and execute any C/C++ code directly in the browser
+- Step forward and backward through execution one line at a time
+- Watch variables appear, change, and go out of scope as you step
+- Inspect the live call stack at every point in execution
+- Click any step on the execution timeline to jump directly to it
+- Ask Gemini to explain the code — time complexity, space complexity, a plain-English walkthrough
+- Switch between edit mode and playback mode without losing your session
+- Light and dark themes
 
 ---
 
-## 🏗️ Architecture
+## Tech stack
 
-```
-User Code (C/C++)
-    ↓
-Auto-wrap if no main() + Auto-include headers
-    ↓
-Compile (clang++ or g++)
-    ↓
-LLDB Debugger (step-by-step execution)
-    ↓
-Start Session + Store First Snapshot
-    ↓
-`Next` / `Back` API calls fetch one step at a time
-  ↓
-Optional MongoDB persistence for code + history metadata
-    ↓
-React Frontend (visualization & playback)
-```
+| Layer | Technology |
+|-------|------------|
+| Frontend | React 18, Monaco Editor, CSS custom properties |
+| Backend | Python 3.10+, FastAPI, Uvicorn |
+| Debugger | LLDB (step-by-step C/C++ execution) |
+| Compiler | clang++ (falls back to g++) |
+| AI | Google Gemini 2.5 Flash via `google-genai` SDK |
+| Database | MongoDB (optional — graceful fallback to in-memory) |
 
 ---
 
-## 💻 Tech Stack
+## Prerequisites
 
-### Backend
-- **Python 3.8+** — FastAPI web framework
-- **LLDB** — Debugger for C/C++ execution
-- **clang++/g++** — Compiler with debug symbols
-
-### Frontend
-- **React 18** — UI framework
-- **CSS3** — Modern styling with gradients & animations
-- **JavaScript ES6+** — Interactive controls
-
-### Development
-- **FastAPI** — RESTful API
-- **CORS** — Cross-origin requests
-- **Subprocess** — C++ compilation & debugging
-
----
-
-## 📦 Installation & Setup
-
-### Prerequisites
-Ensure you have the following installed:
+- **macOS or Linux** (Windows not tested)
+- Python 3.10+
+- Node.js 18+ and npm
+- LLDB and clang++
 
 ```bash
-# Check Python version
-python3 --version  # Should be 3.8+
+# macOS — Xcode command-line tools include clang++ and lldb
+xcode-select --install
 
-# Check if clang++ is installed
-clang++ --version
-
-# Or g++
-g++ --version
-
-# Check if lldb is installed
-lldb --version
-```
-
-On macOS, everything is typically included. On Linux:
-```bash
-# Ubuntu/Debian
-sudo apt update
-sudo apt install build-essential lldb
+# Ubuntu / Debian
+sudo apt install build-essential clang lldb
 
 # Fedora
-sudo dnf install gcc g++ clang lldb
+sudo dnf install gcc-c++ clang lldb
 ```
 
 ---
 
-## 🚀 Quick Start
+## Setup
 
-### 1. Clone the Repository
+### 1. Clone
+
 ```bash
 git clone https://github.com/NkOffiCiAL07/AI-Powered-C-Execution-Flow-Visualizer.git
 cd AI-Powered-C-Execution-Flow-Visualizer
 ```
 
-### 2. Set Up Backend
+### 2. Backend
 
-#### Option A: Virtual Environment (Recommended)
 ```bash
-# Create virtual environment
 python3 -m venv venv
-
-# Activate it
-source venv/bin/activate  # macOS/Linux
-# or
-venv\Scripts\activate  # Windows
-
-# Install dependencies
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-#### Option B: Direct Install
-```bash
-pip install fastapi uvicorn python-dotenv pydantic cors
+Create a `.env` file in the project root:
+
+```env
+GEMINI_API_KEY=your_key_here
+# Optional — omit to use in-memory session storage
+MONGO_URI=mongodb://localhost:27017
 ```
 
-### 3. Set Up Frontend
+Get a free Gemini API key at [aistudio.google.com](https://aistudio.google.com).
+
+### 3. Frontend
 
 ```bash
 cd frontend
-
-# Install Node dependencies
 npm install
-
-# (Optional) Check if React is set up
-npm list react
 ```
 
-### 4. Start the Backend Server
+---
+
+## Running locally
+
+**Terminal 1 — backend**
+
 ```bash
-# From project root, with virtual environment activated
+source venv/bin/activate
 python run_server.py
-
-# Or with explicit port
-PYTHONPATH=src python -m uvicorn src.traceon.server.app:app --host 0.0.0.0 --port 8000 --reload
+# Listening on http://127.0.0.1:8000
 ```
 
-**Expected output:**
-```
-INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     Started server process [12345]
-```
+**Terminal 2 — frontend**
 
-### 5. Start the Frontend Server
 ```bash
 cd frontend
-
-# Start React development server
 npm start
-```
-
-**Expected output:**
-```
-webpack compiled successfully
-Compiled successfully!
-
-You can now view the app in your browser at:
-  http://localhost:3000
+# Opens http://localhost:3000
 ```
 
 ---
 
-## 🎮 Using the App
+## Usage
 
-### In Your Browser
-1. Open **[http://localhost:3000](http://localhost:3000)**
-2. You'll see:
-   - **Left Panel** — Code editor
-   - **Right Panel** — Execution visualizer
+1. Open `http://localhost:3000`
+2. Write or paste C/C++ code in the editor (no `main()` required — it is auto-wrapped)
+3. Click **Analyze & Visualize** in the header
+4. Use the playback controls to step through execution:
 
-### Workflow
+| Control | Action |
+|---------|--------|
+| Next | Advance one line |
+| Back | Go back one line |
+| Play / Pause | Auto-step at 1 s intervals |
+| Timeline click | Jump to any recorded step |
+| Space | Play / Pause |
+| → or N | Step forward |
+| ← or B | Step back |
+| Esc | Reset |
 
-#### Writing Code
-- Type C/C++ code in the left editor
-- Code can be complete programs or snippets (no main() needed)
-- Supported: variables, loops, conditionals, functions, vectors, strings
-
-#### Running Code
-1. Click **"Analyze & Run"** button in the header
-2. Backend compiles and starts a debug session
-3. Click **Next ▶** to fetch each step from the API in real time
-4. Execution state appears on the right showing:
-   - Current line (➤ arrow)
-   - Variables at that step
-   - Step count and progress bar
-   - Plain-English explanation
-
-#### Controls
-- **◀ Back / Next ▶** — API-driven manual step navigation
-- **Timeline click** — Jump among already-recorded steps
-- **✏️ Edit Code** — Exit playback, switch to editing mode
-
-### Optional MongoDB persistence
-If you want to persist input code + step history metadata, set:
-
-```bash
-export MONGO_CONNECTION_STRING="mongodb+srv://..."
-export MONGO_DB_NAME="traceon"                 # optional
-export MONGO_COLLECTION_NAME="execution_sessions"  # optional
-```
-
-#### Loading Examples
-Click any example button:
-- **Simple Math** — Basic arithmetic
-- **Counting Loop** — Loop variable tracking
-- **If Statement** — Conditional execution
-- **🔢 Fibonacci** — Complex example with functions
+5. Click **Explain Code** to get an AI breakdown of time complexity, space complexity, and a section-by-section walkthrough.
 
 ---
 
-## 📁 Project Structure
+## Project structure
 
 ```
 .
-├── README.md                          # This file
-├── requirements.txt                   # Python dependencies
-├── run_server.py                      # Backend server entry point
+├── run_server.py              # Backend entry point
+├── requirements.txt
 │
-├── frontend/                          # React UI
-│   ├── public/
-│   │   └── index.html
-│   ├── src/
-│   │   ├── App.js                    # Main app component
-│   │   ├── App.css                   # App styling
-│   │   ├── index.js
-│   │   ├── index.css
-│   │   ├── components/
-│   │   │   ├── CodeEditor.js         # Code input/viewer
-│   │   │   ├── FlowVisualizer.js     # Main visualizer
-│   │   │   ├── ExecutionTimeline.js  # Timeline component
-│   │   │   ├── VariableTracker.js    # Variable display
-│   │   │   ├── OutputPanel.js        # Output view
-│   │   │   └── Header.js             # Header with buttons
-│   │   ├── services/
-│   │   │   └── api.js                # API calls to backend
-│   │   └── styles/
-│   │       ├── CodeEditor.css
-│   │       ├── FlowVisualizer.css
-│   │       ├── VariableTracker.css
-│   │       ├── ExecutionTimeline.css
-│   │       ├── OutputPanel.css
-│   │       └── Header.css
-│   ├── package.json
-│   └── package-lock.json
+├── src/traceon/
+│   ├── executor.py            # Compile + LLDB session lifecycle
+│   ├── lldb_controller.py     # LLDB MI protocol wrapper
+│   ├── models.py              # Shared data models
+│   └── server/
+│       ├── app.py             # FastAPI app + CORS
+│       ├── api.py             # REST endpoints
+│       ├── session_manager.py # In-memory session store
+│       ├── ai_service.py      # Gemini integration
+│       └── mongo_store.py     # MongoDB persistence (optional)
 │
-├── src/                               # Python backend
-│   └── traceon/
-│       ├── __init__.py
-│       ├── cli.py                    # CLI interface
-│       ├── executor.py               # Execution controller
-│       ├── models.py                 # Data models
-│       ├── gdb_controller.py         # GDB MI control
-│       ├── lldb_controller.py        # LLDB MI control
-│       └── server/
-│           ├── __init__.py
-│           ├── app.py                # FastAPI application ⭐ IMPROVED
-│           ├── api.py                # API endpoints
-│           ├── session_manager.py    # Session management
-│           └── models.py             # Pydantic models
-│
-├── examples/                          # Example C++ programs
-│   ├── simple.cpp
-│   ├── functions_example.cpp
-│   └── simple_gdb.cpp
-│
-└── build/                             # Compiled binaries (generated)
+└── frontend/src/
+    ├── App.js                 # Root — view routing, auth state
+    ├── theme.js               # Light / dark theme context
+    ├── components/
+    │   ├── LandingPage.js
+    │   ├── Header.js
+    │   ├── CppEditorPage.js   # Main editor + visualizer layout
+    │   ├── CodeEditor.js      # Monaco editor wrapper
+    │   ├── FlowVisualizer.js  # Step viewer + variable cards
+    │   ├── ExecutionTimeline.js
+    │   ├── VariableTracker.js
+    │   ├── AiExplanation.js   # Gemini explanation panel
+    │   ├── OutputPanel.js
+    │   ├── LoginModal.js
+    │   ├── DocsPage.js
+    │   ├── PricingPage.js
+    │   └── CommunityPage.js
+    └── styles/                # Per-component CSS
 ```
 
 ---
 
-## 🔧 API Endpoints
+## API reference
 
-### POST `/analyze` — Compile & Execute Code
+### `POST /analyze`
 
-**Request:**
+Compile code and return all execution snapshots.
+
 ```json
-{
-  "code": "int x = 5; int y = 10; int z = x + y;"
-}
-```
+// Request
+{ "code": "int x = 5;\nint y = x * 2;" }
 
-**Response:**
-```json
+// Response
 {
+  "session_id": "abc123",
   "snapshots": [
     {
       "step": 1,
-      "location": {"file": "...", "line": 23, "function": "main"},
-      "variables": {"x": "5"},
+      "location": { "file": "tmp.cpp", "line": 3, "function": "main" },
+      "variables": { "x": "5" },
       "changed_variables": ["x"]
-    },
-    ...
+    }
   ],
-  "total_steps": 45
+  "total_steps": 12
 }
 ```
 
-### GET `/health` — Health Check
+### `POST /run`
 
-Returns `{"status": "ok"}` if backend is running.
+Compile and run code, returning stdout and stderr.
+
+### `GET /health`
+
+Returns `{ "status": "ok" }`.
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
-### "Compilation failed" Error
-**Issue:** Code has syntax errors  
-**Solution:** Check error message, fix code, try again
+**`LLDB not found`**
+Install the LLDB package for your OS (see Prerequisites above). On macOS, running `xcode-select --install` is usually enough.
 
-### "LLDB not found"
-**Issue:** LLDB debugger not installed  
-**Solution:**
+**`Compilation failed`**
+The error message returned by the API includes the compiler output. Check for missing semicolons, undeclared variables, or unsupported C++ standard features.
+
+**Port conflict**
 ```bash
-# macOS
-brew install lldb
-
-# Linux (Debian)
-sudo apt install lldb
-
-# Linux (Fedora)
-sudo dnf install lldb
+lsof -i :8000 | awk 'NR>1 {print $2}' | xargs kill -9
 ```
 
-### Port Already in Use
-**Issue:** Port 8000 or 3000 is already in use  
-**Solution:**
-```bash
-# Find and kill process on port 8000
-lsof -i :8000
-kill -9 <PID>
+**Gemini returns empty / slow**
+Make sure `GEMINI_API_KEY` is set in `.env` and that the key was generated from [aistudio.google.com](https://aistudio.google.com) (not a GCP project with free-tier quota disabled).
 
-# Or use different ports
-PYTHONPATH=src python -m uvicorn src.traceon.server.app:app --port 8001
-# Update frontend API_BASE_URL in src/services/api.js
-```
-
-### No Variables Shown
-**Issue:** LLDB may not be capturing local variables  
-**Solution:** Ensure code compiles with `-g` flag (automatic in this project)
+**No variables shown**
+Code is compiled with `-g` automatically. If variables still don't appear, check that LLDB has permission to attach to processes (`sudo DevToolsSecurity -enable` on macOS).
 
 ---
 
-## 🎓 Example Code Snippets
+## License
 
-### Simple Loop
-```cpp
-for (int i = 0; i < 5; i++) {
-    cout << i << endl;
-}
-```
-
-### Array Operations
-```cpp
-int arr[] = {10, 20, 30};
-int sum = 0;
-for (int i = 0; i < 3; i++) {
-    sum += arr[i];
-}
-```
-
-### String Manipulation
-```cpp
-string name = "John";
-string greeting = "Hello, " + name;
-cout << greeting << endl;
-```
-
-### Vector Usage
-```cpp
-vector<int> nums = {1, 2, 3, 4, 5};
-for (int num : nums) {
-    cout << num << " ";
-}
-```
+MIT — see [LICENSE](LICENSE).
 
 ---
 
-## 📈 Recent Improvements (v1.1)
+## Contributing
 
-### Compiler Enhancements
-- ✅ Auto-wrap code snippets without `main()` function
-- ✅ Auto-include common headers (`iostream`, `vector`, `string`, `cmath`)
-- ✅ Fallback compiler support (clang++ → g++)
-- ✅ Better error messages with clear formatting
-
-### UI/UX Improvements
-- ✅ Modern gradient backgrounds and shadows
-- ✅ Edit Code button to switch modes
-- ✅ Reset playback on example load
-- ✅ Improved button styling with hover effects
-- ✅ Better error display with warning icon
-- ✅ Progress bar with glow effect
-- ✅ Responsive layout
-
----
-
-## 📝 License
-
-This project is licensed under the MIT License. See LICENSE file for details.
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit pull requests or open issues for bugs and feature requests.
-
----
-
-## 📞 Support
-
-For issues, questions, or suggestions, please open an issue on GitHub or contact the maintainers.
-
----
-
-**Happy Debugging! 🎉**
+Issues and pull requests are welcome. For larger changes, open an issue first to discuss the approach.
