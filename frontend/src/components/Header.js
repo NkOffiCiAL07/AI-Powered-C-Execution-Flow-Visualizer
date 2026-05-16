@@ -1,6 +1,52 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "../styles/Header.css";
 import { useTheme } from "../theme";
+
+const VIEW_OPTIONS = [
+  { value: "visualizer", label: "Debugger", icon: "bug_report" },
+  { value: "editor",     label: "Editor",   icon: "code"       },
+];
+
+function ViewDropdown({ view, onSwitchView }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const current = VIEW_OPTIONS.find(o => o.value === view) || VIEW_OPTIONS[0];
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+
+  return (
+    <div className="view-dropdown" ref={ref}>
+      <button className="view-dropdown-trigger" onClick={() => setOpen(o => !o)} aria-haspopup="listbox" aria-expanded={open}>
+        <span className="material-symbols-outlined">{current.icon}</span>
+        <span>{current.label}</span>
+        <span className={`material-symbols-outlined view-dropdown-chevron ${open ? "open" : ""}`}>expand_more</span>
+      </button>
+
+      {open && (
+        <ul className="view-dropdown-menu" role="listbox">
+          {VIEW_OPTIONS.map(opt => (
+            <li
+              key={opt.value}
+              className={`view-dropdown-item ${opt.value === view ? "active" : ""}`}
+              role="option"
+              aria-selected={opt.value === view}
+              onClick={() => { onSwitchView(opt.value); setOpen(false); }}
+            >
+              <span className="material-symbols-outlined">{opt.icon}</span>
+              {opt.label}
+              {opt.value === view && <span className="material-symbols-outlined view-dropdown-check">check</span>}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 export default function Header({ onAnalyze, onRun, onExplain, loading, runLoading, aiLoading, view, onSwitchView, user, onLogout, onSignIn }) {
   const { theme, toggleTheme } = useTheme();
@@ -16,28 +62,19 @@ export default function Header({ onAnalyze, onRun, onExplain, loading, runLoadin
 
       {/* Center — nav */}
       <nav className="header-nav" aria-label="Main navigation">
-        <button className={`nav-link ${view === "landing"  ? "active" : ""}`} onClick={() => onSwitchView("landing")}>Home</button>
-        <button className={`nav-link ${view === "docs"     ? "active" : ""}`} onClick={() => onSwitchView("docs")}>Docs</button>
-        <button className={`nav-link ${view === "pricing"  ? "active" : ""}`} onClick={() => onSwitchView("pricing")}>Pricing</button>
-        <button className={`nav-link ${view === "community"? "active" : ""}`} onClick={() => onSwitchView("community")}>Community</button>
+        <button className={`nav-link ${view === "landing"   ? "active" : ""}`} onClick={() => onSwitchView("landing")}>Home</button>
+        <button className={`nav-link ${view === "docs"      ? "active" : ""}`} onClick={() => onSwitchView("docs")}>Docs</button>
+        <button className={`nav-link ${view === "pricing"   ? "active" : ""}`} onClick={() => onSwitchView("pricing")}>Pricing</button>
+        <button className={`nav-link ${view === "community" ? "active" : ""}`} onClick={() => onSwitchView("community")}>Community</button>
       </nav>
 
       {/* Right — actions + user */}
       <div className="header-right">
 
-        {/* View switcher — only inside the app */}
-        {inApp && (
-          <div className="header-view-switch" role="tablist" aria-label="App view">
-            <button className={`view-switch-btn ${view === "visualizer" ? "active" : ""}`} onClick={() => onSwitchView("visualizer")} role="tab" aria-selected={view === "visualizer"}>
-              Debugger
-            </button>
-            <button className={`view-switch-btn ${view === "editor" ? "active" : ""}`} onClick={() => onSwitchView("editor")} role="tab" aria-selected={view === "editor"}>
-              Editor
-            </button>
-          </div>
-        )}
+        {/* View dropdown — only inside the app */}
+        {inApp && <ViewDropdown view={view} onSwitchView={onSwitchView} />}
 
-        {/* AI + primary action — shown in both debugger and editor */}
+        {/* AI + primary action */}
         {inApp && (
           <div className="header-actions-group">
             <button className={`explain-btn ${aiLoading ? "loading" : ""}`} onClick={onExplain} disabled={aiLoading || loading || runLoading}>
