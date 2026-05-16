@@ -34,6 +34,7 @@ _load_local_env()
 
 from traceon.server.api import router as sessions_router, session_manager
 from traceon.server.ai_service import explain_code_ai
+from traceon.server.auth import router as auth_router
 from traceon.server.models import (
     AnalyzeCodeRequest,
     AnalyzeCodeResponse,
@@ -293,6 +294,7 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=500, detail=f"AI explanation failed: {error}") from error
 
     app.include_router(sessions_router)
+    app.include_router(auth_router)
     return app
 
 

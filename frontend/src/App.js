@@ -145,37 +145,46 @@ function App() {
   useEffect(() => { checkServer(); }, [checkServer]);
 
   useEffect(() => {
-    // Check for existing session
     const savedUser = localStorage.getItem("traceon_user");
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+    const savedToken = localStorage.getItem("traceon_auth_token");
+
+    if (savedUser && savedToken) {
+      try {
+        const payload = JSON.parse(atob(savedToken.split(".")[1]));
+        if (payload.exp && payload.exp * 1000 > Date.now()) {
+          setUser(JSON.parse(savedUser));
+        } else {
+          localStorage.removeItem("traceon_user");
+          localStorage.removeItem("traceon_auth_token");
+        }
+      } catch {
+        localStorage.removeItem("traceon_user");
+        localStorage.removeItem("traceon_auth_token");
+      }
+    } else if (savedUser) {
+      // Legacy sessions created before OAuth was added
+      localStorage.removeItem("traceon_user");
     }
 
     return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      if (aiAbortControllerRef.current) {
-        aiAbortControllerRef.current.abort();
-      }
-      if (stepAbortControllerRef.current) {
-        stepAbortControllerRef.current.abort();
-      }
-      if (runAbortControllerRef.current) {
-        runAbortControllerRef.current.abort();
-      }
+      if (abortControllerRef.current) abortControllerRef.current.abort();
+      if (aiAbortControllerRef.current) aiAbortControllerRef.current.abort();
+      if (stepAbortControllerRef.current) stepAbortControllerRef.current.abort();
+      if (runAbortControllerRef.current) runAbortControllerRef.current.abort();
     };
   }, []);
 
-  const handleLogin = (userData) => {
+  const handleLogin = (userData, token) => {
     setUser(userData);
     localStorage.setItem("traceon_user", JSON.stringify(userData));
+    if (token) localStorage.setItem("traceon_auth_token", token);
     setView("editor");
   };
 
   const handleLogout = () => {
     setUser(null);
     localStorage.removeItem("traceon_user");
+    localStorage.removeItem("traceon_auth_token");
     setView("landing");
   };
 
