@@ -88,45 +88,65 @@ class LLDBController:
 
     def list_locals(self) -> tuple[dict[str, str], list[dict]]:
         for _ in range(3):
-            output = self.run("frame variable -L -T")
+            output_locals = self.run("frame variable -L -T")
+            output_globals = self.run("target variable")
+            
             variables: dict[str, str] = {}
             memory: list[dict] = []
             
             current_var = None
             current_val = []
             
-            for line in output:
-                line_stripped = line.strip()
-                match = re.match(r"^([0-9a-fA-Fx]+|[a-z0-9]+):\s+\((.*?)\)\s+(.+?)\s*=\s*(.*)$", line_stripped)
-                if match:
-                    addr, typ, name, val = match.groups()
-                    if not current_var:
-                        if val.endswith("{"):
-                            current_var = name
-                            current_val = [val]
-                        else:
-                            variables[name] = val
-                    else:
-                        current_val.append(line_stripped)
+            # Helper to parse LLDB variable output
+            def parse_lldb_lines(lines, is_global=False):
+                nonlocal current_var, current_val
+                for line in lines:
+                    line_stripped = line.strip()
+                    # frame variable has address prefix, target variable usually does not (unless specifically requested)
+                    # match with or without address
+                    match = re.match(r"^([0-9a-fA-Fx]+|[a-z0-9]+)?:\s+\((.*?)\)\s+(.+?)\s*=\s*(.*)$", line_stripped)
+                    # Also match lines without address prefix (common in target variable)
+                    if not match:
+                        match = re.match(r"^\((.*?)\)\s+([A-Za-z_]\w*)\s*=\s*(.*)$", line_stripped)
                     
-                    deref = None
-                    if "*" in typ and val.startswith("0x"):
-                        deref = val
+                    if match:
+                        groups = match.groups()
+                        if len(groups) == 4:
+                            addr, typ, name, val = groups
+                        else:
+                            addr, typ, name, val = None, groups[0], groups[1], groups[2]
+
+                        if not current_var:
+                            if val.endswith("{"):
+                                current_var = name
+                                current_val = [val]
+                            else:
+                                variables[name] = val
+                        else:
+                            current_val.append(line_stripped)
                         
-                    memory.append({
-                        "address": addr, 
-                        "type": typ, 
-                        "name": name, 
-                        "value": val, 
-                        "deref": deref
-                    })
-                elif line_stripped == "}" and current_var:
-                    current_val.append("}")
-                    variables[current_var] = "\n".join(current_val)
-                    current_var = None
-                    current_val = []
-                elif current_var:
-                    current_val.append(line_stripped)
+                        deref = None
+                        if "*" in typ and val.startswith("0x"):
+                            deref = val
+                            
+                        memory.append({
+                            "address": addr or "global", 
+                            "type": typ, 
+                            "name": name, 
+                            "value": val, 
+                            "deref": deref,
+                            "scope": "global" if is_global else "local"
+                        })
+                    elif line_stripped == "}" and current_var:
+                        current_val.append("}")
+                        variables[current_var] = "\n".join(current_val)
+                        current_var = None
+                        current_val = []
+                    elif current_var:
+                        current_val.append(line_stripped)
+
+            parse_lldb_lines(output_locals, is_global=False)
+            parse_lldb_lines(output_globals, is_global=True)
                     
             if variables or memory:
                 return variables, memory

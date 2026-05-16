@@ -86,6 +86,26 @@
 
 ---
 
+## 🔥 Phase 12 — Hotspot Heatmap & Performance Profiler
+
+**Goal:** Visualise execution density and identify performance bottlenecks.
+
+### 12.1 Backend Metrics Collection
+- **Hit Counting:** Update `collect_execution_timeline` to aggregate how many times each source line is visited.
+- **Micro-timing:** Measure wall-clock time between debugger steps to provide a high-level performance estimate per line.
+- **API Extension:** Include `execution_heatmap` data in the final `AnalyzeCodeResponse`.
+
+### 12.2 Editor Heatmap Overlay
+- **Monaco Gutter Integration:** Render a vertical "Heat Strip" next to line numbers.
+- **Dynamic Coloring:** Use a gradient (Blue → Yellow → Red) to reflect line-hit frequency.
+- **Metric Tooltips:** Show execution stats when hovering over line gutters in the editor.
+
+### 12.3 AI Performance Audit
+- **Optimization Button:** New action in the performance tab to send hot-path data to Gemini.
+- **Algorithmic Refactoring:** AI suggestions focused on reducing time complexity for high-frequency code paths.
+
+---
+
 ## 🚀 Future Roadmap
 
 | Feature | Description | Complexity |

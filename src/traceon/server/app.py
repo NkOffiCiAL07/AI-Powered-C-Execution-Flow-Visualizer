@@ -78,6 +78,7 @@ from traceon.server.models import (
     FileUpsertRequest,
     GenerateCodeRequest,
     GenerateCodeResponse,
+    PerformanceMetricsDTO,
     ProjectCreateRequest,
     RunCodeRequest,
     RunCodeResponse,
@@ -446,6 +447,10 @@ def create_app() -> FastAPI:
                 except Exception as e:
                     logger.error(f"Failed to persist snapshots to MongoDB: {e}")
 
+            # Fetch performance metrics
+            perf_data = session_manager.get_performance_metrics(started.session_id)
+            performance = PerformanceMetricsDTO(**perf_data)
+
             return AnalyzeCodeResponse(
                 session_id=started.session_id,
                 status=started.status,
@@ -455,6 +460,7 @@ def create_app() -> FastAPI:
                 total_steps=total_steps,
                 execution_mode="incremental",
                 message="Session started. Click Next to fetch each new step.",
+                performance=performance,
             )
         except HTTPException:
             raise
@@ -504,6 +510,10 @@ def create_app() -> FastAPI:
             else:
                 accepted, message, record = session_manager.step_back(session_id)
 
+            # Fetch performance metrics
+            perf_data = session_manager.get_performance_metrics(session_id)
+            performance = PerformanceMetricsDTO(**perf_data)
+
             return AnalyzeStepResponse(
                 session_id=record.session_id,
                 accepted=accepted,
@@ -512,6 +522,7 @@ def create_app() -> FastAPI:
                 total_recorded_steps=len(record.history or []),
                 snapshot=_to_execution_snapshot(record.state),
                 message=message or "",
+                performance=performance,
             )
         except KeyError as error:
             raise HTTPException(status_code=404, detail=str(error)) from error

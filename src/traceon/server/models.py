@@ -159,6 +159,12 @@ class ExecutionSnapshot(BaseModel):
     call_stack: list[StackFrameDTO] = Field(default_factory=list)
 
 
+class PerformanceMetricsDTO(BaseModel):
+    line_hits: dict[int, int] = Field(default_factory=dict)
+    line_times_ms: dict[int, float] = Field(default_factory=dict)
+    total_execution_time_ms: float = 0.0
+
+
 class AnalyzeCodeResponse(BaseModel):
     session_id: str
     status: SessionStatus
@@ -170,6 +176,7 @@ class AnalyzeCodeResponse(BaseModel):
     stderr: str = ""
     execution_mode: str = "timeline"
     message: str = ""
+    performance: PerformanceMetricsDTO | None = None
 
 
 class AnalyzeStepResponse(BaseModel):
@@ -180,6 +187,7 @@ class AnalyzeStepResponse(BaseModel):
     total_recorded_steps: int
     snapshot: ExecutionSnapshot | None = None
     message: str = ""
+    performance: PerformanceMetricsDTO | None = None
 
 
 class GenerateCodeRequest(BaseModel):

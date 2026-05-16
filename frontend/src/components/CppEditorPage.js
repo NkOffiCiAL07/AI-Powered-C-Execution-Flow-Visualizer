@@ -52,6 +52,7 @@ export default function CppEditorPage({
   onProgramInputChange,
   onRun,
   onExplain,
+  onOptimize,
   onGenerate,
   onSave,
   onBackToDashboard,
@@ -64,6 +65,7 @@ export default function CppEditorPage({
   result,
   aiExplanation,
   aiLoading,
+  performance,
   language = "cpp",
   onLanguageChange,
   onFileSwitch,
@@ -294,6 +296,7 @@ export default function CppEditorPage({
             currentLine={null}
             onEditRequest={() => {}}
             language={language}
+            performance={performance}
             compact
             compileError={result?.compile_error || null}
           />
@@ -348,6 +351,18 @@ export default function CppEditorPage({
               {aiLoading ? "Thinking…" : "AI Insights"}
               {aiLoading && <span className="editor-tab-spinner" />}
             </button>
+
+            {performance && (
+              <button
+                className="explain-btn"
+                onClick={onOptimize}
+                disabled={aiLoading || loading}
+                title="AI Performance Audit"
+              >
+                <span className="material-symbols-outlined">speed</span>
+                Optimize
+              </button>
+            )}
             <button
               className="run-icon-btn"
               onClick={onRun}

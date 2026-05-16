@@ -138,36 +138,39 @@
 
 .section-header {
   padding: 0;
+  height: 44px;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0;
   background-color: var(--bg-card);
+  flex-shrink: 0;
 }
 
 .section-header h2 {
   margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
-  padding: 0 16px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .examples-selector-container {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 16px;
+  gap: 8px;
+  padding: 0 10px;
 }
 
 
 .section-header-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 0 12px;
+  gap: 5px;
+  padding: 0 10px;
   flex-shrink: 0;
 }
 
@@ -327,26 +330,61 @@
   flex-shrink: 0;
 }
 
+/* ── Section header title ── */
+.section-header-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 14px;
+}
+
+.section-header-icon {
+  font-size: 16px !important;
+  color: var(--primary);
+  opacity: 0.85;
+}
+
+.section-header-title h2 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 /* ── Tabs ── */
 .tab-bar {
   display: flex;
   gap: 0;
-  height: 48px;
+  height: 44px;
   align-items: stretch;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+.tab-bar::-webkit-scrollbar { display: none; }
 
 .tab {
-  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 15px;
   background: transparent;
   border: none;
+  border-bottom: 2px solid transparent;
   color: var(--text-muted);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
-  border-bottom: 2px solid transparent;
-  transition: all 0.2s var(--ease-out);
+  transition: color 0.18s, background 0.18s, border-color 0.18s;
   font-family: var(--font-sans);
-  position: relative;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tab-icon {
+  font-size: 14px !important;
+  opacity: 0.8;
 }
 
 .tab:hover {
@@ -357,6 +395,11 @@
 .tab.active {
   color: var(--accent-blue-bright);
   border-bottom-color: var(--accent-blue);
+}
+
+.tab.active .tab-icon {
+  opacity: 1;
+  color: var(--accent-blue-bright);
 }
 
 /* ── Server-down banner ── */

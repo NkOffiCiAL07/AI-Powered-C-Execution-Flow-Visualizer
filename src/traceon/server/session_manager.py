@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import time
 from uuid import uuid4
 
 from traceon.lldb_controller import LLDBController
@@ -42,6 +43,11 @@ class _SessionRecord:
     cursor: int = -1
     completed: bool = False
     has_seen_user_source: bool = False
+    # ── Performance Metrics ──
+    line_hits: dict[int, int] = field(default_factory=dict)
+    line_times_ms: dict[int, float] = field(default_factory=dict)
+    total_execution_time_ms: float = 0.0
+    start_time: float | None = None
 
 
 class SessionManager:
@@ -403,6 +409,14 @@ class SessionManager:
             state=record.state,
         )
 
+    def get_performance_metrics(self, session_id: str) -> dict[str, Any]:
+        record = self._require_session(session_id)
+        return {
+            "line_hits": record.line_hits,
+            "line_times_ms": record.line_times_ms,
+            "total_execution_time_ms": record.total_execution_time_ms
+        }
+
     def _require_session(self, session_id: str) -> _SessionRecord:
         record = self.get_record(session_id)
         if record is None:
@@ -413,9 +427,16 @@ class SessionManager:
         if record.controller is None:
             return
 
+        step_start_time = time.perf_counter()
+        if record.start_time is None:
+            record.start_time = step_start_time
+
         current_file, current_line, current_function = record.controller.current_location()
         if self._is_user_source_location(record, current_file):
             record.has_seen_user_source = True
+            
+        if current_line != -1:
+            record.line_hits[current_line] = record.line_hits.get(current_line, 0) + 1
             
         if getattr(record.controller, "__class__", None).__name__ == "LLDBController":
             variables, memory = record.controller.list_locals()
@@ -455,6 +476,12 @@ class SessionManager:
             stdout_tail=previous_state.stdout_tail if previous_state else "",
             stderr_tail=previous_state.stderr_tail if previous_state else "",
         )
+        
+        # Update timing
+        duration_ms = (time.perf_counter() - step_start_time) * 1000
+        if current_line != -1:
+            record.line_times_ms[current_line] = record.line_times_ms.get(current_line, 0.0) + duration_ms
+        record.total_execution_time_ms = (time.perf_counter() - record.start_time) * 1000
         record.previous_variables = variables.copy()
         if record.history is None:
             record.history = []

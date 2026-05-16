@@ -165,7 +165,16 @@
   background-color: var(--bg-hover);
 }
 
-.edit-code-btn:active {
-  transform: scale(0.97);
+.heatmap-gutter {
+  width: 4px !important;
+  margin-left: 1px;
 }
+
+.heatmap-gutter.heat-low { background-color: #3A6A9E; }
+.heatmap-gutter.heat-med { background-color: #f59e0b; }
+.heatmap-gutter.heat-high { background-color: #ef4444; }
+
+.heatmap-line.heat-low { background-color: rgba(58, 106, 158, 0.05); }
+.heatmap-line.heat-med { background-color: rgba(245, 158, 11, 0.08); }
+.heatmap-line.heat-high { background-color: rgba(239, 68, 68, 0.12); }
 

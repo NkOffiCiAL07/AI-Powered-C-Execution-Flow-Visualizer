@@ -274,7 +274,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 6px 13px;
+  padding: 5px 11px;
   background: var(--bg-card);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
@@ -284,6 +284,7 @@
   cursor: pointer;
   transition: all 0.18s ease;
   font-family: inherit;
+  white-space: nowrap;
 }
 
 .explain-btn .material-symbols-outlined {
@@ -297,9 +298,36 @@
 }
 
 .explain-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.38;
   cursor: not-allowed;
 }
+
+/* AI Insights button — blue accent */
+.explain-btn--ai {
+  color: var(--accent-blue-bright);
+  border-color: var(--accent-blue-glow);
+  background: var(--accent-blue-glow);
+}
+.explain-btn--ai .material-symbols-outlined { color: var(--accent-blue-bright); }
+.explain-btn--ai:hover:not(:disabled) {
+  filter: brightness(1.1);
+  border-color: var(--accent-blue);
+  color: var(--accent-blue-bright);
+}
+
+/* Optimize button — green accent */
+.explain-btn--optimize {
+  color: var(--accent-green);
+  border-color: rgba(76, 175, 125, 0.28);
+  background: rgba(76, 175, 125, 0.06);
+}
+.explain-btn--optimize .material-symbols-outlined { color: var(--accent-green); }
+.explain-btn--optimize:hover:not(:disabled) {
+  background: rgba(76, 175, 125, 0.13);
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+}
+.explain-btn--optimize:disabled { opacity: 0.3; }
 
 .theme-toggle-btn {
   background: transparent;

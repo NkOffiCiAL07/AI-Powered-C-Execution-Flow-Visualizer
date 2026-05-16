@@ -131,6 +131,7 @@ function App() {
   const [code, setCode] = useState(DEFAULT_CODES.cpp);
   const [programInput, setProgramInput] = useState("");
   const [analysisResult, setAnalysisResult] = useState(null);
+  const [performanceMetrics, setPerformanceMetrics] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [stepLoading, setStepLoading] = useState(false);
@@ -320,8 +321,9 @@ function App() {
         }
 
       } else {
-        // No URL view param → use role-based default
-        setView(isMember ? "dashboard" : "editor");
+        // No URL view param -> keep the default "landing" view even if logged in.
+        // Users should click "Launch App" to enter their workspace.
+        setView("landing");
       }
     }
 
@@ -671,6 +673,11 @@ function App() {
       );
       setServerDown(false);
       setAnalysisResult(result);
+      if (result.performance) {
+        setPerformanceMetrics(result.performance);
+      } else {
+        setPerformanceMetrics(null);
+      }
       setActiveTab("flow");
     } catch (err) {
       if (err.name === "AbortError") return;
@@ -757,6 +764,45 @@ function App() {
     }
   }, [language]);
 
+  const handleOptimizePerformance = useCallback(async () => {
+    if (!code.trim() || !performanceMetrics) {
+      setError("Please run the debugger first to collect performance data.");
+      return;
+    }
+
+    const hotPath = Object.entries(performanceMetrics.line_hits || {})
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([line, hits]) => `Line ${line} (hit ${hits} times)`)
+      .join(", ");
+
+    const prompt = `I have a ${language} program with performance bottlenecks. The hottest paths are: ${hotPath}. Total execution time: ${performanceMetrics.total_execution_time_ms.toFixed(2)}ms. Please suggest specific algorithmic optimizations for these hotspots.`;
+    
+    if (aiAbortControllerRef.current) {
+      aiAbortControllerRef.current.abort();
+    }
+    aiAbortControllerRef.current = new AbortController();
+
+    setAiLoading(true);
+    setError(null);
+    setActiveTab("ai");
+    try {
+      const result = await generateCode(prompt, language, aiAbortControllerRef.current.signal);
+      setAiExplanation({
+        explanation: result.code || result.explanation || "No optimization suggestions provided.",
+        time_complexity: "N/A (Performance Audit)",
+        space_complexity: "N/A (Performance Audit)",
+        key_points: ["Performance Hotspot Analysis", ...hotPath.split(", ")]
+      });
+    } catch (err) {
+      if (err.name === "AbortError") return;
+      setError(err.message || "Optimization audit failed");
+    } finally {
+      setAiLoading(false);
+      aiAbortControllerRef.current = null;
+    }
+  }, [code, language, performanceMetrics]);
+
   const handleStep = useCallback(async (direction, stepType) => {
     if (!analysisResult?.session_id) {
       return;
@@ -777,6 +823,10 @@ function App() {
         stepType,
         stepAbortControllerRef.current.signal
       );
+
+      if (response.performance) {
+        setPerformanceMetrics(response.performance);
+      }
 
       setAnalysisResult((prev) => {
         if (!prev) return prev;
@@ -869,6 +919,7 @@ function App() {
               }
             }}
             onExplain={handleExplain}
+            onOptimize={handleOptimizePerformance}
             onSave={currentProject ? handleSave : null}
             onBackToDashboard={currentProject ? () => setView("dashboard") : null}
             currentProject={currentProject}
@@ -878,6 +929,7 @@ function App() {
             result={runResult}
             aiExplanation={aiExplanation}
             aiLoading={aiLoading}
+            performance={performanceMetrics}
             language={language}
             onLanguageChange={handleLanguageChange}
             onGenerate={handleGenerate}
@@ -937,7 +989,10 @@ function App() {
                 </div>
               )}
               <div className="section-header">
-                <h2>Your Code</h2>
+                <div className="section-header-title">
+                  <span className="material-symbols-outlined section-header-icon">code</span>
+                  <h2>Your Code</h2>
+                </div>
                 <div className="examples-selector-container">
                   <button
                     className="ai-gen-trigger"
@@ -1006,14 +1061,20 @@ function App() {
                 <>
                   <div className="section-header">
                 <div className="tab-bar" role="tablist" aria-label="View tabs">
-                  {['Execution Flow', 'Memory Spectrometer', 'AI Insights', 'Output & Details'].map(tab => (
+                  {[
+                    { id: "flow",   label: "Execution Flow",      icon: "account_tree" },
+                    { id: "memory", label: "Memory Spectrometer", icon: "memory_alt" },
+                    { id: "ai",     label: "AI Insights",         icon: "auto_awesome" },
+                    { id: "output", label: "Output",              icon: "terminal" },
+                  ].map(({ id, label, icon }) => (
                     <button
-                      key={tab}
-                      className={`tab ${activeTab === (tab.toLowerCase().split(' ')[0]) ? "active" : ""}`}
-                      onClick={() => setActiveTab(tab.toLowerCase().split(' ')[0])}
+                      key={id}
+                      className={`tab ${activeTab === id ? "active" : ""}`}
+                      onClick={() => setActiveTab(id)}
                       role="tab"
                     >
-                      {tab}
+                      <span className="material-symbols-outlined tab-icon">{icon}</span>
+                      {label}
                     </button>
                   ))}
                 </div>
@@ -1028,15 +1089,21 @@ function App() {
                       </button>
                     </>
                   )}
-                  <button className="explain-btn" onClick={handleExplain} disabled={aiLoading || loading}>
+                  <button className="explain-btn explain-btn--ai" onClick={handleExplain} disabled={aiLoading || loading}>
                     <span className="material-symbols-outlined">auto_awesome</span>
                     {aiLoading ? "Thinking…" : "AI Insights"}
+                    {aiLoading && <span className="editor-tab-spinner" />}
                   </button>
+                  <button className="explain-btn explain-btn--optimize" onClick={handleOptimizePerformance} disabled={aiLoading || loading || !performanceMetrics}>
+                    <span className="material-symbols-outlined">speed</span>
+                    Optimize
+                  </button>
+
                   <button
                     className="run-icon-btn"
                     onClick={() => handleAnalyze()}
                     disabled={loading || aiLoading}
-                    title="Analyze & Run"
+                    title="Analyze & Debug"
                   >
                     <span className={`material-symbols-outlined${loading ? " spin" : ""}`}>{loading ? "sync" : "play_arrow"}</span>
                   </button>

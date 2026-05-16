@@ -395,11 +395,12 @@ function parseErrorMarkers(errorText, lang) {
   return markers;
 }
 
-export default function CodeEditor({ code, onChange, currentLine, onEditRequest, language = "cpp", compact = false, compileError = null }) {
+export default function CodeEditor({ code, onChange, currentLine, onEditRequest, language = "cpp", compact = false, compileError = null, performance = null }) {
   const lineRefs = useRef({});
   const completionProviderRef = useRef(null);
   const monacoRef = useRef(null);
   const editorRef = useRef(null);
+  const decorationIdsRef = useRef([]);
   const { theme } = useTheme();
   const isDark = isDarkTheme(theme);
 
@@ -415,6 +416,41 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest,
     if (!model) return;
     monacoRef.current.editor.setModelMarkers(model, 'traceon', parseErrorMarkers(compileError, language));
   }, [compileError, language]);
+
+  // Phase 12.2: Execution Heatmap Decorations
+  useEffect(() => {
+    if (!monacoRef.current || !editorRef.current || !performance) {
+      if (editorRef.current) {
+        decorationIdsRef.current = editorRef.current.deltaDecorations(decorationIdsRef.current, []);
+      }
+      return;
+    }
+
+    const { line_hits = {} } = performance;
+    const maxHits = Math.max(...Object.values(line_hits), 1);
+    
+    const newDecorations = Object.entries(line_hits).map(([lineStr, hits]) => {
+      const line = parseInt(lineStr);
+      const intensity = hits / maxHits;
+      
+      // Calculate color (Blue 0% -> Yellow 50% -> Red 100%)
+      let colorClass = "heat-low";
+      if (intensity > 0.7) colorClass = "heat-high";
+      else if (intensity > 0.3) colorClass = "heat-med";
+
+      return {
+        range: new monacoRef.current.Range(line, 1, line, 1),
+        options: {
+          isWholeLine: true,
+          linesDecorationsClassName: `heatmap-gutter ${colorClass}`,
+          className: `heatmap-line ${colorClass}`,
+          hoverMessage: { value: `Executed ${hits} times` }
+        }
+      };
+    });
+
+    decorationIdsRef.current = editorRef.current.deltaDecorations(decorationIdsRef.current, newDecorations);
+  }, [performance]);
 
   const handleEditorMount = (editor, monaco) => {
     monacoRef.current = monaco;

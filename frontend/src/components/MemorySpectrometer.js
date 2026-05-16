@@ -35,6 +35,7 @@ export default function MemorySpectrometer({ result, currentStep }) {
             <div className="memory-address">{mem.address}</div>
             <div className="memory-content">
               <div className="memory-meta">
+                {mem.scope === "global" && <span className="scope-badge global">GLOBAL</span>}
                 <span className="memory-type">{mem.type}</span>
                 <span className="memory-name">{mem.name}</span>
               </div>
