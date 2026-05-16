@@ -35,15 +35,6 @@ export default function CppEditorPage({
       </section>
 
       <section className="editor-page-right">
-        <button
-          className={`editor-run-btn ${loading ? "loading" : ""}`}
-          onClick={() => onRun()}
-          disabled={loading}
-        >
-          <span className="material-symbols-outlined">{loading ? 'sync' : 'play_arrow'}</span>
-          {loading ? "Initializing..." : "Compile & Run"}
-        </button>
-
         <div className="editor-page-card input-card">
           <div className="editor-page-subhead">
             <h3>Program Input</h3>
