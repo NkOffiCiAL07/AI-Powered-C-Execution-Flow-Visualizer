@@ -482,9 +482,12 @@ function App() {
               setRunError(null);
             }}
             onRun={handleRun}
+            onExplain={handleExplain}
             loading={runLoading}
             error={runError}
             result={runResult}
+            aiExplanation={aiExplanation}
+            aiLoading={aiLoading}
           />
         );
       case "visualizer":
@@ -560,6 +563,27 @@ function App() {
                     Output & Details
                   </button>
                 </div>
+                <div className="section-header-actions">
+                  <button
+                    className="explain-btn"
+                    onClick={handleExplain}
+                    disabled={aiLoading || loading}
+                  >
+                    <span className="material-symbols-outlined">auto_awesome</span>
+                    {aiLoading ? "Thinking…" : "AI Insights"}
+                    {aiLoading && <span className="editor-tab-spinner" />}
+                  </button>
+                  <button
+                    className="run-icon-btn"
+                    onClick={handleAnalyze}
+                    disabled={loading || aiLoading}
+                    title="Analyze & Visualize"
+                  >
+                    <span className={`material-symbols-outlined${loading ? " spin" : ""}`}>
+                      {loading ? "sync" : "play_arrow"}
+                    </span>
+                  </button>
+                </div>
               </div>
               {error && (
                 <div className="error-banner">
@@ -608,12 +632,6 @@ function App() {
     <div className="app">
       {view !== "landing" && (
         <Header
-          onAnalyze={handleAnalyze}
-          onRun={handleRun}
-          onExplain={handleExplain}
-          loading={loading}
-          runLoading={runLoading}
-          aiLoading={aiLoading}
           view={view}
           onSwitchView={setView}
           user={user}

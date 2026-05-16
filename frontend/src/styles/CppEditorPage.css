@@ -24,10 +24,9 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 1px;
   background-color: var(--border);
   min-width: 0;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 /* resize-divider styles live in App.css (shared with debugger view) */
@@ -52,6 +51,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
 }
 
 .editor-page-head h2,
@@ -191,6 +191,82 @@
 
 .editor-input-textarea:focus {
   background: var(--bg-secondary);
+}
+
+/* ── Right-panel tab bar ── */
+.editor-tab-bar {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  height: 42px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.editor-tab-group {
+  display: flex;
+  align-items: stretch;
+}
+
+.editor-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: color 0.18s, border-color 0.18s, background 0.18s;
+  white-space: nowrap;
+}
+
+.editor-tab .material-symbols-outlined {
+  font-size: 15px;
+}
+
+.editor-tab:hover {
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+}
+
+.editor-tab.active {
+  color: var(--accent-blue-bright, #60a5fa);
+  border-bottom-color: var(--accent-blue, #3b82f6);
+}
+
+.editor-tab-spinner {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid transparent;
+  border-top-color: var(--accent-blue-bright, #60a5fa);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+  margin-left: 4px;
+}
+
+/* ── AI panel wrapper ── */
+.editor-ai-panel {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* ── Output tab scroll wrapper ── */
+.editor-output-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--border);
+  overflow-y: auto;
+  min-height: 0;
 }
 
 /* ── Output panels ── */
