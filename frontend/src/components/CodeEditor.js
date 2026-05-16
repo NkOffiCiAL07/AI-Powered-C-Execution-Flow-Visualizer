@@ -401,8 +401,20 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest,
   const monacoRef = useRef(null);
   const editorRef = useRef(null);
   const decorationIdsRef = useRef([]);
+  const containerRef = useRef(null);
   const { theme } = useTheme();
   const isDark = isDarkTheme(theme);
+
+  // Force Monaco to recalculate layout whenever the container is resized
+  // (covers: initial render where flex heights aren't resolved, sidebar appearing/disappearing)
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver(() => {
+      editorRef.current?.layout?.();
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  });
 
   useEffect(() => {
     if (monacoRef.current) {
@@ -615,6 +627,9 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest,
 
     monaco.editor.setTheme(monacoThemeName(theme));
     editor.focus();
+
+    // Force layout after initial mount — flex heights may not be resolved yet
+    requestAnimationFrame(() => editor.layout());
   };
 
   // Auto-scroll to the active line
@@ -631,7 +646,7 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest,
 
   if (currentLine !== undefined && currentLine !== null) {
     return (
-      <div className="code-editor">
+      <div className="code-editor" ref={containerRef}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", backgroundColor: "var(--bg-card)", borderBottom: "1px solid var(--border)" }}>
           <span style={{ fontSize: "13px", color: "var(--text-primary)" }}>Playing — currently on line {currentLine}</span>
           <button className="edit-code-btn" onClick={onEditRequest}>
@@ -664,7 +679,7 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest,
   }
 
   return (
-    <div className="code-editor">
+    <div className="code-editor" ref={containerRef}>
       {!compact && <div className="editor-hint">{language === "python" ? "Python" : language === "c" ? "C" : language === "java" ? "Java" : "C++"} editor with syntax highlighting, indentation, and bracket matching</div>}
       <div className="editor-shell">
         {!compact && (

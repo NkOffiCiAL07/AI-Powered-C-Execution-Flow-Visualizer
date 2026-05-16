@@ -124,7 +124,7 @@ export default function CppEditorPage({
   const success = result?.success;
 
   const [tab, setTab] = useState("output");
-  const [leftPct, setLeftPct] = useState(68);
+  const [leftPct, setLeftPct] = useState(58);
   const dragging = useRef(false);
   const containerRef = useRef(null);
 
@@ -159,7 +159,7 @@ export default function CppEditorPage({
   }, []);
 
   return (
-    <main className="editor-page-main" ref={containerRef}>
+    <main className="editor-page-main">
       {/* ── Left Sidebar: File Explorer ── */}
       {currentProject && (
         <aside className="editor-sidebar">
@@ -213,6 +213,8 @@ export default function CppEditorPage({
         </aside>
       )}
 
+      {/* ── Content area: editor + divider + right (percentages relative to this, not full page) ── */}
+      <div className="editor-content-wrap" ref={containerRef}>
       {/* ── Middle: code editor ── */}
       <section className="editor-page-left" style={{ width: `${leftPct}%`, position: "relative" }}>
         {/* ── AI Generate overlay ── */}
@@ -309,7 +311,7 @@ export default function CppEditorPage({
       </div>
 
       {/* ── Right: tabs + content ── */}
-      <section className="editor-page-right" style={{ width: `${100 - leftPct}%` }}>
+      <section className="editor-page-right" style={{ flex: 1 }}>
 
         {/* Tab bar */}
         <div className="editor-tab-bar">
@@ -332,37 +334,40 @@ export default function CppEditorPage({
           </div>
           <div className="section-header-actions">
             <button
-              className="visualise-btn"
+              className="tab-action-btn tab-action-debug"
               onClick={onAnalyze}
               disabled={loading || aiLoading}
               title={!user || user.role === "guest" ? "Sign in to unlock advanced debugging" : !currentProject ? "Create a project to enable debugging" : "Start high-fidelity debugger"}
             >
               <span className="material-symbols-outlined">bug_report</span>
-              Visualise
-              {(!user || user.role === "guest" || !currentProject) && <span className="material-symbols-outlined lock-icon">lock</span>}
+              Debug
+              {(!user || user.role === "guest" || !currentProject) && (
+                <span className="material-symbols-outlined tab-action-lock">lock</span>
+              )}
             </button>
 
             <button
-              className="explain-btn"
+              className="tab-action-btn"
               onClick={onExplain}
               disabled={aiLoading || loading}
+              title="AI Insights"
             >
-              <span className="material-symbols-outlined">auto_awesome</span>
-              {aiLoading ? "Thinking…" : "AI Insights"}
-              {aiLoading && <span className="editor-tab-spinner" />}
+              <span className={`material-symbols-outlined${aiLoading ? " spin" : ""}`}>
+                {aiLoading ? "sync" : "auto_awesome"}
+              </span>
             </button>
 
             {performance && (
               <button
-                className="explain-btn"
+                className="tab-action-btn"
                 onClick={onOptimize}
                 disabled={aiLoading || loading}
-                title="AI Performance Audit"
+                title="Optimize with AI"
               >
                 <span className="material-symbols-outlined">speed</span>
-                Optimize
               </button>
             )}
+
             <button
               className="run-icon-btn"
               onClick={onRun}
@@ -426,6 +431,7 @@ export default function CppEditorPage({
           </div>
         )}
       </section>
+      </div>{/* end editor-content-wrap */}
     </main>
   );
 }
