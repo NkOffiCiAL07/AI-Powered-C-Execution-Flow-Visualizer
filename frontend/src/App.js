@@ -148,22 +148,29 @@ function App() {
     const savedUser = localStorage.getItem("traceon_user");
     const savedToken = localStorage.getItem("traceon_auth_token");
 
-    if (savedUser && savedToken) {
+    if (savedUser) {
       try {
-        const payload = JSON.parse(atob(savedToken.split(".")[1]));
-        if (payload.exp && payload.exp * 1000 > Date.now()) {
-          setUser(JSON.parse(savedUser));
+        const parsed = JSON.parse(savedUser);
+        if (parsed.provider === "guest") {
+          // Guest sessions are always valid (no token needed)
+          setUser(parsed);
+        } else if (savedToken) {
+          // OAuth session — verify JWT expiry before restoring
+          const payload = JSON.parse(atob(savedToken.split(".")[1]));
+          if (payload.exp && payload.exp * 1000 > Date.now()) {
+            setUser(parsed);
+          } else {
+            localStorage.removeItem("traceon_user");
+            localStorage.removeItem("traceon_auth_token");
+          }
         } else {
+          // OAuth user but no token — clear stale state
           localStorage.removeItem("traceon_user");
-          localStorage.removeItem("traceon_auth_token");
         }
       } catch {
         localStorage.removeItem("traceon_user");
         localStorage.removeItem("traceon_auth_token");
       }
-    } else if (savedUser) {
-      // Legacy sessions created before OAuth was added
-      localStorage.removeItem("traceon_user");
     }
 
     return () => {

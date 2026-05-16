@@ -91,6 +91,18 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
     window.addEventListener('message', onMessage);
   };
 
+  const handleGuestSignIn = () => {
+    const guest = {
+      id: `guest-${Math.random().toString(36).slice(2, 9)}`,
+      name: 'Guest',
+      email: '',
+      avatar: '',
+      provider: 'guest',
+    };
+    onLogin(guest, null);
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -131,10 +143,17 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
           )}
         </button>
 
-        <p className="auth-note">Secure OAuth 2.0 — no password stored</p>
+        <div className="auth-divider"><span>or</span></div>
+
+        <button className="guest-signin-btn" onClick={handleGuestSignIn} disabled={loading}>
+          <span className="material-symbols-outlined">person</span>
+          Continue as Guest
+        </button>
+
+        <p className="auth-note">Google sign-in saves your session across devices</p>
 
         <div className="modal-footer">
-          <p>By signing in you agree to our Terms of Service and Privacy Policy.</p>
+          <p>By continuing you agree to our Terms of Service and Privacy Policy.</p>
         </div>
 
         <div className="hud-line" />
