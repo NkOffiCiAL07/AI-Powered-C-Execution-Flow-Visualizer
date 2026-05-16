@@ -22,12 +22,6 @@ const NAV_PAGES = [
   { value: "community", label: "Community", icon: "groups"     },
 ];
 
-const LANG_OPTIONS = [
-  { value: "cpp",    label: "C++",    icon: "terminal" },
-  { value: "c",      label: "C",      icon: "terminal" },
-  { value: "python", label: "Python", icon: "terminal" },
-  { value: "java",   label: "Java",   icon: "terminal" },
-];
 
 function Dropdown({ trigger, children, align = "left" }) {
   const [open, setOpen] = useState(false);
@@ -56,7 +50,6 @@ export default function Header({ view, onSwitchView, user, onLogout, onSignIn, l
   const { theme, setTheme } = useTheme();
   const inApp = view === "editor" || view === "visualizer";
   const currentView = VIEW_OPTIONS.find(o => o.value === view);
-  const currentLang = LANG_OPTIONS.find(o => o.value === (language || "cpp"));
 
   return (
     <header className="header">
@@ -76,7 +69,7 @@ export default function Header({ view, onSwitchView, user, onLogout, onSignIn, l
             </span>
             <span className="breadcrumb-sep">/</span>
             <span className="breadcrumb-item file-crumb">
-              {currentProject.file?.name}
+              {currentProject.file?.name ?? "Loading…"}
             </span>
           </div>
         )}

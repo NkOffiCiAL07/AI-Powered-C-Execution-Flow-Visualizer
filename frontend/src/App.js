@@ -13,6 +13,8 @@ import LoginModal from "./components/LoginModal";
 import DashboardPage from "./components/DashboardPage";
 import DebuggerRestricted from "./components/DebuggerRestricted";
 import MemorySpectrometer from "./components/MemorySpectrometer";
+import LangDropdown from "./components/LangDropdown";
+import KeyboardShortcutsModal from "./components/KeyboardShortcutsModal";
 import { 
   analyzeCode, runCode, stepAnalyzeSession, explainCode, generateCode, 
   updateFile, deleteFile, fetchProject, fetchFiles, createFile, fetchPublicProject, API_BASE_URL 
@@ -82,49 +84,6 @@ if __name__ == "__main__":
 }`,
 };
 
-const LANG_OPTIONS = [
-  { value: "cpp",    label: "C++"    },
-  { value: "c",      label: "C"      },
-  { value: "python", label: "Python" },
-  { value: "java",   label: "Java"   },
-];
-
-function LangDropdown({ language, onChange }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-  const current = LANG_OPTIONS.find(o => o.value === language);
-
-  useEffect(() => {
-    if (!open) return;
-    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, [open]);
-
-  return (
-    <div className="ex-dropdown" ref={ref}>
-      <button className="ex-dropdown-trigger" onClick={() => setOpen(o => !o)}>
-        <span className="material-symbols-outlined" style={{ fontSize: 14, color: "var(--primary)" }}>code</span>
-        {current?.label}
-        <span className="material-symbols-outlined ex-chevron" style={{ transform: open ? "rotate(180deg)" : "none" }}>expand_more</span>
-      </button>
-      {open && (
-        <ul className="ex-dropdown-menu">
-          {LANG_OPTIONS.map(opt => (
-            <li key={opt.value}
-              className={`ex-dropdown-item ${opt.value === language ? "active" : ""}`}
-              onClick={() => { onChange(opt.value); setOpen(false); }}>
-              {opt.value === language && <span className="material-symbols-outlined ex-check">check</span>}
-              {opt.label}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-
 function App() {
   const [user, setUser] = useState(null);
   const [language, setLanguage] = useState("cpp");
@@ -153,6 +112,7 @@ function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [sessionExpiredBanner, setSessionExpiredBanner] = useState(false);
   const [currentProject, setCurrentProject] = useState(null);
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const abortControllerRef = useRef(null);
   const aiAbortControllerRef = useRef(null);
   const stepAbortControllerRef = useRef(null);
@@ -496,6 +456,31 @@ function App() {
     }
   };
 
+  const handleFileRename = async (fileId, newName) => {
+    if (!currentProject || !newName.trim()) return;
+    const { project, files } = currentProject;
+    const file = files.find(f => f.id === fileId);
+    if (!file || file.name === newName.trim()) return;
+
+    const ext = newName.trim().split('.').pop().toLowerCase();
+    const langMap = { cpp: 'cpp', cc: 'cpp', cxx: 'cpp', c: 'c', py: 'python', java: 'java' };
+    const detectedLang = langMap[ext] || file.language;
+
+    try {
+      await updateFile(project.id, fileId, newName.trim(), detectedLang, file.code);
+      setCurrentProject(prev => ({
+        ...prev,
+        files: prev.files.map(f =>
+          f.id === fileId ? { ...f, name: newName.trim(), language: detectedLang } : f
+        ),
+        ...(prev.activeFileId === fileId ? { file: { ...prev.file, name: newName.trim(), language: detectedLang } } : {}),
+      }));
+      if (currentProject.activeFileId === fileId) setLanguage(detectedLang);
+    } catch (err) {
+      alert(err.message || "Failed to rename file");
+    }
+  };
+
   // Save current code back to the open project file
   const handleSave = useCallback(async () => {
     if (!currentProject?.activeFileId || !currentProject?.project) return;
@@ -526,7 +511,9 @@ function App() {
   }, [currentProject]);
 
   // Phase 7.2: Auto-save effect
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
+    if (!user || user.role === "guest") return;
     if (!currentProject || view !== "editor") return;
     
     const activeFile = currentProject.files?.find(f => f.id === currentProject.activeFileId);
@@ -541,7 +528,18 @@ function App() {
     }, 2000); // 2 second debounce
 
     return () => clearTimeout(timer);
-  }, [code, language, currentProject, view, handleSave]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code, language, currentProject, view, handleSave]); // 'user' omitted intentionally — guest check inside
+
+  useEffect(() => {
+    const handler = (e) => {
+      const tag = e.target.tagName;
+      const inInput = tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable;
+      if (!inInput && e.key === '?') setShowShortcuts(s => !s);
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
 
   const handleExplain = useCallback(async () => {
     if (!code.trim()) {
@@ -732,6 +730,21 @@ function App() {
       runAbortControllerRef.current = null;
     }
   }, [code, programInput, language]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (view === 'editor') handleRun();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'E') {
+        e.preventDefault();
+        if (view === 'editor') handleExplain();
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [view, handleRun, handleExplain]);
 
   const handleExplainStep = useCallback(async (snapshot) => {
     if (!snapshot) return;
@@ -937,6 +950,7 @@ function App() {
             onFileSwitch={handleFileSwitch}
             onFileCreate={handleFileCreate}
             onFileDelete={handleFileDelete}
+            onFileRename={handleFileRename}
           />
         );
       case "visualizer":
@@ -1189,6 +1203,7 @@ function App() {
       )}
       {renderView()}
       <LoginModal isOpen={showLoginModal} onLogin={(userData, token) => { handleLogin(userData, token); setShowLoginModal(false); }} onClose={() => setShowLoginModal(false)} />
+      <KeyboardShortcutsModal isOpen={showShortcuts} onClose={() => setShowShortcuts(false)} />
     </div>
   );
 }

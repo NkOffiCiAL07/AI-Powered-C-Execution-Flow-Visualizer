@@ -56,10 +56,23 @@ const T = 'rgba(201,106,72,'; // terracotta helper
 const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [heroReady, setHeroReady] = useState(false);
+  const [githubStars, setGithubStars] = useState(null);
 
   useEffect(() => {
     const t = setTimeout(() => setHeroReady(true), 80);
     return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    fetch('https://api.github.com/repos/NkOffiCiAL07/AI-Powered-C-Execution-Flow-Visualizer')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.stargazers_count != null) {
+          const n = data.stargazers_count;
+          setGithubStars(n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const { theme } = useTheme();
@@ -463,7 +476,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
                   <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#C96A48' }}>star</span>
                   Star on GitHub
                   <div className="w-px h-4 mx-1" style={{ background: border20 }} />
-                  <span style={{ color: '#C96A48', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px' }}>12.4k</span>
+                  <span style={{ color: '#C96A48', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px' }}>{githubStars ?? '★'}</span>
                 </button>
                 <button className="cta-primary flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm" onClick={launch}>
                   <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>rocket_launch</span>
@@ -472,7 +485,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
               </div>
 
               <div className="flex flex-wrap items-center justify-center gap-10 mt-16 pt-14 border-t" style={{ borderColor: border10 }}>
-                {[{ value: '12.4k', label: 'GitHub Stars' }, { value: '50k+', label: 'Traces Analyzed' }, { value: '< 200ms', label: 'Avg. Analysis' }, { value: '99.9%', label: 'Uptime' }].map((s, i) => (
+                {[{ value: githubStars ?? '…', label: 'GitHub Stars' }, { value: '50k+', label: 'Traces Analyzed' }, { value: '< 200ms', label: 'Avg. Analysis' }, { value: '99.9%', label: 'Uptime' }].map((s, i) => (
                   <div key={i} className="text-center">
                     <div className="text-3xl font-extrabold mb-1" style={{ color: '#C96A48', fontFamily: 'Space Grotesk, sans-serif' }}>{s.value}</div>
                     <div className="text-xs uppercase tracking-widest font-bold" style={{ color: textMuted38 }}>{s.label}</div>
@@ -507,10 +520,10 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
                   { icon: 'group',       label: 'Community', onClick: () => onSwitchView('community') },
                   { icon: 'mail',        label: 'Email',     onClick: () => window.open('mailto:nishantkumar19041@gmail.com', '_blank') },
                 ].map(s => (
-                  <a key={s.label} href="#0" aria-label={s.label} className="social-icon"
-                     onClick={(e) => { e.preventDefault(); s.onClick(); }}>
+                  <button key={s.label} type="button" aria-label={s.label} className="social-icon"
+                     onClick={s.onClick}>
                     <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>{s.icon}</span>
-                  </a>
+                  </button>
                 ))}
               </div>
             </div>
@@ -540,11 +553,13 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
             </p>
             <div className="flex gap-6">
               {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map(link => (
-                <a key={link} href="#0" className="text-xs transition-colors" style={{ color: textMuted35 }}
+                <button key={link} type="button" className="text-xs transition-colors"
+                  style={{ color: textMuted35, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
                   onMouseEnter={e => e.currentTarget.style.color = '#C96A48'}
-                  onMouseLeave={e => e.currentTarget.style.color = textMuted35}>
+                  onMouseLeave={e => e.currentTarget.style.color = textMuted35}
+                  onClick={() => alert(`${link} — Coming Soon`)}>
                   {link}
-                </a>
+                </button>
               ))}
             </div>
           </div>

@@ -29,6 +29,9 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
   const [deletingId, setDeletingId]     = useState(null);
   const [restoringId, setRestoringId]   = useState(null);
   const [openingId, setOpeningId]       = useState(null);
+  const [searchQuery, setSearchQuery]   = useState('');
+  const [langFilter, setLangFilter]     = useState('all');
+  const [sortBy, setSortBy]             = useState('accessed');
 
   const loadProjects = useCallback(async () => {
     setLoading(true);
@@ -115,6 +118,15 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
     onOpenProject({ project, files: [file], activeFileId: file.id });
   };
 
+  const filteredProjects = projects
+    .filter(p => langFilter === 'all' || p.language === langFilter)
+    .filter(p => !searchQuery.trim() || p.name.toLowerCase().includes(searchQuery.trim().toLowerCase()))
+    .sort((a, b) => {
+      if (sortBy === 'name') return a.name.localeCompare(b.name);
+      if (sortBy === 'created') return new Date(b.created_at) - new Date(a.created_at);
+      return new Date(b.last_accessed || b.created_at) - new Date(a.last_accessed || a.created_at);
+    });
+
   return (
     <div className="dashboard">
       {/* ── Sidebar ── */}
@@ -190,7 +202,7 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
                 <h1 className="dash-title">My Projects</h1>
                 <p className="dash-subtitle">
                   {projects.length > 0
-                    ? `${projects.length} project${projects.length !== 1 ? 's' : ''}`
+                    ? `${filteredProjects.length} of ${projects.length} project${projects.length !== 1 ? 's' : ''}`
                     : 'Create a project to get started'}
                 </p>
               </div>
@@ -199,6 +211,49 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
                 New Project
               </button>
             </div>
+
+            {projects.length > 0 && (
+              <div className="dash-search-row">
+                <div className="dash-search-wrap">
+                  <span className="material-symbols-outlined dash-search-icon">search</span>
+                  <input
+                    className="dash-search-input"
+                    type="text"
+                    placeholder="Search projects…"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                  {searchQuery && (
+                    <button className="dash-search-clear" onClick={() => setSearchQuery('')}>
+                      <span className="material-symbols-outlined">close</span>
+                    </button>
+                  )}
+                </div>
+                <div className="dash-filter-chips">
+                  {['all', 'cpp', 'c', 'python', 'java'].map(lang => (
+                    <button
+                      key={lang}
+                      className={`dash-chip ${langFilter === lang ? 'active' : ''}`}
+                      onClick={() => setLangFilter(lang)}
+                    >
+                      {lang === 'all' ? 'All' : LANG_LABELS[lang]}
+                    </button>
+                  ))}
+                </div>
+                <div className="dash-sort-wrap">
+                  <span className="material-symbols-outlined dash-sort-icon">sort</span>
+                  <select
+                    className="dash-sort-select"
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                  >
+                    <option value="accessed">Last Opened</option>
+                    <option value="created">Created</option>
+                    <option value="name">Name A–Z</option>
+                  </select>
+                </div>
+              </div>
+            )}
 
             {loadingProjects ? (
               <div className="dash-loading">
@@ -224,9 +279,15 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
                         Create your first project
                       </button>
                     </div>
+                  ) : filteredProjects.length === 0 ? (
+                    <div className="dash-empty-state">
+                      <span className="material-symbols-outlined dash-empty-icon">search_off</span>
+                      <h3>No projects match</h3>
+                      <p>Try adjusting the search or filter.</p>
+                    </div>
                   ) : (
                     <div className="proj-grid">
-                      {projects.map(proj => (
+                      {filteredProjects.map(proj => (
                         <div
                           key={proj.id}
                           className={`proj-card ${openingId === proj.id ? 'proj-card-opening' : ''}`}
@@ -271,14 +332,27 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
                 <aside className="dash-activity-sidebar">
                   <h3>Activity</h3>
                   <div className="activity-heatmap">
-                    {Array.from({ length: 35 }).map((_, i) => (
-                      <div 
-                        key={i} 
-                        className="heatmap-cell" 
-                        style={{ opacity: i > 25 ? Math.random() * 0.8 + 0.2 : Math.random() * 0.3 }}
-                        title={`Activity level: ${Math.round(Math.random() * 10)}`}
-                      />
-                    ))}
+                    {(() => {
+                      const now = Date.now();
+                      const day = 86400000;
+                      const accessedDays = new Set(
+                        projects
+                          .filter(p => p.last_accessed)
+                          .map(p => Math.floor((now - new Date(p.last_accessed).getTime()) / day))
+                      );
+                      return Array.from({ length: 35 }).map((_, i) => {
+                        const daysAgo = 34 - i;
+                        const active = accessedDays.has(daysAgo);
+                        return (
+                          <div
+                            key={i}
+                            className="heatmap-cell"
+                            style={{ opacity: active ? 0.85 : 0.12 }}
+                            title={active ? `Active ${daysAgo === 0 ? 'today' : `${daysAgo}d ago`}` : 'No activity'}
+                          />
+                        );
+                      });
+                    })()}
                   </div>
                   <div className="activity-meta">
                     <span>Less</span>
@@ -353,11 +427,33 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
         )}
 
         {activeNav === 'settings' && (
-          <div className="dash-settings-placeholder">
-            <span className="material-symbols-outlined" style={{ fontSize: 48, color: 'var(--text-muted)' }}>settings</span>
-            <h3>Settings</h3>
-            <p>Account and workspace settings — coming soon.</p>
-          </div>
+          <>
+            <div className="dash-topbar">
+              <div>
+                <h1 className="dash-title">Settings</h1>
+                <p className="dash-subtitle">Account and workspace preferences</p>
+              </div>
+            </div>
+            <div className="settings-grid">
+              {[
+                { icon: 'person', title: 'Profile', desc: 'Avatar, display name, and email address', badge: true },
+                { icon: 'palette', title: 'Appearance', desc: 'Theme, font size, and editor layout', badge: true },
+                { icon: 'code', title: 'Editor', desc: 'Default language, tab size, and keybindings', badge: true },
+                { icon: 'lock', title: 'Security', desc: 'Sign out of all devices and delete account', badge: true },
+              ].map(s => (
+                <div key={s.title} className="settings-card">
+                  <div className="settings-card-icon">
+                    <span className="material-symbols-outlined">{s.icon}</span>
+                  </div>
+                  <div className="settings-card-body">
+                    <div className="settings-card-title">{s.title}</div>
+                    <div className="settings-card-desc">{s.desc}</div>
+                  </div>
+                  {s.badge && <span className="settings-soon-badge">Soon</span>}
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </main>
 

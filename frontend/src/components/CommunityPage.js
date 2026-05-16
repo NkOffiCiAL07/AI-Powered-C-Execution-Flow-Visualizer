@@ -68,7 +68,7 @@ const CommunityPage = () => (
             Real-time support and architecture discussions with the core team. Ask questions, share projects, get feedback.
           </p>
           <button
-            onClick={() => window.open('mailto:nishantkumar19041@gmail.com?subject=Traceon Discord Invite', '_blank')}
+            onClick={() => alert('Discord server coming soon — follow the GitHub repo for updates.')}
             style={{
               padding: '11px 28px', borderRadius: '10px', fontWeight: '700', fontSize: '0.875rem',
               cursor: 'pointer', background: 'transparent', color: 'var(--text-primary)',
@@ -76,7 +76,7 @@ const CommunityPage = () => (
             }}
             onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}
             onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-          >Request Invite</button>
+          >Coming Soon</button>
         </div>
       </div>
 
@@ -86,27 +86,9 @@ const CommunityPage = () => (
         borderRadius: '16px', padding: '32px'
       }}>
         <h3 style={{ fontSize: '1.05rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '20px' }}>Upcoming Events</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-          {[
-            { title: 'v1.2 Release Keynote', sub: 'Global Virtual Event', date: 'May 24', accent: 'var(--primary)' },
-            { title: 'C++ Flow Analysis Workshop', sub: 'Advanced Debugging Series', date: 'Jun 02', accent: 'var(--primary)' },
-          ].map((ev, i, arr) => (
-            <div key={ev.title} style={{
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              padding: '16px 0',
-              borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none'
-            }}>
-              <div>
-                <p style={{ fontWeight: '600', color: 'var(--text-primary)', fontSize: '0.9rem', marginBottom: '3px' }}>{ev.title}</p>
-                <p style={{ fontSize: '0.78rem', color: 'rgba(26,19,16,0.5)' }}>{ev.sub}</p>
-              </div>
-              <span style={{
-                fontSize: '0.8rem', fontWeight: '700', color: ev.accent,
-                fontFamily: 'JetBrains Mono, monospace', background: 'var(--bg-secondary)',
-                padding: '4px 12px', borderRadius: '6px', border: '1px solid var(--border)'
-              }}>{ev.date}</span>
-            </div>
-          ))}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '20px 0', color: 'rgba(26,19,16,0.45)' }}>
+          <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>event_busy</span>
+          <span style={{ fontSize: '0.875rem' }}>No upcoming events scheduled. Check back soon.</span>
         </div>
       </div>
 

@@ -37,11 +37,12 @@ const AiExplanation = ({ data, loading }) => {
   }
 
   const getComplexityClass = (complexity) => {
-    const c = (complexity || "").toLowerCase();
-    if (c.includes('o(1)')) return 'complexity-low';
-    if (c.includes('o(log')) return 'complexity-low';
-    if (c.includes('o(n)')) return 'complexity-medium';
-    if (c.includes('o(n log')) return 'complexity-medium';
+    const c = (complexity || "");
+    if (/o\(1\)/i.test(c) || /o\(log/i.test(c)) return 'complexity-low';
+    if (/n!|2\^n|\^n|factorial/i.test(c)) return 'complexity-high';
+    if (/o\(n\^2\)|o\(n²\)|o\(n\*\*2\)/i.test(c)) return 'complexity-high';
+    if (/o\(n log|o\(n²\)/i.test(c)) return 'complexity-medium';
+    if (/o\(n\)/i.test(c)) return 'complexity-medium';
     return 'complexity-high';
   };
 

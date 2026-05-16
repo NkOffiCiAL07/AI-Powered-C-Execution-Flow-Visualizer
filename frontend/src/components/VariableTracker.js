@@ -99,8 +99,8 @@ export default function VariableTracker({ variables, changedVariables, previousS
               }`}
             >
               {isChanged && <BubbleParticles active varName={name} varValue={value} key={`${name}-${burstKey}`} />}
-              <div className="var-name">{name}</div>
-              <div className="var-value">
+              <div className="var-name" title={name}>{name}</div>
+              <div className="var-value" title={String(value)}>
                 <code>{value}</code>
               </div>
               {isChanged && previousValue !== undefined && (

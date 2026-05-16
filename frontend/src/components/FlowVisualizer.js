@@ -33,9 +33,6 @@ function buildExplanation(snapshot, prevSnapshot, stepIndex) {
   return `Line ${line}: ${sentences.join(" ")}`;
 }
 
-function stepEmoji(snapshot, stepIndex) {
-  return null;
-}
 
 export default function FlowVisualizer({
   result,

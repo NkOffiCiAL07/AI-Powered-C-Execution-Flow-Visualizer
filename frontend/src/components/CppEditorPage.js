@@ -1,49 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import CodeEditor from "./CodeEditor";
 import AiExplanation from "./AiExplanation";
+import LangDropdown from "./LangDropdown";
 import "../styles/CppEditorPage.css";
-
-const LANG_OPTIONS = [
-  { value: "cpp",    label: "C++"    },
-  { value: "c",      label: "C"      },
-  { value: "python", label: "Python" },
-  { value: "java",   label: "Java"   },
-];
-
-function LangDropdown({ language, onChange }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-  const current = LANG_OPTIONS.find(o => o.value === language);
-
-  useEffect(() => {
-    if (!open) return;
-    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, [open]);
-
-  return (
-    <div className="ex-dropdown" ref={ref}>
-      <button className="ex-dropdown-trigger" onClick={() => setOpen(o => !o)}>
-        <span className="material-symbols-outlined" style={{ fontSize: 14, color: "var(--primary)" }}>code</span>
-        {current?.label}
-        <span className="material-symbols-outlined ex-chevron" style={{ transform: open ? "rotate(180deg)" : "none" }}>expand_more</span>
-      </button>
-      {open && (
-        <ul className="ex-dropdown-menu">
-          {LANG_OPTIONS.map(opt => (
-            <li key={opt.value}
-              className={`ex-dropdown-item ${opt.value === language ? "active" : ""}`}
-              onClick={() => { onChange(opt.value); setOpen(false); }}>
-              {opt.value === language && <span className="material-symbols-outlined ex-check">check</span>}
-              {opt.label}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
 
 export default function CppEditorPage({
   code,
@@ -71,6 +30,7 @@ export default function CppEditorPage({
   onFileSwitch,
   onFileCreate,
   onFileDelete,
+  onFileRename,
 }) {
   const [prompt, setPrompt] = useState("");
   const [showPrompt, setShowPrompt] = useState(false);
@@ -79,8 +39,11 @@ export default function CppEditorPage({
   const saveTimerRef = useRef(null);
   const [showNewFilePrompt, setShowNewFilePrompt] = useState(false);
   const [newFileName, setNewFileName] = useState("");
+  const [renamingFileId, setRenamingFileId] = useState(null);
+  const [renameValue, setRenameValue] = useState("");
+  const renameInputRef = useRef(null);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!onSave || saveState === "saving") return;
     setSaveState("saving");
     try {
@@ -93,9 +56,21 @@ export default function CppEditorPage({
       clearTimeout(saveTimerRef.current);
       saveTimerRef.current = setTimeout(() => setSaveState("idle"), 2500);
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onSave]);
 
   useEffect(() => () => clearTimeout(saveTimerRef.current), []);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [handleSave]);
 
   const handleGenerate = () => {
     if (prompt.trim()) {
@@ -111,6 +86,20 @@ export default function CppEditorPage({
       setNewFileName("");
       setShowNewFilePrompt(false);
     }
+  };
+
+  const startRename = (f, e) => {
+    e.stopPropagation();
+    setRenamingFileId(f.id);
+    setRenameValue(f.name);
+    setTimeout(() => renameInputRef.current?.select(), 20);
+  };
+
+  const commitRename = () => {
+    if (renameValue.trim() && renamingFileId) {
+      onFileRename && onFileRename(renamingFileId, renameValue.trim());
+    }
+    setRenamingFileId(null);
   };
 
   const openPrompt = () => {
@@ -169,16 +158,31 @@ export default function CppEditorPage({
           </div>
           <div className="sidebar-list">
             {currentProject.files?.map(f => (
-              <div 
-                key={f.id} 
+              <div
+                key={f.id}
                 className={`file-item ${f.id === currentProject.activeFileId ? 'active' : ''}`}
-                onClick={() => onFileSwitch && onFileSwitch(f.id)}
+                onClick={() => renamingFileId !== f.id && onFileSwitch && onFileSwitch(f.id)}
               >
                 <span className="material-symbols-outlined file-icon">
                   {f.language === 'python' ? 'terminal' : 'description'}
                 </span>
-                <span className="file-name">{f.name}</span>
-                <button 
+                {renamingFileId === f.id ? (
+                  <input
+                    ref={renameInputRef}
+                    className="file-rename-input"
+                    value={renameValue}
+                    onChange={(e) => setRenameValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') commitRename();
+                      if (e.key === 'Escape') setRenamingFileId(null);
+                    }}
+                    onBlur={commitRename}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                ) : (
+                  <span className="file-name" onDoubleClick={(e) => startRename(f, e)} title="Double-click to rename">{f.name}</span>
+                )}
+                <button
                   className="file-delete-btn"
                   onClick={(e) => { e.stopPropagation(); onFileDelete && onFileDelete(f.id); }}
                   title="Delete file"
