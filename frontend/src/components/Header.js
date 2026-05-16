@@ -4,70 +4,59 @@ import { useTheme } from "../theme";
 
 export default function Header({ onAnalyze, onExplain, loading, aiLoading, view, onSwitchView, user, onLogout, onSignIn }) {
   const { theme, toggleTheme } = useTheme();
+  const inApp = view === "editor" || view === "visualizer";
+
   return (
     <header className="header">
-      <div className="header-content">
-        <h1 className="header-title" onClick={() => onSwitchView("landing")} style={{cursor: 'pointer'}}>
-          <span className="material-symbols-outlined text-primary" style={{fontSize: '24px'}}>terminal</span>
-          <span className="brand-text">Traceon</span>
-        </h1>
+      {/* Left — brand */}
+      <div className="header-brand" onClick={() => onSwitchView("landing")}>
+        <span className="material-symbols-outlined header-brand-icon">terminal</span>
+        <span className="brand-text">Traceon</span>
       </div>
 
-      <div className="header-actions">
-        <nav className="header-nav">
-          <button className={`nav-link ${view === 'landing' ? 'active' : ''}`} onClick={() => onSwitchView("landing")}>Home</button>
-          <button className={`nav-link ${view === 'docs' ? 'active' : ''}`} onClick={() => onSwitchView("docs")}>Docs</button>
-          <button className={`nav-link ${view === 'pricing' ? 'active' : ''}`} onClick={() => onSwitchView("pricing")}>Pricing</button>
-          <button className={`nav-link ${view === 'community' ? 'active' : ''}`} onClick={() => onSwitchView("community")}>Community</button>
-        </nav>
-        
-        {(view === "editor" || view === "visualizer") && (
-          <div className="header-view-switch" role="tablist" aria-label="Page view switch">
-            <button
-              className={`view-switch-btn ${view === "visualizer" ? "active" : ""}`}
-              onClick={() => onSwitchView("visualizer")}
-              role="tab"
-              aria-selected={view === "visualizer"}
-            >
-              Visualizer
+      {/* Center — nav */}
+      <nav className="header-nav" aria-label="Main navigation">
+        <button className={`nav-link ${view === "landing"  ? "active" : ""}`} onClick={() => onSwitchView("landing")}>Home</button>
+        <button className={`nav-link ${view === "docs"     ? "active" : ""}`} onClick={() => onSwitchView("docs")}>Docs</button>
+        <button className={`nav-link ${view === "pricing"  ? "active" : ""}`} onClick={() => onSwitchView("pricing")}>Pricing</button>
+        <button className={`nav-link ${view === "community"? "active" : ""}`} onClick={() => onSwitchView("community")}>Community</button>
+      </nav>
+
+      {/* Right — actions + user */}
+      <div className="header-right">
+
+        {/* View switcher — only inside the app */}
+        {inApp && (
+          <div className="header-view-switch" role="tablist" aria-label="App view">
+            <button className={`view-switch-btn ${view === "visualizer" ? "active" : ""}`} onClick={() => onSwitchView("visualizer")} role="tab" aria-selected={view === "visualizer"}>
+              Debugger
             </button>
-            <button
-              className={`view-switch-btn ${view === "editor" ? "active" : ""}`}
-              onClick={() => onSwitchView("editor")}
-              role="tab"
-              aria-selected={view === "editor"}
-            >
+            <button className={`view-switch-btn ${view === "editor" ? "active" : ""}`} onClick={() => onSwitchView("editor")} role="tab" aria-selected={view === "editor"}>
               Editor
             </button>
           </div>
         )}
 
-        <button
-          className="theme-toggle-btn"
-          onClick={toggleTheme}
-          title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-        >
-          {theme === "dark" ? "🌙" : "☀️"}
+        {/* AI + Analyze actions — only in debugger */}
+        {view === "visualizer" && (
+          <div className="header-actions-group">
+            <button className={`explain-btn ${aiLoading ? "loading" : ""}`} onClick={onExplain} disabled={aiLoading || loading}>
+              <span className="material-symbols-outlined">auto_awesome</span>
+              {aiLoading ? "Thinking…" : "AI Insights"}
+            </button>
+            <button className={`analyze-btn ${loading ? "loading" : ""}`} onClick={onAnalyze} disabled={loading || aiLoading}>
+              <span className="material-symbols-outlined">play_arrow</span>
+              {loading ? "Analyzing…" : "Analyze & Visualize"}
+            </button>
+          </div>
+        )}
+
+        {/* Theme toggle */}
+        <button className="theme-toggle-btn" onClick={toggleTheme} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} aria-label="Toggle theme">
+          <span className="material-symbols-outlined">{theme === "dark" ? "dark_mode" : "light_mode"}</span>
         </button>
 
-        {view === "visualizer" && (
-          <>
-            <button
-              className={`explain-btn ${aiLoading ? "loading" : ""}`}
-              onClick={onExplain}
-              disabled={aiLoading || loading}
-            >
-              {aiLoading ? "Thinking..." : "Explain Code"}
-            </button>
-            <button
-              className={`analyze-btn ${loading ? "loading" : ""}`}
-              onClick={onAnalyze}
-              disabled={loading || aiLoading}
-            >
-              {loading ? "Analyzing..." : "Analyze & Run"}
-            </button>
-          </>
-        )}
+        {/* User */}
         {user ? (
           <div className="user-pill">
             {user.avatar ? (
@@ -75,7 +64,7 @@ export default function Header({ onAnalyze, onExplain, loading, aiLoading, view,
             ) : (
               <span className="user-avatar-placeholder material-symbols-outlined">person</span>
             )}
-            <span className="user-name">{user.name || 'Guest'}</span>
+            <span className="user-name">{user.name || "Guest"}</span>
             <button className="signout-btn" onClick={onLogout} title="Sign out">
               <span className="material-symbols-outlined">logout</span>
             </button>

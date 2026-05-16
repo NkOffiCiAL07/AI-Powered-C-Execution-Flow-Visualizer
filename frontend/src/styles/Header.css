@@ -12,22 +12,22 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 100;
   box-shadow: 0 1px 0 var(--border);
 }
 
-.header-title {
-  margin: 0;
+/* ── Brand ── */
+.header-brand {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 8px;
   cursor: pointer;
-  color: var(--primary);
-  text-decoration: none;
+  flex-shrink: 0;
 }
 
-.header-title .material-symbols-outlined {
+.header-brand-icon {
   font-size: 20px;
   color: var(--primary);
 }
@@ -41,12 +41,6 @@
 }
 
 /* ── Center nav ── */
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .header-nav {
   display: none;
 }
@@ -60,6 +54,21 @@
     left: 50%;
     transform: translateX(-50%);
   }
+}
+
+/* ── Right section ── */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ── Actions group (AI + Analyze) ── */
+.header-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 /* nav-link is shared with LandingPage — redefine for header context only */
@@ -125,7 +134,10 @@
 
 /* ── Action Buttons ── */
 .analyze-btn {
-  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 13px;
   background: var(--primary);
   border: none;
   border-radius: var(--radius-md);
@@ -136,6 +148,11 @@
   letter-spacing: 0.01em;
   transition: opacity 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
   box-shadow: 0 2px 8px rgba(217, 119, 87, 0.28);
+  font-family: inherit;
+}
+
+.analyze-btn .material-symbols-outlined {
+  font-size: 14px;
 }
 
 .analyze-btn:hover:not(:disabled) {
@@ -150,7 +167,10 @@
 }
 
 .explain-btn {
-  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 13px;
   background: var(--bg-card);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
@@ -159,6 +179,11 @@
   font-size: 11px;
   cursor: pointer;
   transition: all 0.18s ease;
+  font-family: inherit;
+}
+
+.explain-btn .material-symbols-outlined {
+  font-size: 14px;
 }
 
 .explain-btn:hover:not(:disabled) {
@@ -177,15 +202,21 @@
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  font-size: 15px;
-  padding: 4px;
+  padding: 5px;
   border-radius: var(--radius-sm);
-  transition: background 0.18s ease;
-  line-height: 1;
+  transition: background 0.18s ease, color 0.18s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-toggle-btn .material-symbols-outlined {
+  font-size: 18px;
 }
 
 .theme-toggle-btn:hover {
   background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .sign-in-link {
