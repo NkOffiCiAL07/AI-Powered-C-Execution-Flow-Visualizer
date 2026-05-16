@@ -2,7 +2,7 @@ import React from "react";
 import "../styles/Header.css";
 import { useTheme } from "../theme";
 
-export default function Header({ onAnalyze, onExplain, loading, aiLoading, view, onSwitchView, user, onLogout, onSignIn }) {
+export default function Header({ onAnalyze, onRun, onExplain, loading, runLoading, aiLoading, view, onSwitchView, user, onLogout, onSignIn }) {
   const { theme, toggleTheme } = useTheme();
   const inApp = view === "editor" || view === "visualizer";
 
@@ -37,17 +37,24 @@ export default function Header({ onAnalyze, onExplain, loading, aiLoading, view,
           </div>
         )}
 
-        {/* AI + Analyze actions — only in debugger */}
-        {view === "visualizer" && (
+        {/* AI + primary action — shown in both debugger and editor */}
+        {inApp && (
           <div className="header-actions-group">
-            <button className={`explain-btn ${aiLoading ? "loading" : ""}`} onClick={onExplain} disabled={aiLoading || loading}>
+            <button className={`explain-btn ${aiLoading ? "loading" : ""}`} onClick={onExplain} disabled={aiLoading || loading || runLoading}>
               <span className="material-symbols-outlined">auto_awesome</span>
               {aiLoading ? "Thinking…" : "AI Insights"}
             </button>
-            <button className={`analyze-btn ${loading ? "loading" : ""}`} onClick={onAnalyze} disabled={loading || aiLoading}>
-              <span className="material-symbols-outlined">play_arrow</span>
-              {loading ? "Analyzing…" : "Analyze & Visualize"}
-            </button>
+            {view === "visualizer" ? (
+              <button className={`analyze-btn ${loading ? "loading" : ""}`} onClick={onAnalyze} disabled={loading || aiLoading}>
+                <span className="material-symbols-outlined">play_arrow</span>
+                {loading ? "Analyzing…" : "Analyze & Visualize"}
+              </button>
+            ) : (
+              <button className={`analyze-btn ${runLoading ? "loading" : ""}`} onClick={onRun} disabled={runLoading || aiLoading}>
+                <span className="material-symbols-outlined">play_arrow</span>
+                {runLoading ? "Running…" : "Compile & Run"}
+              </button>
+            )}
           </div>
         )}
 

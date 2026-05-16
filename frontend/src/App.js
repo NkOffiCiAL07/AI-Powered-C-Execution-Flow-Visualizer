@@ -548,8 +548,10 @@ function App() {
       {view !== "landing" && (
         <Header
           onAnalyze={handleAnalyze}
+          onRun={handleRun}
           onExplain={handleExplain}
           loading={loading}
+          runLoading={runLoading}
           aiLoading={aiLoading}
           view={view}
           onSwitchView={setView}
