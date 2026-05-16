@@ -76,6 +76,7 @@ class LiveExecutionStateDTO(BaseModel):
     step: int
     location: SourceLocationDTO
     variables: dict[str, str] = Field(default_factory=dict)
+    memory: list[dict] = Field(default_factory=list)
     changed_variables: list[str] = Field(default_factory=list)
     call_stack: list[StackFrameDTO] = Field(default_factory=list)
     stdout_tail: str = ""

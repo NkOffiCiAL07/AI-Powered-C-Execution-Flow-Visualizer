@@ -3,27 +3,43 @@ import '../styles/FlowVisualizer.css';
 
 export default function DebuggerRestricted({ reason, onAction, actionLabel, onSecondaryAction, secondaryActionLabel }) {
   return (
-    <div className="flow-visualizer-empty restricted-state">
-      <div className="restricted-icon-wrapper">
-        <span className="material-symbols-outlined">lock</span>
-      </div>
-      <h3>Debugger Restricted</h3>
-      <p className="restricted-reason">{reason}</p>
-      
-      <div className="restricted-actions">
-        <button className="control-btn primary" onClick={onAction}>
-          {actionLabel}
-        </button>
-        {onSecondaryAction && (
-          <button className="control-btn" onClick={onSecondaryAction}>
-            {secondaryActionLabel}
+    <div className="restricted-overlay">
+      <div className="restricted-content">
+        <div className="restricted-icon-shield">
+          <span className="material-symbols-outlined">security</span>
+        </div>
+        <h2 className="restricted-title">Authentication Required</h2>
+        <p className="restricted-text">
+          {reason || "Sign in to access high-fidelity execution visualization and interactive memory mapping."}
+        </p>
+        
+        <div className="restricted-actions-row">
+          <button className="restricted-btn-primary" onClick={onAction}>
+            <span className="material-symbols-outlined">login</span>
+            {actionLabel || "Sign in with Google"}
           </button>
-        )}
-      </div>
+          
+          {onSecondaryAction && (
+            <button className="restricted-btn-outline" onClick={onSecondaryAction}>
+              {secondaryActionLabel}
+            </button>
+          )}
+        </div>
 
-      <div className="restricted-footer">
-        <span className="material-symbols-outlined">info</span>
-        <span>The debugger requires a project to store execution snapshots in MongoDB.</span>
+        <div className="restricted-perks">
+          <div className="perk-item">
+            <span className="material-symbols-outlined">schema</span>
+            <span>Live Execution Maps</span>
+          </div>
+          <div className="perk-item">
+            <span className="material-symbols-outlined">memory</span>
+            <span>Memory Spectrometer</span>
+          </div>
+          <div className="perk-item">
+            <span className="material-symbols-outlined">auto_awesome</span>
+            <span>AI Step Insights</span>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -55,16 +55,40 @@
 - Permanent share links (`?v=view&pid=...`) load code and snapshots instantly.
 - Execution snapshots persisted in MongoDB for every successful `/analyze` run.
 
+### ~~Phase 10 — Future Enhancements Delivered~~
+- **Execution Diff:** Side-by-side diff of variable state via "Diff Mode" toggle.
+- **Step-level AI:** "AI Explain" button for specific steps in the debugger.
+- **Trash Bin:** "Recently Deleted" recovery via soft deletes in MongoDB.
+- **Activity Heatmap:** Visual activity feed in the Dashboard.
+- **Mobile Debugger:** Tabbed layout for small screens (< 768px).
+
 ---
 
-## 🚀 Future Enhancements
+## 💎 Phase 11 — Memory Spectrometer *(Next Major Release)*
+
+**Goal:** Provide high-fidelity visualization of the Stack, Heap, and Pointer relationships.
+
+### 11.1 Robust LLDB Data Extraction
+- **Bug Fix:** Refactor `LLDBController.list_locals` to use `parray` or JSON-formatted output to handle complex C++ types (STL vectors, nested structs).
+- **Address Mapping:** Extract memory addresses for every variable (`p &var`) to build a virtual memory map.
+- **Pointer Dereferencing:** Automatically track what `ptr` points to in the current frame.
+
+### 11.2 Memory Map UI
+- New **Memory Spectrometer** tab in the debugger view.
+- Visualise memory as a Contiguous Block list (Addresses + Hex values).
+- **Pointer Arrows:** SVG lines connecting pointer variables to their target memory cells.
+- Contiguous highlighting for arrays and structs.
+
+### 11.3 Memory Safety Intelligence
+- Automatically detect and highlight **Out-of-Bounds** access in the visualizer.
+- Identify **Dangling Pointers** (pointers to deallocated or stack-expired memory).
+- AI Insight: "Gemini, why is this pointer dereference unsafe at this step?"
+
+---
+
+## 🚀 Future Roadmap
 
 | Feature | Description | Complexity |
 |---|---|---|
-| **Execution Diff** | Side-by-side diff of variable state between any two steps. | Medium |
-| **Step-level AI** | Ask Gemini: "Why did x change on this line?" in the debugger. | High |
-| **Trash Bin** | "Recently Deleted" section for project recovery. | Low |
-| **Activity Heatmap** | Dashboard visualization of debugging activity. | Medium |
-| **Mobile Debugger** | Tabbed layout for small screens (< 768px). | Medium |
 | **VS Code Extension** | Packaging the tracers as an official plugin. | High |
 | **Team Collab** | Real-time shared editing and execution via WebSockets. | Very High |

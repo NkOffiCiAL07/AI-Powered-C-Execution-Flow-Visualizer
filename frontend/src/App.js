@@ -12,6 +12,7 @@ import CommunityPage from "./components/CommunityPage";
 import LoginModal from "./components/LoginModal";
 import DashboardPage from "./components/DashboardPage";
 import DebuggerRestricted from "./components/DebuggerRestricted";
+import MemorySpectrometer from "./components/MemorySpectrometer";
 import { 
   analyzeCode, runCode, stepAnalyzeSession, explainCode, generateCode, 
   updateFile, deleteFile, fetchProject, fetchFiles, createFile, fetchPublicProject, API_BASE_URL 
@@ -725,6 +726,37 @@ function App() {
     }
   }, [code, programInput, language]);
 
+  const handleExplainStep = useCallback(async (snapshot) => {
+    if (!snapshot) return;
+    const line = snapshot.location?.line;
+    const prompt = `I am debugging my ${language} code. At line ${line}, the variables are: ${JSON.stringify(snapshot.variables)}. What exactly is happening here and why did the variables change like this?`;
+    
+    if (aiAbortControllerRef.current) {
+      aiAbortControllerRef.current.abort();
+    }
+    aiAbortControllerRef.current = new AbortController();
+
+    setAiLoading(true);
+    setError(null);
+    setActiveTab("ai");
+    try {
+      const result = await generateCode(prompt, language, aiAbortControllerRef.current.signal);
+      // Hack: we reuse AiExplanation which expects explainCode format. We'll map the raw response to explanation field.
+      setAiExplanation({
+        explanation: result.code || result.explanation || "No explanation provided.",
+        time_complexity: "N/A (Step-level analysis)",
+        space_complexity: "N/A (Step-level analysis)",
+        key_points: ["Step-level execution analysis"]
+      });
+    } catch (err) {
+      if (err.name === "AbortError") return;
+      setError(err.message || "Step explanation failed");
+    } finally {
+      setAiLoading(false);
+      aiAbortControllerRef.current = null;
+    }
+  }, [language]);
+
   const handleStep = useCallback(async (direction, stepType) => {
     if (!analysisResult?.session_id) {
       return;
@@ -958,23 +990,23 @@ function App() {
             <section className="visualizer-section" style={{ flex: 1, minWidth: 0 }}>
               {isGuest ? (
                 <DebuggerRestricted 
-                  reason="The high-fidelity debugger requires a signed-in account to store execution snapshots."
+                  reason="Authentication is required to access high-fidelity execution visualization and interactive memory mapping."
                   actionLabel="Sign in with Google"
                   onAction={() => setShowLoginModal(true)}
                 />
               ) : noProject ? (
                 <DebuggerRestricted 
-                  reason="To use the debugger, you must open or create a project. This ensures your execution flow data is properly associated with your account."
-                  actionLabel="Go to Dashboard"
+                  reason="To use the advanced debugger, you must first create or open a project from your dashboard."
+                  actionLabel="Open Dashboard"
                   onAction={() => setView("dashboard")}
-                  secondaryActionLabel="Open Editor"
+                  secondaryActionLabel="Return to Editor"
                   onSecondaryAction={() => setView("editor")}
                 />
               ) : (
                 <>
                   <div className="section-header">
                 <div className="tab-bar" role="tablist" aria-label="View tabs">
-                  {['Execution Flow', 'AI Insights', 'Output & Details'].map(tab => (
+                  {['Execution Flow', 'Memory Spectrometer', 'AI Insights', 'Output & Details'].map(tab => (
                     <button
                       key={tab}
                       className={`tab ${activeTab === (tab.toLowerCase().split(' ')[0]) ? "active" : ""}`}
@@ -991,7 +1023,7 @@ function App() {
                       <button className="icon-action-btn" onClick={handleExportTrace} title="Export trace as JSON">
                         <span className="material-symbols-outlined">download</span>
                       </button>
-                      <button className="icon-action-btn" onClick={handleCopyShareLink} title="Copy share link">
+                      <button className="icon-action-btn" onClick={handleCopyProjectShareLink} title="Copy share link">
                         <span className="material-symbols-outlined">share</span>
                       </button>
                     </>
@@ -1017,14 +1049,25 @@ function App() {
                 </div>
               )}
               {activeTab === "flow" ? (
-                <FlowVisualizer result={analysisResult} loading={loading} stepLoading={stepLoading} onLineChange={setCurrentLine} code={code} onNext={(stepType) => handleStep("next", stepType)} onBack={() => handleStep("back")} />
-              ) : activeTab === "ai" ? (
-                <AiExplanation data={aiExplanation} loading={aiLoading} />
+                <FlowVisualizer 
+                  result={analysisResult} 
+                  loading={loading} 
+                  stepLoading={stepLoading} 
+                  onLineChange={setCurrentLine} 
+                  code={code} 
+                  onNext={(stepType) => handleStep("next", stepType)} 
+                  onBack={() => handleStep("back")} 
+                  onExplainStep={handleExplainStep}
+                />
+              ) : activeTab === "memory" ? (
+                <MemorySpectrometer result={analysisResult} currentStep={analysisResult?.cursor ?? 0} />
+              ) : activeTab === "ai" ? (                <AiExplanation data={aiExplanation} loading={aiLoading} />
               ) : (
                 <OutputPanel result={analysisResult} loading={loading} />
                 )}
                 </>
-                )}
+              )}
+
                 </section>
                 </main>
                 );

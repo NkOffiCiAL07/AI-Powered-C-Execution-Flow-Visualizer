@@ -509,3 +509,28 @@
   overflow-y: auto;
   overflow-x: hidden;
 }
+
+/* ── Mobile Layout ── */
+@media (max-width: 768px) {
+  .app-main {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  
+  .editor-section {
+    width: 100% !important;
+    min-height: 40vh;
+    flex: none;
+    border-bottom: 2px solid var(--border-strong);
+  }
+  
+  .visualizer-section {
+    width: 100%;
+    flex: none;
+    min-height: 60vh;
+  }
+  
+  .resize-divider {
+    display: none;
+  }
+}

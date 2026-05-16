@@ -1,0 +1,118 @@
+.memory-spectrometer {
+  padding: 24px;
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--bg-primary);
+}
+
+.memory-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.memory-header h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.memory-header .material-symbols-outlined {
+  color: var(--primary);
+  font-size: 24px;
+}
+
+.memory-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--border-strong);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1px;
+}
+
+.memory-block {
+  display: flex;
+  background: var(--bg-secondary);
+  transition: background 0.2s;
+}
+
+.memory-block:hover {
+  background: var(--bg-hover);
+}
+
+.memory-address {
+  width: 160px;
+  background: rgba(255, 255, 255, 0.02);
+  border-right: 1px solid var(--border);
+  padding: 12px 16px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+}
+
+.memory-content {
+  flex: 1;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.memory-meta {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.memory-type {
+  font-size: 10px;
+  color: var(--accent-purple);
+  font-family: var(--font-mono);
+}
+
+.memory-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+.memory-val-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.memory-value {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: #fff;
+}
+
+.memory-deref {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--accent-orange, #f59e0b);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.memory-deref .material-symbols-outlined {
+  font-size: 12px;
+}

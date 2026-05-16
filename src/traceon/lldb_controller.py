@@ -86,20 +86,51 @@ class LLDBController:
     def kill(self) -> list[str]:
         return self.run("process kill")
 
-    def list_locals(self) -> dict[str, str]:
+    def list_locals(self) -> tuple[dict[str, str], list[dict]]:
         for _ in range(3):
-            output = self.run("frame variable")
+            output = self.run("frame variable -L -T")
             variables: dict[str, str] = {}
+            memory: list[dict] = []
+            
+            current_var = None
+            current_val = []
+            
             for line in output:
-                match = re.match(r"^\((.*?)\)\s+([A-Za-z_]\w*)\s*=\s*(.*)$", line.strip())
-                if not match:
-                    continue
-                variable_name = match.group(2)
-                variable_value = match.group(3).strip()
-                variables[variable_name] = variable_value
-            if variables:
-                return variables
-        return {}
+                line_stripped = line.strip()
+                match = re.match(r"^([0-9a-fA-Fx]+|[a-z0-9]+):\s+\((.*?)\)\s+(.+?)\s*=\s*(.*)$", line_stripped)
+                if match:
+                    addr, typ, name, val = match.groups()
+                    if not current_var:
+                        if val.endswith("{"):
+                            current_var = name
+                            current_val = [val]
+                        else:
+                            variables[name] = val
+                    else:
+                        current_val.append(line_stripped)
+                    
+                    deref = None
+                    if "*" in typ and val.startswith("0x"):
+                        deref = val
+                        
+                    memory.append({
+                        "address": addr, 
+                        "type": typ, 
+                        "name": name, 
+                        "value": val, 
+                        "deref": deref
+                    })
+                elif line_stripped == "}" and current_var:
+                    current_val.append("}")
+                    variables[current_var] = "\n".join(current_val)
+                    current_var = None
+                    current_val = []
+                elif current_var:
+                    current_val.append(line_stripped)
+                    
+            if variables or memory:
+                return variables, memory
+        return {}, []
 
     def current_location(self) -> tuple[str, int, str]:
         for _ in range(3):

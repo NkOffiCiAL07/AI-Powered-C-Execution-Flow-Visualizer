@@ -44,10 +44,13 @@ export default function FlowVisualizer({
   onLineChange,
   onNext,
   onBack,
+  onExplainStep,
 }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1000);
+  const [diffMode, setDiffMode] = useState(false);
+  const [diffStep, setDiffStep] = useState(null);
   const playingRef = useRef(false);
   const speedRef = useRef(1000);
   const onNextRef = useRef(onNext);
@@ -233,7 +236,12 @@ export default function FlowVisualizer({
   }
 
   const snap = visibleSnapshots[safeCurrentStep];
-  const prevSnap = safeCurrentStep > 0 ? visibleSnapshots[safeCurrentStep - 1] : null;
+  
+  // If in diff mode and a diff step is selected, compare against that step. Otherwise, compare against previous step.
+  const prevSnap = diffMode && diffStep !== null 
+    ? visibleSnapshots[diffStep] 
+    : (safeCurrentStep > 0 ? visibleSnapshots[safeCurrentStep - 1] : null);
+    
   const explanation = buildExplanation(snap, prevSnap, safeCurrentStep);
   const progressPct = Math.round(((safeCurrentStep + 1) / totalSteps) * 100);
 
@@ -300,6 +308,16 @@ export default function FlowVisualizer({
           />
           <span className="speed-label">{speed}ms</span>
         </div>
+        <div className="control-group">
+          <button
+            className={`control-btn ${diffMode ? 'primary' : ''}`}
+            onClick={() => { setDiffMode(!diffMode); if (!diffMode) setDiffStep(safeCurrentStep > 0 ? safeCurrentStep - 1 : 0); }}
+            title="Toggle execution diff mode. When active, click a step on the timeline to compare with the current step."
+          >
+            <span className="material-symbols-outlined">compare_arrows</span>
+            Diff Mode
+          </button>
+        </div>
         {stepLoading && <div className="control-group">Fetching next step...</div>}
       </div>
 
@@ -313,11 +331,22 @@ export default function FlowVisualizer({
         </div>
       </div>
 
-      <div className="explanation-box">
-        <div className="explanation-text">
+      <div className="explanation-box" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div className="explanation-text" style={{ flex: 1 }}>
           <div className="explanation-label">What is happening?</div>
           <div className="explanation-body">{explanation}</div>
         </div>
+        {onExplainStep && (
+          <button 
+            className="control-btn primary" 
+            onClick={() => onExplainStep(snap)}
+            title="Ask AI to explain this specific step in detail"
+            style={{ marginLeft: '12px', flexShrink: 0, padding: '4px 8px', fontSize: '10px' }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '14px', marginRight: '4px', verticalAlign: 'middle' }}>auto_awesome</span>
+            AI Explain
+          </button>
+        )}
       </div>
 
       <div className="var-section-label">
@@ -352,9 +381,14 @@ export default function FlowVisualizer({
       <ExecutionTimeline
         snapshots={visibleSnapshots}
         currentStep={safeCurrentStep}
+        diffStep={diffMode ? diffStep : null}
         onStepClick={(i) => {
           if (i <= (result?.cursor ?? 0)) {
-            setCurrentStep(i);
+            if (diffMode) {
+              setDiffStep(i);
+            } else {
+              setCurrentStep(i);
+            }
           }
         }}
       />

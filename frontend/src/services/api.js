@@ -104,6 +104,24 @@ export async function fetchProjects(signal) {
   return apiFetch(`${API_BASE_URL}/projects`, { signal });
 }
 
+export async function fetchTrash(signal) {
+  return apiFetch(`${API_BASE_URL}/projects/trash`, { signal });
+}
+
+export async function restoreProject(projectId, signal) {
+  return apiFetch(`${API_BASE_URL}/projects/${projectId}/restore`, {
+    method: "POST",
+    signal,
+  });
+}
+
+export async function emptyTrash(signal) {
+  return apiFetch(`${API_BASE_URL}/projects/trash`, {
+    method: "DELETE",
+    signal,
+  });
+}
+
 export async function fetchProject(projectId, signal) {
   return apiFetch(`${API_BASE_URL}/projects/${projectId}`, { signal });
 }

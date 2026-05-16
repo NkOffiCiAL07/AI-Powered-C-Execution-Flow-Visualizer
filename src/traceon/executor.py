@@ -59,7 +59,12 @@ def collect_execution_timeline(
                 current_line = last_known_location.line
                 current_function = last_known_location.function
 
-            variables = controller.list_locals()
+            if backend == "lldb":
+                variables, memory = controller.list_locals()
+            else:
+                variables = controller.list_locals()
+                memory = []
+                
             if not variables and previous_variables:
                 variables = previous_variables.copy()
 
@@ -82,10 +87,12 @@ def collect_execution_timeline(
                     step=step_number,
                     location=location,
                     variables=variables,
+                    memory=memory,
                     changed_variables=changed,
                     call_stack=call_stack,
                 )
             )
+
 
             previous_variables = variables
             if location.line != -1:

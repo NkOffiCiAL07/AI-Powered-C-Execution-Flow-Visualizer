@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import NewProjectModal from './NewProjectModal';
-import { fetchProjects, deleteProject, fetchFiles } from '../services/api';
+import { fetchProjects, deleteProject, fetchFiles, fetchTrash, restoreProject, emptyTrash } from '../services/api';
 import '../styles/DashboardPage.css';
 
 const LANG_LABELS = { cpp: 'C++', c: 'C', python: 'Python', java: 'Java' };
@@ -21,10 +21,13 @@ function relativeTime(iso) {
 const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwitchView }) => {
   const [activeNav, setActiveNav]       = useState('projects');
   const [projects, setProjects]         = useState([]);
+  const [trash, setTrash]               = useState([]);
   const [loadingProjects, setLoading]   = useState(true);
+  const [loadingTrash, setLoadingTrash] = useState(false);
   const [fetchError, setFetchError]     = useState(null);
   const [showNewModal, setShowNewModal] = useState(false);
   const [deletingId, setDeletingId]     = useState(null);
+  const [restoringId, setRestoringId]   = useState(null);
   const [openingId, setOpeningId]       = useState(null);
 
   const loadProjects = useCallback(async () => {
@@ -40,19 +43,57 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
     }
   }, []);
 
-  useEffect(() => { loadProjects(); }, [loadProjects]);
+  const loadTrash = useCallback(async () => {
+    setLoadingTrash(true);
+    try {
+      const data = await fetchTrash();
+      setTrash(data.projects || []);
+    } catch (err) {
+      if (err.name !== 'AbortError') console.error('Failed to load trash:', err);
+    } finally {
+      setLoadingTrash(false);
+    }
+  }, []);
+
+  useEffect(() => { 
+    if (activeNav === 'projects') loadProjects();
+    if (activeNav === 'trash') loadTrash();
+  }, [activeNav, loadProjects, loadTrash]);
 
   const handleDelete = async (e, projectId) => {
     e.stopPropagation();
-    if (!window.confirm('Delete this project and all its files? This cannot be undone.')) return;
+    if (!window.confirm('Move this project to trash?')) return;
     setDeletingId(projectId);
     try {
       await deleteProject(projectId);
       setProjects(prev => prev.filter(p => p.id !== projectId));
     } catch (err) {
-      alert(err.message || 'Failed to delete project');
+      alert(err.message || 'Failed to move project to trash');
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleRestore = async (e, projectId) => {
+    e.stopPropagation();
+    setRestoringId(projectId);
+    try {
+      await restoreProject(projectId);
+      setTrash(prev => prev.filter(p => p.id !== projectId));
+    } catch (err) {
+      alert(err.message || 'Failed to restore project');
+    } finally {
+      setRestoringId(null);
+    }
+  };
+
+  const handleEmptyTrash = async () => {
+    if (!window.confirm('Permanently delete all projects in trash? This cannot be undone.')) return;
+    try {
+      await emptyTrash();
+      setTrash([]);
+    } catch (err) {
+      alert(err.message || 'Failed to empty trash');
     }
   };
 
@@ -78,12 +119,19 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
     <div className="dashboard">
       {/* ── Sidebar ── */}
       <aside className="dash-sidebar">
-        <div className="dash-brand">
+        <div className="dash-brand" onClick={() => onSwitchView('landing')} style={{ cursor: 'pointer' }}>
           <span className="material-symbols-outlined dash-brand-icon">terminal</span>
           <span className="dash-brand-name">Traceon</span>
         </div>
 
         <nav className="dash-nav">
+          <button
+            className="dash-nav-item"
+            onClick={() => onSwitchView('landing')}
+          >
+            <span className="material-symbols-outlined">home</span>
+            Home
+          </button>
           <button
             className={`dash-nav-item ${activeNav === 'playground' ? 'active' : ''}`}
             onClick={onOpenPlayground}
@@ -97,6 +145,13 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
           >
             <span className="material-symbols-outlined">folder_open</span>
             My Projects
+          </button>
+          <button
+            className={`dash-nav-item ${activeNav === 'trash' ? 'active' : ''}`}
+            onClick={() => setActiveNav('trash')}
+          >
+            <span className="material-symbols-outlined">delete</span>
+            Trash
           </button>
           <button
             className={`dash-nav-item ${activeNav === 'settings' ? 'active' : ''}`}
@@ -156,57 +211,142 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
                 <p>{fetchError}</p>
                 <button className="dash-retry-btn" onClick={loadProjects}>Retry</button>
               </div>
-            ) : projects.length === 0 ? (
-              <div className="dash-empty-state">
-                <span className="material-symbols-outlined dash-empty-icon">folder_open</span>
-                <h3>No projects yet</h3>
-                <p>Create a project to organise and save your code across sessions.</p>
-                <button className="dash-new-btn" onClick={() => setShowNewModal(true)}>
-                  <span className="material-symbols-outlined">add</span>
-                  Create your first project
+            ) : (
+              <div className="dash-content-layout">
+                <div className="dash-main-col">
+                  {projects.length === 0 ? (
+                    <div className="dash-empty-state">
+                      <span className="material-symbols-outlined dash-empty-icon">folder_open</span>
+                      <h3>No projects yet</h3>
+                      <p>Create a project to organise and save your code across sessions.</p>
+                      <button className="dash-new-btn" onClick={() => setShowNewModal(true)}>
+                        <span className="material-symbols-outlined">add</span>
+                        Create your first project
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="proj-grid">
+                      {projects.map(proj => (
+                        <div
+                          key={proj.id}
+                          className={`proj-card ${openingId === proj.id ? 'proj-card-opening' : ''}`}
+                          onClick={() => openingId ? null : handleOpenProject(proj)}
+                        >
+                          <div className="proj-card-header">
+                            <span className={`lang-badge lang-${proj.language}`}>
+                              {LANG_LABELS[proj.language] || proj.language}
+                            </span>
+                            <button
+                              className="proj-delete-btn"
+                              onClick={(e) => handleDelete(e, proj.id)}
+                              disabled={deletingId === proj.id}
+                              title="Move to trash"
+                            >
+                              <span className="material-symbols-outlined">
+                                {deletingId === proj.id ? 'hourglass_empty' : 'delete'}
+                              </span>
+                            </button>
+                          </div>
+                          <div className="proj-card-name">{proj.name}</div>
+                          <div className="proj-card-meta">
+                            <span className="material-symbols-outlined proj-clock">schedule</span>
+                            {relativeTime(proj.last_accessed)}
+                          </div>
+                          {openingId === proj.id && (
+                            <div className="proj-card-opening-overlay">
+                              <div className="dash-spinner" />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+
+                      {/* Inline new-project card */}
+                      <div className="proj-card proj-card-add" onClick={() => setShowNewModal(true)}>
+                        <span className="material-symbols-outlined proj-add-icon">add_circle</span>
+                        <span className="proj-add-label">New Project</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <aside className="dash-activity-sidebar">
+                  <h3>Activity</h3>
+                  <div className="activity-heatmap">
+                    {Array.from({ length: 35 }).map((_, i) => (
+                      <div 
+                        key={i} 
+                        className="heatmap-cell" 
+                        style={{ opacity: i > 25 ? Math.random() * 0.8 + 0.2 : Math.random() * 0.3 }}
+                        title={`Activity level: ${Math.round(Math.random() * 10)}`}
+                      />
+                    ))}
+                  </div>
+                  <div className="activity-meta">
+                    <span>Less</span>
+                    <span>More</span>
+                  </div>
+                </aside>
+              </div>
+            )}
+          </>
+        )}
+
+        {activeNav === 'trash' && (
+          <>
+            <div className="dash-topbar">
+              <div>
+                <h1 className="dash-title">Trash</h1>
+                <p className="dash-subtitle">
+                  {trash.length > 0
+                    ? `${trash.length} project${trash.length !== 1 ? 's' : ''}`
+                    : 'Trash is empty'}
+                </p>
+              </div>
+              {trash.length > 0 && (
+                <button className="dash-new-btn" style={{ background: 'var(--bg-card)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }} onClick={handleEmptyTrash}>
+                  <span className="material-symbols-outlined">delete_forever</span>
+                  Empty Trash
                 </button>
+              )}
+            </div>
+
+            {loadingTrash ? (
+              <div className="dash-loading">
+                <div className="dash-spinner" />
+                <span>Loading trash…</span>
+              </div>
+            ) : trash.length === 0 ? (
+              <div className="dash-empty-state">
+                <span className="material-symbols-outlined dash-empty-icon">delete</span>
+                <h3>Trash is empty</h3>
+                <p>Deleted projects will appear here.</p>
               </div>
             ) : (
               <div className="proj-grid">
-                {projects.map(proj => (
-                  <div
-                    key={proj.id}
-                    className={`proj-card ${openingId === proj.id ? 'proj-card-opening' : ''}`}
-                    onClick={() => openingId ? null : handleOpenProject(proj)}
-                  >
+                {trash.map(proj => (
+                  <div key={proj.id} className="proj-card">
                     <div className="proj-card-header">
                       <span className={`lang-badge lang-${proj.language}`}>
                         {LANG_LABELS[proj.language] || proj.language}
                       </span>
                       <button
                         className="proj-delete-btn"
-                        onClick={(e) => handleDelete(e, proj.id)}
-                        disabled={deletingId === proj.id}
-                        title="Delete project"
+                        onClick={(e) => handleRestore(e, proj.id)}
+                        disabled={restoringId === proj.id}
+                        title="Restore project"
+                        style={{ color: 'var(--primary)' }}
                       >
                         <span className="material-symbols-outlined">
-                          {deletingId === proj.id ? 'hourglass_empty' : 'delete'}
+                          {restoringId === proj.id ? 'hourglass_empty' : 'restore'}
                         </span>
                       </button>
                     </div>
                     <div className="proj-card-name">{proj.name}</div>
                     <div className="proj-card-meta">
-                      <span className="material-symbols-outlined proj-clock">schedule</span>
-                      {relativeTime(proj.last_accessed)}
+                      <span className="material-symbols-outlined proj-clock">delete</span>
+                      Deleted {relativeTime(proj.deleted_at || proj.last_accessed)}
                     </div>
-                    {openingId === proj.id && (
-                      <div className="proj-card-opening-overlay">
-                        <div className="dash-spinner" />
-                      </div>
-                    )}
                   </div>
                 ))}
-
-                {/* Inline new-project card */}
-                <div className="proj-card proj-card-add" onClick={() => setShowNewModal(true)}>
-                  <span className="material-symbols-outlined proj-add-icon">add_circle</span>
-                  <span className="proj-add-label">New Project</span>
-                </div>
               </div>
             )}
           </>

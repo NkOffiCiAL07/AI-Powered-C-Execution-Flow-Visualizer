@@ -332,7 +332,7 @@ export default function CppEditorPage({
               className="visualise-btn"
               onClick={onAnalyze}
               disabled={loading || aiLoading}
-              title={!user || user.role === "guest" ? "Sign in to use debugger" : !currentProject ? "Save to project to use debugger" : "Start high-fidelity debugging"}
+              title={!user || user.role === "guest" ? "Sign in to unlock advanced debugging" : !currentProject ? "Create a project to enable debugging" : "Start high-fidelity debugger"}
             >
               <span className="material-symbols-outlined">bug_report</span>
               Visualise

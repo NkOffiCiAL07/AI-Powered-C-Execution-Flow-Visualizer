@@ -704,6 +704,25 @@ def create_app() -> FastAPI:
         owner_id = payload.get("user_id") or payload.get("sub", "")
         return {"projects": mongo_app_store.list_projects(owner_id)}
 
+    @app.get("/projects/trash", tags=["projects"])
+    def list_trash(payload: dict = Depends(require_member)):
+        owner_id = payload.get("user_id") or payload.get("sub", "")
+        return {"projects": mongo_app_store.list_trash(owner_id)}
+
+    @app.post("/projects/{project_id}/restore", tags=["projects"])
+    def restore_project(project_id: str, payload: dict = Depends(require_member)):
+        owner_id = payload.get("user_id") or payload.get("sub", "")
+        restored = mongo_app_store.restore_project(owner_id, project_id)
+        if not restored:
+            raise HTTPException(status_code=404, detail="Project not found in trash")
+        return {"restored": True}
+
+    @app.delete("/projects/trash", tags=["projects"])
+    def empty_trash(payload: dict = Depends(require_member)):
+        owner_id = payload.get("user_id") or payload.get("sub", "")
+        count = mongo_app_store.empty_trash(owner_id)
+        return {"deleted_count": count}
+
     @app.post("/projects", tags=["projects"], status_code=201)
     def create_project(req: ProjectCreateRequest, payload: dict = Depends(require_member)):
         owner_id = payload.get("user_id") or payload.get("sub", "")

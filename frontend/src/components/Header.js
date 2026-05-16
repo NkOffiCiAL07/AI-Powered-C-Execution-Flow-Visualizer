@@ -115,30 +115,6 @@ export default function Header({ view, onSwitchView, user, onLogout, onSignIn, l
       {/* ── Right: app controls + theme + user ── */}
       <div className="header-right">
 
-        {/* Language switcher dropdown */}
-        {inApp && (
-          <Dropdown
-            trigger={(open) => (
-              <button className="view-dropdown-trigger lang-dropdown" aria-expanded={open} title="Change language">
-                <span className="material-symbols-outlined">language</span>
-                <span>{currentLang?.label}</span>
-                <span className={`material-symbols-outlined hdr-chevron ${open ? "open" : ""}`}>expand_more</span>
-              </button>
-            )}
-          >
-            {(close) => LANG_OPTIONS.map(opt => (
-              <li key={opt.value}
-                className={`hdr-dropdown-item ${opt.value === language ? "active" : ""}`}
-                role="menuitem"
-                onClick={() => { onLanguageChange(opt.value); close(); }}>
-                <span className="material-symbols-outlined">{opt.icon}</span>
-                {opt.label}
-                {opt.value === language && <span className="material-symbols-outlined hdr-check">check</span>}
-              </li>
-            ))}
-          </Dropdown>
-        )}
-
         {/* View switcher dropdown */}
         {inApp && currentView && (
           <Dropdown

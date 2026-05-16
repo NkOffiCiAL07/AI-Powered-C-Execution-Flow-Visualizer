@@ -416,7 +416,13 @@ class SessionManager:
         current_file, current_line, current_function = record.controller.current_location()
         if self._is_user_source_location(record, current_file):
             record.has_seen_user_source = True
-        variables = record.controller.list_locals()
+            
+        if getattr(record.controller, "__class__", None).__name__ == "LLDBController":
+            variables, memory = record.controller.list_locals()
+        else:
+            variables = record.controller.list_locals()
+            memory = []
+            
         if not variables and record.previous_variables:
             variables = record.previous_variables.copy()
 
@@ -443,6 +449,7 @@ class SessionManager:
                 function=current_function,
             ),
             variables=variables,
+            memory=memory,
             changed_variables=changed_variables,
             call_stack=call_stack,
             stdout_tail=previous_state.stdout_tail if previous_state else "",
