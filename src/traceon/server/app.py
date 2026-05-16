@@ -33,7 +33,7 @@ def _load_local_env() -> None:
 _load_local_env()
 
 from traceon.server.api import router as sessions_router, session_manager
-from traceon.server.ai_service import explain_code_ai
+from traceon.server.ai_service import explain_code_ai, generate_code_ai
 from traceon.server.auth import router as auth_router
 from traceon.server.models import (
     AnalyzeCodeRequest,
@@ -46,12 +46,42 @@ from traceon.server.models import (
     ExecutionSnapshot,
     ExplainCodeRequest,
     ExplainCodeResponse,
+    GenerateCodeRequest,
+    GenerateCodeResponse,
     RunCodeRequest,
     RunCodeResponse,
     SessionSettings,
     SessionStatus,
     SourceFile,
 )
+
+
+def _prepare_c_code(code: str) -> str:
+    normalized = code.strip()
+    has_main = "main(" in normalized or "main ()" in normalized
+
+    if not has_main:
+        return f"""#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+
+int main() {{
+{chr(10).join('    ' + line for line in normalized.split(chr(10)))}
+    return 0;
+}}
+"""
+
+    if "#include" not in normalized:
+        return f"""#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+
+{normalized}
+"""
+
+    return normalized
 
 
 def _prepare_cpp_code(code: str) -> str:
@@ -159,16 +189,23 @@ def create_app() -> FastAPI:
 
     @app.post("/analyze", response_model=AnalyzeCodeResponse, tags=["analysis"])
     def analyze_code(request: AnalyzeCodeRequest):
+        is_c = (request.language or "cpp").lower() == "c"
         if not request.code or not request.code.strip():
-            raise HTTPException(status_code=400, detail="No C++ code provided")
+            raise HTTPException(status_code=400, detail="No code provided")
 
-        wrapped_code = _prepare_cpp_code(request.code)
+        if is_c:
+            wrapped_code = _prepare_c_code(request.code)
+            file_name, lang, compiler, flags = "main.c", "c", "clang", ["-std=c11", "-g", "-O0"]
+        else:
+            wrapped_code = _prepare_cpp_code(request.code)
+            file_name, lang, compiler, flags = "main.cpp", "cpp", "clang++", ["-std=c++17", "-g", "-O0"]
+
         create_request = CreateSessionRequest(
-            source=SourceFile(file_name="main.cpp", language="cpp", code=wrapped_code),
+            source=SourceFile(file_name=file_name, language=lang, code=wrapped_code),
             settings=SessionSettings(
                 backend=DebugBackend.LLDB,
-                compiler="clang++",
-                compiler_flags=["-std=c++17", "-g", "-O0"],
+                compiler=compiler,
+                compiler_flags=flags,
                 stdin_data=request.stdin or "",
                 stop_at_main=True,
                 max_steps=150,
@@ -236,19 +273,25 @@ def create_app() -> FastAPI:
         import tempfile
         from pathlib import Path
 
+        is_c = (request.language or "cpp").lower() == "c"
         if not request.code or not request.code.strip():
-            raise HTTPException(status_code=400, detail="No C++ code provided")
+            raise HTTPException(status_code=400, detail="No code provided")
 
-        wrapped_code = _prepare_cpp_code(request.code)
+        if is_c:
+            wrapped_code = _prepare_c_code(request.code)
+            src_name, compiler, compile_flags = "main.c", "clang", ["-std=c11", "-O0"]
+        else:
+            wrapped_code = _prepare_cpp_code(request.code)
+            src_name, compiler, compile_flags = "main.cpp", "clang++", ["-std=c++17", "-O0"]
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            src_path = Path(tmpdir) / "main.cpp"
+            src_path = Path(tmpdir) / src_name
             exe_path = Path(tmpdir) / "program"
             src_path.write_text(wrapped_code)
 
             # Compile
             compile_proc = subprocess.run(
-                ["clang++", "-std=c++17", "-O0", "-o", str(exe_path), str(src_path)],
+                [compiler, *compile_flags, "-o", str(exe_path), str(src_path)],
                 capture_output=True, text=True, timeout=15,
             )
             if compile_proc.returncode != 0:
@@ -282,6 +325,15 @@ def create_app() -> FastAPI:
                     stderr="Program timed out (10s limit)",
                     exit_code=-1,
                 )
+
+    @app.post("/generate", response_model=GenerateCodeResponse, tags=["analysis"])
+    def generate_code(request: GenerateCodeRequest):
+        if not request.prompt or not request.prompt.strip():
+            raise HTTPException(status_code=400, detail="No prompt provided")
+        try:
+            return generate_code_ai(request.prompt.strip(), request.language or "cpp")
+        except Exception as error:
+            raise HTTPException(status_code=500, detail=f"Code generation failed: {error}") from error
 
     @app.post("/explain", response_model=ExplainCodeResponse, tags=["analysis"])
     def explain_code(request: ExplainCodeRequest):

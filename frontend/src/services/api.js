@@ -10,7 +10,7 @@ function handleFetchError(err) {
   throw err;
 }
 
-export async function analyzeCode(code, stdin, signal) {
+export async function analyzeCode(code, stdin, signal, language = "cpp") {
   let response;
   try {
     response = await fetch(`${API_BASE_URL}/analyze`, {
@@ -18,7 +18,7 @@ export async function analyzeCode(code, stdin, signal) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ code, stdin: stdin || "" }),
+      body: JSON.stringify({ code, stdin: stdin || "", language }),
       signal,
     });
   } catch (err) {
@@ -82,6 +82,25 @@ export async function stepAnalyzeSession(sessionId, direction, stepType, signal)
     );
   }
 
+  return response.json();
+}
+
+export async function generateCode(prompt, language, signal) {
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}/generate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt, language: language || "cpp" }),
+      signal,
+    });
+  } catch (err) {
+    handleFetchError(err);
+  }
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || errorData.message || `Server error: ${response.status}`);
+  }
   return response.json();
 }
 

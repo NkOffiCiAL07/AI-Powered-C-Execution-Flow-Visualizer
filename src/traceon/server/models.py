@@ -126,6 +126,7 @@ class ErrorResponse(BaseModel):
 class RunCodeRequest(BaseModel):
     code: str
     stdin: str = ""
+    language: str = "cpp"
 
 
 class RunCodeResponse(BaseModel):
@@ -139,6 +140,7 @@ class RunCodeResponse(BaseModel):
 class AnalyzeCodeRequest(BaseModel):
     code: str
     stdin: str = ""
+    language: str = "cpp"
 
 
 class AnalyzeStepRequest(BaseModel):
@@ -175,6 +177,15 @@ class AnalyzeStepResponse(BaseModel):
     total_recorded_steps: int
     snapshot: ExecutionSnapshot | None = None
     message: str = ""
+
+
+class GenerateCodeRequest(BaseModel):
+    prompt: str
+    language: str = "cpp"
+
+
+class GenerateCodeResponse(BaseModel):
+    code: str
 
 
 class ExplainCodeRequest(BaseModel):

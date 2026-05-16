@@ -18,6 +18,10 @@
   box-shadow: 0 1px 0 var(--border);
 }
 
+.dark-theme .header {
+  background-color: rgba(35, 31, 28, 0.94);
+}
+
 /* ── Left group ── */
 .header-left {
   display: flex;

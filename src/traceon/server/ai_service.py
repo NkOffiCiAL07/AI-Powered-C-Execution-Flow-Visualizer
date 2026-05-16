@@ -3,9 +3,55 @@ import re
 import json
 import logging
 from typing import Any, Dict
-from traceon.server.models import ExplainCodeResponse
+from traceon.server.models import ExplainCodeResponse, GenerateCodeResponse
 
 logger = logging.getLogger(__name__)
+
+
+def generate_code_ai(prompt: str, language: str = "cpp") -> GenerateCodeResponse:
+    """Generate C or C++ code from a natural-language prompt using Gemini."""
+    api_key = os.getenv("GEMINI_API_KEY")
+    lang_label = "C" if language == "c" else "C++"
+
+    if api_key:
+        try:
+            return _gemini_generate(prompt, lang_label, api_key)
+        except Exception as e:
+            logger.warning(f"Gemini generation failed: {e}")
+            raise
+
+    raise RuntimeError("GEMINI_API_KEY is not configured. Add it to your .env file.")
+
+
+def _gemini_generate(prompt: str, lang_label: str, api_key: str) -> GenerateCodeResponse:
+    from google import genai
+    from google.genai import types
+
+    client = genai.Client(api_key=api_key)
+
+    system_prompt = f"""You are an expert {lang_label} programmer.
+The user will describe a program or function they want. Write clean, correct, well-commented {lang_label} code that satisfies the request.
+Rules:
+- Return ONLY the raw source code. No markdown, no code fences, no explanation.
+- Always include the necessary #include headers.
+- Always include a complete main() function that demonstrates or tests the code.
+- The code must compile with {'clang++ -std=c++17' if lang_label == 'C++' else 'clang -std=c11'} with no errors or warnings.
+- Keep it concise but complete."""
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=f"{system_prompt}\n\nRequest: {prompt}",
+        config=types.GenerateContentConfig(
+            max_output_tokens=2048,
+            temperature=0.3,
+        ),
+    )
+
+    code = response.text.strip()
+    # Strip markdown fences if the model adds them anyway
+    code = re.sub(r"^```(?:cpp|c|c\+\+)?\n?", "", code)
+    code = re.sub(r"\n?```$", "", code)
+    return GenerateCodeResponse(code=code.strip())
 
 
 def explain_code_ai(code: str) -> ExplainCodeResponse:

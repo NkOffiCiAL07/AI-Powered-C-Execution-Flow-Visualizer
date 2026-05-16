@@ -43,6 +43,7 @@
   flex: 1;
 }
 
+
 .editor-page-head,
 .editor-page-subhead {
   padding: 7px 14px;
@@ -193,6 +194,74 @@
   background: var(--bg-secondary);
 }
 
+/* ── AI prompt bar ── */
+.ai-prompt-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.ai-prompt-icon {
+  font-size: 16px !important;
+  color: var(--primary);
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.ai-prompt-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.5;
+  min-width: 0;
+}
+
+.ai-prompt-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.65;
+}
+
+.ai-prompt-input:disabled {
+  opacity: 0.5;
+}
+
+.ai-prompt-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.ai-prompt-btn .material-symbols-outlined {
+  font-size: 16px;
+}
+
+.ai-prompt-btn:hover:not(:disabled) {
+  background: var(--primary);
+  color: #fff;
+}
+
+.ai-prompt-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 /* ── Right-panel tab bar ── */
 .editor-tab-bar {
   display: flex;
@@ -278,6 +347,8 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .editor-output-block {

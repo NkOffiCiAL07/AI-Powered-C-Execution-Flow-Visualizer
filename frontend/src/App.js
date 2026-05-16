@@ -10,12 +10,12 @@ import DocsPage from "./components/DocsPage";
 import PricingPage from "./components/PricingPage";
 import CommunityPage from "./components/CommunityPage";
 import LoginModal from "./components/LoginModal";
-import { analyzeCode, runCode, stepAnalyzeSession, explainCode, API_BASE_URL } from "./services/api";
+import { analyzeCode, runCode, stepAnalyzeSession, explainCode, generateCode, API_BASE_URL } from "./services/api";
 import "./App.css";
 import "./styles/CppEditorPage.css";
 
 const EXAMPLE_CODES = {
-  simple: `#include <iostream>
+  simple_cpp: `#include <iostream>
 using namespace std;
 
 int main() {
@@ -25,7 +25,7 @@ int main() {
     cout << "z = " << z << endl;
     return 0;
 }`,
-  counting: `#include <iostream>
+  counting_cpp: `#include <iostream>
 using namespace std;
 
 int main() {
@@ -34,7 +34,7 @@ int main() {
     }
     return 0;
 }`,
-  ifStatement: `#include <iostream>
+  ifStatement_cpp: `#include <iostream>
 using namespace std;
 
 int main() {
@@ -46,75 +46,148 @@ int main() {
     }
     return 0;
 }`,
-  fibonacci: `#include <iostream>
-#include <string>
-#include <vector>
+  fibonacci_cpp: `#include <iostream>
 using namespace std;
 
-int fibonacci(int n) {
-    if (n <= 1) {
-        return n;
-    }
-    int first = 0;
-    int second = 1;
-    for (int i = 2; i <= n; i++) {
-        int next = first + second;
-        first = second;
-        second = next;
-    }
-    return second;
+int fib(int n) {
+    if (n <= 1) return n;
+    return fib(n - 1) + fib(n - 2);
 }
 
 int main() {
-    vector<int> values = {2, 4, 6};
-    int total = 0;
-    string label = "start";
-    for (int index = 0; index < values.size(); index++) {
-        int current = values[index];
-        int fib = fibonacci(current);
-        total += fib;
-        if (fib % 2 == 0) {
-            label = "even";
-        } else {
-            label = "odd";
-        }
-        cout << "fib(" << current << ")=" << fib << " label=" << label << endl;
-    }
-    cout << "total=" << total << endl;
+    int n = 7;
+    cout << "fib(" << n << ") = " << fib(n) << endl;
     return 0;
 }`,
-  functionCall: `#include <iostream>
+  functionCall_cpp: `#include <iostream>
 using namespace std;
 
-int addNumbers(int a, int b) {
+int add(int a, int b) {
     int result = a + b;
     return result;
 }
 
 int main() {
-    int x = 10;
-    int y = 20;
-    cout << "Calling function..." << endl;
-    int sum = addNumbers(x, y);
+    int x = 10, y = 20;
+    int sum = add(x, y);
     cout << "Sum: " << sum << endl;
+    return 0;
+}`,
+  simple_c: `#include <stdio.h>
+
+int main() {
+    int x = 5;
+    int y = 3;
+    int z = x + y;
+    printf("z = %d\\n", z);
+    return 0;
+}`,
+  counting_c: `#include <stdio.h>
+
+int main() {
+    for (int i = 1; i <= 5; i++) {
+        printf("%d\\n", i);
+    }
+    return 0;
+}`,
+  ifStatement_c: `#include <stdio.h>
+
+int main() {
+    int age = 12;
+    if (age >= 13) {
+        printf("Teen\\n");
+    } else {
+        printf("Kid\\n");
+    }
+    return 0;
+}`,
+  fibonacci_c: `#include <stdio.h>
+
+int fib(int n) {
+    if (n <= 1) return n;
+    return fib(n - 1) + fib(n - 2);
+}
+
+int main() {
+    int n = 7;
+    printf("fib(%d) = %d\\n", n, fib(n));
+    return 0;
+}`,
+  functionCall_c: `#include <stdio.h>
+
+int add(int a, int b) {
+    int result = a + b;
+    return result;
+}
+
+int main() {
+    int x = 10, y = 20;
+    int sum = add(x, y);
+    printf("Sum: %d\\n", sum);
     return 0;
 }`,
 };
 
-const DEFAULT_CODE = EXAMPLE_CODES.simple;
+const DEFAULT_CODE = EXAMPLE_CODES.simple_cpp;
 
 const EXAMPLE_OPTIONS = [
-  { value: "simple",       label: "Simple Math"   },
-  { value: "counting",     label: "Counting Loop"  },
-  { value: "ifStatement",  label: "If Statement"   },
-  { value: "fibonacci",    label: "Fibonacci"      },
-  { value: "functionCall", label: "Function Call"  },
+  { value: "simple_cpp",      lang: "cpp", label: "Simple Math"    },
+  { value: "counting_cpp",    lang: "cpp", label: "Counting Loop"  },
+  { value: "ifStatement_cpp", lang: "cpp", label: "If Statement"   },
+  { value: "fibonacci_cpp",   lang: "cpp", label: "Fibonacci"      },
+  { value: "functionCall_cpp",lang: "cpp", label: "Function Call"  },
+  { value: "simple_c",        lang: "c",   label: "Simple Math"    },
+  { value: "counting_c",      lang: "c",   label: "Counting Loop"  },
+  { value: "ifStatement_c",   lang: "c",   label: "If Statement"   },
+  { value: "fibonacci_c",     lang: "c",   label: "Fibonacci"      },
+  { value: "functionCall_c",  lang: "c",   label: "Function Call"  },
 ];
 
-function ExamplesDropdown({ selected, onChange }) {
+const LANG_OPTIONS = [
+  { value: "cpp", label: "C++" },
+  { value: "c",   label: "C"   },
+];
+
+function LangDropdown({ language, onChange }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
-  const current = EXAMPLE_OPTIONS.find(o => o.value === selected);
+  const current = LANG_OPTIONS.find(o => o.value === language);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+
+  return (
+    <div className="ex-dropdown" ref={ref}>
+      <button className="ex-dropdown-trigger" onClick={() => setOpen(o => !o)}>
+        <span className="material-symbols-outlined" style={{ fontSize: 14, color: "var(--primary)" }}>code</span>
+        {current?.label}
+        <span className="material-symbols-outlined ex-chevron" style={{ transform: open ? "rotate(180deg)" : "none" }}>expand_more</span>
+      </button>
+      {open && (
+        <ul className="ex-dropdown-menu">
+          {LANG_OPTIONS.map(opt => (
+            <li key={opt.value}
+              className={`ex-dropdown-item ${opt.value === language ? "active" : ""}`}
+              onClick={() => { onChange(opt.value); setOpen(false); }}>
+              {opt.value === language && <span className="material-symbols-outlined ex-check">check</span>}
+              {opt.label}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function ExamplesDropdown({ selected, onChange, language = "cpp" }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const filtered = EXAMPLE_OPTIONS.filter(o => o.lang === language);
+  const current = filtered.find(o => o.value === selected) || filtered[0];
 
   useEffect(() => {
     if (!open) return;
@@ -131,7 +204,7 @@ function ExamplesDropdown({ selected, onChange }) {
       </button>
       {open && (
         <ul className="ex-dropdown-menu">
-          {EXAMPLE_OPTIONS.map(opt => (
+          {filtered.map(opt => (
             <li key={opt.value}
               className={`ex-dropdown-item ${opt.value === selected ? "active" : ""}`}
               onClick={() => { onChange(opt.value); setOpen(false); }}>
@@ -147,6 +220,7 @@ function ExamplesDropdown({ selected, onChange }) {
 
 function App() {
   const [user, setUser] = useState(null);
+  const [language, setLanguage] = useState("cpp");
   const [code, setCode] = useState(DEFAULT_CODE);
   const [programInput, setProgramInput] = useState("");
   const [analysisResult, setAnalysisResult] = useState(null);
@@ -157,11 +231,13 @@ function App() {
   const [activeTab, setActiveTab] = useState("flow");
   const [aiExplanation, setAiExplanation] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
-  const [selectedExample, setSelectedExample] = useState("simple");
+  const [selectedExample, setSelectedExample] = useState("simple_cpp");
   const [currentLine, setCurrentLine] = useState(null);
   const [runResult, setRunResult] = useState(null);
   const [runLoading, setRunLoading] = useState(false);
   const [runError, setRunError] = useState(null);
+  const [generateLoading, setGenerateLoading] = useState(false);
+  const generateAbortRef = useRef(null);
   const [serverDown, setServerDown] = useState(false);
   const [serverChecking, setServerChecking] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -209,7 +285,6 @@ function App() {
     }
   }, []);
 
-  // Health-check on mount, then auto-retry every 8s while server is down
   useEffect(() => { checkServer(); }, [checkServer]);
   useEffect(() => {
     if (!serverDown) return;
@@ -217,7 +292,6 @@ function App() {
     return () => clearInterval(id);
   }, [serverDown, checkServer]);
 
-  // Only the editor/visualizer requires auth — redirect there if not signed in
   useEffect(() => {
     if (!user && (view === "editor" || view === "visualizer")) {
       setView("landing");
@@ -232,10 +306,8 @@ function App() {
       try {
         const parsed = JSON.parse(savedUser);
         if (parsed.provider === "guest") {
-          // Guest sessions are always valid (no token needed)
           setUser(parsed);
         } else if (savedToken) {
-          // OAuth session — verify JWT expiry before restoring
           const payload = JSON.parse(atob(savedToken.split(".")[1]));
           if (payload.exp && payload.exp * 1000 > Date.now()) {
             setUser(parsed);
@@ -244,7 +316,6 @@ function App() {
             localStorage.removeItem("traceon_auth_token");
           }
         } else {
-          // OAuth user but no token — clear stale state
           localStorage.removeItem("traceon_user");
         }
       } catch {
@@ -277,7 +348,7 @@ function App() {
 
   const handleExplain = useCallback(async () => {
     if (!code.trim()) {
-      setError("Please enter some C++ code before explaining.");
+      setError(`Please enter some ${language.toUpperCase()} code before explaining.`);
       return;
     }
 
@@ -299,7 +370,7 @@ function App() {
       setAiLoading(false);
       aiAbortControllerRef.current = null;
     }
-  }, [code]);
+  }, [code, language]);
 
   const handleLoadExample = (exampleKey) => {
     setSelectedExample(exampleKey);
@@ -312,17 +383,55 @@ function App() {
     setStepLoading(false);
   };
 
+  const handleGenerate = useCallback(async (prompt) => {
+    if (!prompt.trim()) return;
+    if (generateAbortRef.current) generateAbortRef.current.abort();
+    generateAbortRef.current = new AbortController();
+    setGenerateLoading(true);
+    try {
+      const result = await generateCode(prompt, language, generateAbortRef.current.signal);
+      setCode(result.code);
+      setCurrentLine(null);
+      setAnalysisResult(null);
+      setRunResult(null);
+      setRunError(null);
+      setError(null);
+    } catch (err) {
+      if (err.name === "AbortError") return;
+      setError(err.message || "Code generation failed");
+    } finally {
+      setGenerateLoading(false);
+      generateAbortRef.current = null;
+    }
+  }, [language]);
+
+  const handleLanguageChange = (newLang) => {
+    setLanguage(newLang);
+    const defaultKey = newLang === "c" ? "simple_c" : "simple_cpp";
+    setSelectedExample(defaultKey);
+    setCode(EXAMPLE_CODES[defaultKey]);
+    setCurrentLine(null);
+    setAnalysisResult(null);
+    setAiExplanation(null);
+    setError(null);
+    setRunResult(null);
+    setRunError(null);
+    setStepLoading(false);
+  };
+
   const handleAnalyze = useCallback(async (codeOverride) => {
     const codeToAnalyze = typeof codeOverride === "string" ? codeOverride : code;
     if (!codeToAnalyze.trim()) {
-      setError("Please enter some C++ code before analyzing.");
+      setError(`Please enter some ${language.toUpperCase()} code before analyzing.`);
       return;
     }
 
-    // Warn if code uses cin/scanf but no stdin input is provided
-    const usesInput = /\b(cin\s*>>|getline\s*\(|scanf\s*\()/.test(codeToAnalyze);
+    const usesInput = language === "cpp" 
+      ? /\b(cin\s*>>|getline\s*\(|scanf\s*\()/.test(codeToAnalyze)
+      : /\b(scanf\s*\(|gets\s*\(|fgets\s*\()/.test(codeToAnalyze);
+      
     if (usesInput && !programInput.trim()) {
-      setError("Your code reads input (cin/scanf/getline) but no input was provided. Please add input in the Program Input box below.");
+      setError("Your code reads input but no input was provided. Please add input in the Program Input box below.");
       return;
     }
 
@@ -336,7 +445,7 @@ function App() {
     setError(null);
     setAnalysisResult(null);
     try {
-      const result = await analyzeCode(codeToAnalyze, programInput, abortControllerRef.current.signal);
+      const result = await analyzeCode(codeToAnalyze, programInput, abortControllerRef.current.signal, language);
       setServerDown(false);
       setAnalysisResult(result);
       setActiveTab("flow");
@@ -348,18 +457,20 @@ function App() {
       setLoading(false);
       abortControllerRef.current = null;
     }
-  }, [code, programInput]);
+  }, [code, programInput, language]);
 
   const handleRun = useCallback(async () => {
     if (!code.trim()) {
-      setRunError("Please enter some C++ code before running.");
+      setRunError(`Please enter some ${language.toUpperCase()} code before running.`);
       return;
     }
 
-    // Warn if code uses cin/scanf but no stdin input is provided
-    const usesInput = /\b(cin\s*>>|getline\s*\(|scanf\s*\()/.test(code);
+    const usesInput = language === "cpp" 
+      ? /\b(cin\s*>>|getline\s*\(|scanf\s*\()/.test(code)
+      : /\b(scanf\s*\(|gets\s*\(|fgets\s*\()/.test(code);
+
     if (usesInput && !programInput.trim()) {
-      setRunError("Your code reads input (cin/scanf/getline) but no input was provided. Please add input in the Input box.");
+      setRunError("Your code reads input but no input was provided. Please add input in the Input box.");
       return;
     }
 
@@ -372,7 +483,7 @@ function App() {
     setRunError(null);
     setRunResult(null);
     try {
-      const result = await runCode(code, programInput, runAbortControllerRef.current.signal);
+      const result = await runCode(code, programInput, runAbortControllerRef.current.signal, language);
       setServerDown(false);
       if (!result.success) {
         setRunError(result.compile_error || result.stderr || "Compilation failed");
@@ -386,7 +497,7 @@ function App() {
       setRunLoading(false);
       runAbortControllerRef.current = null;
     }
-  }, [code, programInput]);
+  }, [code, programInput, language]);
 
   const handleStep = useCallback(async (direction, stepType) => {
     if (!analysisResult?.session_id) {
@@ -413,7 +524,6 @@ function App() {
         if (!prev) return prev;
         const nextSnapshots = [...(prev.snapshots || [])];
 
-        // Only update snapshots if the step was accepted
         if (response.accepted && response.snapshot && response.cursor >= 0) {
           if (response.cursor < nextSnapshots.length) {
             nextSnapshots[response.cursor] = response.snapshot;
@@ -440,7 +550,6 @@ function App() {
     } catch (err) {
       if (err.name === "AbortError") return;
       setError(err.message || "Step failed");
-      // Mark accepted as false so play loop stops
       setAnalysisResult((prev) => prev ? { ...prev, accepted: false } : prev);
     } finally {
       setStepLoading(false);
@@ -488,6 +597,10 @@ function App() {
             result={runResult}
             aiExplanation={aiExplanation}
             aiLoading={aiLoading}
+            language={language}
+            onLanguageChange={handleLanguageChange}
+            onGenerate={handleGenerate}
+            generateLoading={generateLoading}
           />
         );
       case "visualizer":
@@ -497,8 +610,9 @@ function App() {
               <div className="section-header">
                 <h2>Your Code</h2>
                 <div className="examples-selector-container">
+                  <LangDropdown language={language} onChange={handleLanguageChange} />
                   <span className="selector-label">Examples:</span>
-                  <ExamplesDropdown selected={selectedExample} onChange={handleLoadExample} />
+                  <ExamplesDropdown selected={selectedExample} onChange={handleLoadExample} language={language} />
                 </div>
               </div>
               <CodeEditor
@@ -506,6 +620,8 @@ function App() {
                 onChange={(newCode) => { setCode(newCode); setCurrentLine(null); setAnalysisResult(null); }}
                 currentLine={currentLine}
                 onEditRequest={() => { setCurrentLine(null); setAnalysisResult(null); }}
+                language={language}
+                compact
               />
               <div className="stdin-panel">
                 <div className="stdin-header">
@@ -532,93 +648,39 @@ function App() {
             <section className="visualizer-section" style={{ flex: 1, minWidth: 0 }}>
               <div className="section-header">
                 <div className="tab-bar" role="tablist" aria-label="View tabs">
-                  <button
-                    className={`tab ${activeTab === "flow" ? "active" : ""}`}
-                    onClick={() => setActiveTab("flow")}
-                    role="tab"
-                    id="tab-flow"
-                    aria-selected={activeTab === "flow"}
-                    aria-controls="panel-flow"
-                  >
-                    Execution Flow
-                  </button>
-                  <button
-                    className={`tab ${activeTab === "ai" ? "active" : ""}`}
-                    onClick={() => setActiveTab("ai")}
-                    role="tab"
-                    id="tab-ai"
-                    aria-selected={activeTab === "ai"}
-                    aria-controls="panel-ai"
-                  >
-                    AI Insights
-                  </button>
-                  <button
-                    className={`tab ${activeTab === "output" ? "active" : ""}`}
-                    onClick={() => setActiveTab("output")}
-                    role="tab"
-                    id="tab-output"
-                    aria-selected={activeTab === "output"}
-                    aria-controls="panel-output"
-                  >
-                    Output & Details
-                  </button>
+                  {['Execution Flow', 'AI Insights', 'Output & Details'].map(tab => (
+                    <button
+                      key={tab}
+                      className={`tab ${activeTab === (tab.toLowerCase().split(' ')[0]) ? "active" : ""}`}
+                      onClick={() => setActiveTab(tab.toLowerCase().split(' ')[0])}
+                      role="tab"
+                    >
+                      {tab}
+                    </button>
+                  ))}
                 </div>
                 <div className="section-header-actions">
-                  <button
-                    className="explain-btn"
-                    onClick={handleExplain}
-                    disabled={aiLoading || loading}
-                  >
+                  <button className="explain-btn" onClick={handleExplain} disabled={aiLoading || loading}>
                     <span className="material-symbols-outlined">auto_awesome</span>
                     {aiLoading ? "Thinking…" : "AI Insights"}
-                    {aiLoading && <span className="editor-tab-spinner" />}
                   </button>
-                  <button
-                    className="run-icon-btn"
-                    onClick={handleAnalyze}
-                    disabled={loading || aiLoading}
-                    title="Analyze & Visualize"
-                  >
-                    <span className={`material-symbols-outlined${loading ? " spin" : ""}`}>
-                      {loading ? "sync" : "play_arrow"}
-                    </span>
+                  <button className="run-icon-btn" onClick={() => handleAnalyze()} disabled={loading || aiLoading}>
+                    <span className={`material-symbols-outlined${loading ? " spin" : ""}`}>{loading ? "sync" : "play_arrow"}</span>
                   </button>
                 </div>
               </div>
               {error && (
                 <div className="error-banner">
-                  <span>
-                    <strong>Error:</strong> {error}
-                  </span>
-                  <button
-                    className="error-dismiss"
-                    onClick={() => setError(null)}
-                    aria-label="Dismiss error"
-                  >
-                    ✕
-                  </button>
+                  <span><strong>Error:</strong> {error}</span>
+                  <button className="error-dismiss" onClick={() => setError(null)}>✕</button>
                 </div>
               )}
               {activeTab === "flow" ? (
-                <div id="panel-flow" role="tabpanel" aria-labelledby="tab-flow">
-                  <FlowVisualizer
-                    result={analysisResult}
-                    loading={loading}
-                    stepLoading={stepLoading}
-                    onLineChange={setCurrentLine}
-                    code={code}
-                    onNext={(stepType) => handleStep("next", stepType)}
-                    onBack={() => handleStep("back")}
-                  />
-                </div>
+                <FlowVisualizer result={analysisResult} loading={loading} stepLoading={stepLoading} onLineChange={setCurrentLine} code={code} onNext={(stepType) => handleStep("next", stepType)} onBack={() => handleStep("back")} />
               ) : activeTab === "ai" ? (
-                <div id="panel-ai" role="tabpanel" aria-labelledby="tab-ai">
-                  <AiExplanation data={aiExplanation} loading={aiLoading} />
-                </div>
+                <AiExplanation data={aiExplanation} loading={aiLoading} />
               ) : (
-                <div id="panel-output" role="tabpanel" aria-labelledby="tab-output">
-                  <OutputPanel result={analysisResult} loading={loading} />
-                </div>
+                <OutputPanel result={analysisResult} loading={loading} />
               )}
             </section>
           </main>
@@ -640,34 +702,23 @@ function App() {
         />
       )}
       {serverDown && (view === "editor" || view === "visualizer") && (
-        <div className="server-down-banner" role="alert">
+        <div className="server-down-banner">
           <div className="server-down-inner">
             <span className="server-down-icon material-symbols-outlined">wifi_off</span>
             <div className="server-down-text">
               <strong>Backend server is not running.</strong>
-              <span> Start it with:</span>
-              <code className="server-down-cmd">source venv/bin/activate &amp;&amp; python run_server.py</code>
+              <span> Start it with: </span>
+              <code className="server-down-cmd">python run_server.py</code>
             </div>
           </div>
-          <button
-            className="server-retry-btn"
-            onClick={checkServer}
-            disabled={serverChecking}
-            title="Check again"
-          >
-            <span className={`material-symbols-outlined${serverChecking ? " spin" : ""}`}>
-              {serverChecking ? "sync" : "refresh"}
-            </span>
+          <button className="server-retry-btn" onClick={checkServer} disabled={serverChecking}>
+            <span className={`material-symbols-outlined${serverChecking ? " spin" : ""}`}>{serverChecking ? "sync" : "refresh"}</span>
             {serverChecking ? "Checking…" : "Retry"}
           </button>
         </div>
       )}
       {renderView()}
-      <LoginModal
-        isOpen={showLoginModal}
-        onLogin={(userData) => { handleLogin(userData); setShowLoginModal(false); }}
-        onClose={() => setShowLoginModal(false)}
-      />
+      <LoginModal isOpen={showLoginModal} onLogin={(userData) => { handleLogin(userData); setShowLoginModal(false); }} onClose={() => setShowLoginModal(false)} />
     </div>
   );
 }
