@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useRef, useState } from "react";
 import CodeEditor from "./CodeEditor";
 import "../styles/CppEditorPage.css";
 
@@ -17,9 +17,38 @@ export default function CppEditorPage({
   const exitCode = result?.exit_code;
   const success = result?.success;
 
+  const [leftPct, setLeftPct] = useState(68);
+  const dragging = useRef(false);
+  const containerRef = useRef(null);
+
+  const onDividerMouseDown = useCallback((e) => {
+    e.preventDefault();
+    dragging.current = true;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    const onMove = (ev) => {
+      if (!dragging.current || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const pct = ((ev.clientX - rect.left) / rect.width) * 100;
+      setLeftPct(Math.min(Math.max(pct, 25), 80));
+    };
+
+    const onUp = () => {
+      dragging.current = false;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }, []);
+
   return (
-    <main className="editor-page-main">
-      <section className="editor-page-left">
+    <main className="editor-page-main" ref={containerRef}>
+      <section className="editor-page-left" style={{ width: `${leftPct}%` }}>
         <div className="editor-page-card editor-card">
           <div className="editor-page-head">
             <h2>C++ Code Editor</h2>
@@ -34,7 +63,12 @@ export default function CppEditorPage({
         </div>
       </section>
 
-      <section className="editor-page-right">
+      {/* Drag divider */}
+      <div className="resize-divider" onMouseDown={onDividerMouseDown}>
+        <div className="resize-handle-dots" />
+      </div>
+
+      <section className="editor-page-right" style={{ width: `${100 - leftPct}%` }}>
         <div className="editor-page-card input-card">
           <div className="editor-page-subhead">
             <h3>Program Input</h3>
@@ -53,8 +87,8 @@ export default function CppEditorPage({
           <div className="editor-page-subhead">
             <h3>Execution Output</h3>
             {result && (
-              <div className={`status-pill ${success ? 'success' : 'error'}`}>
-                {success ? 'SUCCESS' : 'FAILED'} (Exit: {exitCode})
+              <div className={`status-pill ${success ? "success" : "error"}`}>
+                {success ? "SUCCESS" : "FAILED"} (Exit: {exitCode})
               </div>
             )}
           </div>
@@ -70,7 +104,6 @@ export default function CppEditorPage({
               <h4>stdout</h4>
               <pre>{stdout || "(empty)"}</pre>
             </div>
-
             <div className="editor-output-block">
               <h4>stderr</h4>
               <pre>{stderr || "(empty)"}</pre>
