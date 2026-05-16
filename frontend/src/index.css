@@ -60,6 +60,29 @@
   --accent-blue-glow:   rgba(58, 106, 158, 0.15);
 }
 
+/* ── Landing page – always light, immune to dark-theme toggle ── */
+.landing-root,
+.dark-theme .landing-root {
+  --bg-primary:    #FAF9F7;
+  --bg-secondary:  #F2EDE7;
+  --bg-card:       #EDE8E0;
+  --bg-elevated:   #E8E1D6;
+  --bg-hover:      #E1D9CC;
+  --border:        rgba(100, 70, 40, 0.09);
+  --border-strong: rgba(100, 70, 40, 0.15);
+  --border-accent: rgba(201, 106, 72, 0.28);
+  --text-primary:   #1A1310;
+  --text-secondary: #5A4A3C;
+  --text-muted:     #9E8C7C;
+  --primary:       #C96A48;
+  --primary-glow:  rgba(201, 106, 72, 0.16);
+  --secondary:     #D97757;
+  --tertiary:      #B85A3A;
+  --shadow-sm: 0 1px 3px rgba(60, 30, 10, 0.10);
+  --shadow-md: 0 4px 14px rgba(60, 30, 10, 0.12);
+  --shadow-lg: 0 8px 32px rgba(60, 30, 10, 0.16);
+}
+
 /* ── Dark theme – warm charcoal (Claude dark mode) ── */
 .dark-theme {
   --bg-primary:    #1C1917;
@@ -241,6 +264,16 @@ body {
 }
 
 /* ── Landing Page – Nav link ── */
+.landing-root .nav-link,
+.dark-theme .landing-root .nav-link {
+  color: rgba(26,19,16,0.55);
+  background: none;
+}
+.landing-root .nav-link:hover,
+.dark-theme .landing-root .nav-link:hover {
+  color: #C96A48;
+  background: rgba(201,106,72,0.08);
+}
 .nav-link {
   color: rgba(26,19,16,0.55);
   padding: 6px 16px;
@@ -267,6 +300,17 @@ body {
 }
 
 /* ── Landing Page – CTA secondary button ── */
+.landing-root .cta-secondary,
+.dark-theme .landing-root .cta-secondary {
+  background: rgba(201,106,72,0.04);
+  border: 1px solid rgba(100,70,40,0.2);
+  color: rgba(26,19,16,0.8);
+}
+.landing-root .cta-secondary:hover,
+.dark-theme .landing-root .cta-secondary:hover {
+  border-color: rgba(201,106,72,0.4);
+  background: rgba(201,106,72,0.07);
+}
 .cta-secondary {
   background: rgba(201,106,72,0.04);
   border: 1px solid rgba(100,70,40,0.2);
@@ -280,6 +324,17 @@ body {
 }
 
 /* ── Landing Page – Ghost button ── */
+.landing-root .ghost-btn,
+.dark-theme .landing-root .ghost-btn {
+  background: rgba(201,106,72,0.04);
+  border: 1px solid rgba(100,70,40,0.18);
+  color: rgba(26,19,16,0.8);
+}
+.landing-root .ghost-btn:hover,
+.dark-theme .landing-root .ghost-btn:hover {
+  border-color: rgba(201,106,72,0.4);
+  background: rgba(201,106,72,0.08);
+}
 .ghost-btn {
   background: rgba(201,106,72,0.04);
   border: 1px solid rgba(100,70,40,0.18);
@@ -302,6 +357,11 @@ body {
 }
 
 /* ── Landing Page – Footer link ── */
+.landing-root .footer-link,
+.dark-theme .landing-root .footer-link { color: rgba(26,19,16,0.45); }
+.landing-root .footer-link:hover,
+.dark-theme .landing-root .footer-link:hover { color: #C96A48; }
+
 .footer-link {
   color: rgba(26,19,16,0.45);
   font-size: 14px;
@@ -310,6 +370,18 @@ body {
 .footer-link:hover { color: #C96A48; }
 
 /* ── Landing Page – Social icon ── */
+.landing-root .social-icon,
+.dark-theme .landing-root .social-icon {
+  border: 1px solid rgba(100,70,40,0.14);
+  color: rgba(26,19,16,0.35);
+  background: none;
+}
+.landing-root .social-icon:hover,
+.dark-theme .landing-root .social-icon:hover {
+  border-color: rgba(201,106,72,0.4);
+  color: #C96A48;
+  background: rgba(201,106,72,0.08);
+}
 .social-icon {
   width: 36px;
   height: 36px;

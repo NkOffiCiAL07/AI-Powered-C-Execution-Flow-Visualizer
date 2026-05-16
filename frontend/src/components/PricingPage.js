@@ -31,7 +31,7 @@ const tiers = [
 ];
 
 const PricingPage = ({ onStart }) => (
-  <div style={{ background: 'var(--bg-primary)', minHeight: '100vh', padding: '72px 24px 80px' }}>
+  <div className="landing-root" style={{ background: 'var(--bg-primary)', minHeight: '100vh', padding: '72px 24px 80px' }}>
     <div style={{ maxWidth: '1040px', margin: '0 auto' }}>
 
       {/* Header */}

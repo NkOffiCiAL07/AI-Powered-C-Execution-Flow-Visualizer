@@ -71,7 +71,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
   };
 
   return (
-    <div style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)', minHeight: '100vh', fontFamily: 'Inter, sans-serif', overflowX: 'hidden' }}>
+    <div className="landing-root" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)', minHeight: '100vh', fontFamily: 'Inter, sans-serif', overflowX: 'hidden' }}>
 
       {/* ── NAVBAR ── */}
       <header className="fixed top-0 w-full z-50" style={{ background: 'rgba(250,249,247,0.92)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(100,70,40,0.1)' }}>
