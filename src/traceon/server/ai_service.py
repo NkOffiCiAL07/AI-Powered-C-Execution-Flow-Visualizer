@@ -43,11 +43,11 @@ Code:
 ```"""
 
     response = client.models.generate_content(
-        model="gemini-2.0-flash-lite",
+        model="gemini-2.5-flash",
         contents=prompt,
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
-            max_output_tokens=1024,
+            max_output_tokens=4096,
             temperature=0.2,
         ),
     )

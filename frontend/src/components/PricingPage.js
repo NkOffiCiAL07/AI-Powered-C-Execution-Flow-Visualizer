@@ -1,6 +1,6 @@
 import React from 'react';
 
-const PricingPage = () => {
+const PricingPage = ({ onStart }) => {
   const tiers = [
     {
       name: "Alpha",
@@ -65,11 +65,17 @@ const PricingPage = () => {
                 </li>
               ))}
             </ul>
-            <button className={`w-full py-4 rounded-xl font-bold transition-all active:scale-95 ${
-              tier.popular 
-                ? 'bg-primary text-on-primary shadow-[0_0_20px_rgba(168,85,247,0.4)]' 
-                : 'bg-surface-container border border-white/10 hover:bg-white/5'
-            }`}>
+            <button
+              onClick={() => {
+                if (tier.name === "Alpha") onStart();
+                else if (tier.name === "Enterprise") window.open('mailto:nishantkumar19041@gmail.com', '_blank');
+                else window.open('mailto:nishantkumar19041@gmail.com?subject=Traceon Beta Interest', '_blank');
+              }}
+              className={`w-full py-4 rounded-xl font-bold transition-all active:scale-95 ${
+                tier.popular
+                  ? 'bg-primary text-on-primary shadow-[0_0_20px_rgba(168,85,247,0.4)]'
+                  : 'bg-surface-container border border-white/10 hover:bg-white/5'
+              }`}>
               {tier.buttonText}
             </button>
           </div>

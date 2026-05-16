@@ -2,7 +2,7 @@ import React from "react";
 import "../styles/Header.css";
 import { useTheme } from "../theme";
 
-export default function Header({ onAnalyze, onExplain, loading, aiLoading, view, onSwitchView, user, onLogout }) {
+export default function Header({ onAnalyze, onExplain, loading, aiLoading, view, onSwitchView, user, onLogout, onSignIn }) {
   const { theme, toggleTheme } = useTheme();
   return (
     <header className="header">
@@ -74,7 +74,7 @@ export default function Header({ onAnalyze, onExplain, loading, aiLoading, view,
             <button className="sign-in-link" onClick={onLogout} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>Sign Out</button>
           </div>
         ) : (
-          <a href="#" className="sign-in-link">Sign In</a>
+          <button className="sign-in-link" onClick={onSignIn}>Sign In</button>
         )}
       </div>
     </header>

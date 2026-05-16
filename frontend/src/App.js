@@ -9,6 +9,7 @@ import LandingPage from "./components/LandingPage";
 import DocsPage from "./components/DocsPage";
 import PricingPage from "./components/PricingPage";
 import CommunityPage from "./components/CommunityPage";
+import LoginModal from "./components/LoginModal";
 import { analyzeCode, runCode, stepAnalyzeSession, explainCode, API_BASE_URL } from "./services/api";
 import "./App.css";
 import "./styles/CppEditorPage.css";
@@ -121,6 +122,7 @@ function App() {
   const [runError, setRunError] = useState(null);
   const [serverDown, setServerDown] = useState(false);
   const [serverChecking, setServerChecking] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const abortControllerRef = useRef(null);
   const aiAbortControllerRef = useRef(null);
   const stepAbortControllerRef = useRef(null);
@@ -362,9 +364,9 @@ function App() {
       case "docs":
         return <DocsPage />;
       case "pricing":
-        return <PricingPage />;
+        return <PricingPage onStart={() => setView("editor")} />;
       case "community":
-        return <CommunityPage />;
+        return <CommunityPage onStart={() => setView("editor")} />;
       case "editor":
         return (
           <CppEditorPage
@@ -530,6 +532,7 @@ function App() {
           onSwitchView={setView}
           user={user}
           onLogout={handleLogout}
+          onSignIn={() => setShowLoginModal(true)}
         />
       )}
       {serverDown && view !== "landing" && (
@@ -556,6 +559,11 @@ function App() {
         </div>
       )}
       {renderView()}
+      <LoginModal
+        isOpen={showLoginModal}
+        onLogin={(userData) => { handleLogin(userData); setShowLoginModal(false); }}
+        onClose={() => setShowLoginModal(false)}
+      />
     </div>
   );
 }

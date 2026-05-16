@@ -16,14 +16,18 @@ const CommunityPage = () => {
             <span className="material-symbols-outlined text-6xl text-primary group-hover:scale-110 transition-transform">terminal</span>
             <h3 className="text-2xl font-bold">GitHub</h3>
             <p className="text-on-surface-variant">The core engine is 100% open source. Help us refine the algorithms and add support for more architectures.</p>
-            <button className="bg-primary text-on-primary px-8 py-3 rounded-lg font-bold shadow-[0_0_20px_rgba(168,85,247,0.3)]">View Repository</button>
+            <button
+              onClick={() => window.open('https://github.com/NkOffiCiAL07/AI-Powered-C-Execution-Flow-Visualizer', '_blank')}
+              className="bg-primary text-on-primary px-8 py-3 rounded-lg font-bold shadow-[0_0_20px_rgba(168,85,247,0.3)]">View Repository</button>
           </div>
           
           <div className="glass-panel p-10 rounded-2xl border border-white/10 flex flex-col items-center text-center gap-6 group hover:border-secondary/50 transition-all duration-300">
             <span className="material-symbols-outlined text-6xl text-secondary group-hover:scale-110 transition-transform">forum</span>
             <h3 className="text-2xl font-bold">Discord</h3>
             <p className="text-on-surface-variant">Real-time support and architectural discussions with the core team and 12,000+ engineers.</p>
-            <button className="bg-secondary text-white px-8 py-3 rounded-lg font-bold shadow-[0_0_20px_rgba(99,102,241,0.3)]">Join Server</button>
+            <button
+              onClick={() => window.open('mailto:nishantkumar19041@gmail.com?subject=Traceon Discord Invite', '_blank')}
+              className="bg-secondary text-white px-8 py-3 rounded-lg font-bold shadow-[0_0_20px_rgba(99,102,241,0.3)]">Join Server</button>
           </div>
         </div>
 

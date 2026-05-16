@@ -196,6 +196,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
                 Start Visualizing — Free
               </button>
               <button
+                onClick={onStart}
                 className="cta-secondary flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm w-full sm:w-auto justify-center"
               >
                 <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>visibility</span>
