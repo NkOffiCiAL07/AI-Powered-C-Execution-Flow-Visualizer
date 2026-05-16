@@ -149,3 +149,10 @@ export async function updateFile(projectId, fileId, name, language, code, signal
     signal,
   });
 }
+
+export async function deleteFile(projectId, fileId, signal) {
+  return apiFetch(`${API_BASE_URL}/projects/${projectId}/files/${fileId}`, {
+    method: "DELETE",
+    signal,
+  });
+}

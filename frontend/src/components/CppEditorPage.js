@@ -66,12 +66,17 @@ export default function CppEditorPage({
   aiLoading,
   language = "cpp",
   onLanguageChange,
+  onFileSwitch,
+  onFileCreate,
+  onFileDelete,
 }) {
   const [prompt, setPrompt] = useState("");
   const [showPrompt, setShowPrompt] = useState(false);
   const [saveState, setSaveState] = useState("idle"); // "idle" | "saving" | "saved" | "error"
   const promptInputRef = useRef(null);
   const saveTimerRef = useRef(null);
+  const [showNewFilePrompt, setShowNewFilePrompt] = useState(false);
+  const [newFileName, setNewFileName] = useState("");
 
   const handleSave = async () => {
     if (!onSave || saveState === "saving") return;
@@ -95,6 +100,14 @@ export default function CppEditorPage({
       onGenerate(prompt);
       setPrompt("");
       setShowPrompt(false);
+    }
+  };
+
+  const handleCreateFile = () => {
+    if (newFileName.trim()) {
+      onFileCreate(newFileName.trim());
+      setNewFileName("");
+      setShowNewFilePrompt(false);
     }
   };
 
@@ -145,7 +158,60 @@ export default function CppEditorPage({
 
   return (
     <main className="editor-page-main" ref={containerRef}>
-      {/* ── Left: code editor ── */}
+      {/* ── Left Sidebar: File Explorer ── */}
+      {currentProject && (
+        <aside className="editor-sidebar">
+          <div className="sidebar-head">
+            <span className="material-symbols-outlined">folder_open</span>
+            Files
+          </div>
+          <div className="sidebar-list">
+            {currentProject.files?.map(f => (
+              <div 
+                key={f.id} 
+                className={`file-item ${f.id === currentProject.activeFileId ? 'active' : ''}`}
+                onClick={() => onFileSwitch && onFileSwitch(f.id)}
+              >
+                <span className="material-symbols-outlined file-icon">
+                  {f.language === 'python' ? 'terminal' : 'description'}
+                </span>
+                <span className="file-name">{f.name}</span>
+                <button 
+                  className="file-delete-btn"
+                  onClick={(e) => { e.stopPropagation(); onFileDelete && onFileDelete(f.id); }}
+                  title="Delete file"
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+            ))}
+          </div>
+          
+          {showNewFilePrompt ? (
+            <div className="new-file-input-container">
+              <input 
+                autoFocus
+                className="new-file-input"
+                value={newFileName}
+                onChange={(e) => setNewFileName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleCreateFile();
+                  if (e.key === 'Escape') setShowNewFilePrompt(false);
+                }}
+                onBlur={() => !newFileName && setShowNewFilePrompt(false)}
+                placeholder="filename.cpp"
+              />
+            </div>
+          ) : (
+            <button className="sidebar-add-btn" onClick={() => setShowNewFilePrompt(true)}>
+              <span className="material-symbols-outlined">add</span>
+              New File
+            </button>
+          )}
+        </aside>
+      )}
+
+      {/* ── Middle: code editor ── */}
       <section className="editor-page-left" style={{ width: `${leftPct}%`, position: "relative" }}>
         {/* ── AI Generate overlay ── */}
         {showPrompt && (

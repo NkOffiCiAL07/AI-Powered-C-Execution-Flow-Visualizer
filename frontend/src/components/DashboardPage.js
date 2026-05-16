@@ -61,8 +61,7 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
     try {
       const data = await fetchFiles(project.id);
       const files = data.files || [];
-      const firstFile = files[0] || null;
-      onOpenProject({ project, file: firstFile, code: firstFile?.code || '', language: project.language });
+      onOpenProject({ project, files, activeFileId: files[0]?.id });
     } catch (err) {
       alert(err.message || 'Failed to open project');
     } finally {
@@ -72,7 +71,7 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
 
   const handleCreated = ({ project, file, code, language }) => {
     setShowNewModal(false);
-    onOpenProject({ project, file, code, language });
+    onOpenProject({ project, files: [file], activeFileId: file.id });
   };
 
   return (

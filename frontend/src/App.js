@@ -14,7 +14,7 @@ import DashboardPage from "./components/DashboardPage";
 import DebuggerRestricted from "./components/DebuggerRestricted";
 import { 
   analyzeCode, runCode, stepAnalyzeSession, explainCode, generateCode, 
-  updateFile, fetchProject, fetchFiles, fetchPublicProject, API_BASE_URL 
+  updateFile, deleteFile, fetchProject, fetchFiles, createFile, fetchPublicProject, API_BASE_URL 
 } from "./services/api";
 import "./App.css";
 import "./styles/CppEditorPage.css";
@@ -280,7 +280,7 @@ function App() {
           const files   = data.files || [];
           const file    = urlFid ? (files.find(f => f.id === urlFid) || files[0]) : files[0];
           if (project && file) {
-            handleOpenProject({ project, file, code: file.code, language: file.language });
+            handleOpenProject({ project, files, activeFileId: file.id });
           }
         } catch {}
       })();
@@ -308,9 +308,7 @@ function App() {
               const files   = filesData.files || [];
               const file    = urlFid ? (files.find(f => f.id === urlFid) || files[0]) : files[0];
               if (project && file) {
-                setCurrentProject({ project, file });
-                setCode(file.code || "");
-                setLanguage(file.language || project.language || "cpp");
+                handleOpenProject({ project, files, activeFileId: file.id });
               }
             } catch (err) {
               if (err.name !== "AbortError") {
@@ -343,7 +341,7 @@ function App() {
       params.set("v", view);
       if ((view === "editor" || view === "visualizer") && currentProject?.project) {
         params.set("pid", currentProject.project.id);
-        if (currentProject.file) params.set("fid", currentProject.file.id);
+        if (currentProject.activeFileId) params.set("fid", currentProject.activeFileId);
       }
     }
     const search = params.toString() ? "?" + params.toString() : "";
@@ -370,13 +368,52 @@ function App() {
   };
 
   // Open a saved project in the editor
-  const handleOpenProject = ({ project, file, code: projectCode, language: projectLang }) => {
-    setCurrentProject({ project, file });
-    setLanguage(projectLang || project.language || "cpp");
-    setCode(projectCode || "");
+  const handleOpenProject = ({ project, files = [], activeFileId = null }) => {
+    const activeFile = activeFileId 
+      ? (files.find(f => f.id === activeFileId) || files[0]) 
+      : files[0];
     
+    setCurrentProject({ project, files, activeFileId: activeFile?.id });
+    setLanguage(activeFile?.language || project.language || "cpp");
+    setCode(activeFile?.code || "");
+
     // P9.2: Restore pre-computed snapshots if they exist
-    if (file?.last_snapshots?.length > 0) {
+    if (activeFile?.last_snapshots?.length > 0) {
+      setAnalysisResult({
+        session_id: `restored_${activeFile.id}`,
+        status: "exited",
+        cursor: 0,
+        total_recorded_steps: activeFile.last_snapshots.length,
+        snapshots: activeFile.last_snapshots,
+        total_steps: activeFile.last_snapshots.length,
+        execution_mode: "restored",
+      });
+      setActiveTab("flow");
+    } else {
+      setAnalysisResult(null);
+    }
+
+    setError(null);
+    setRunResult(null);
+    setRunError(null);
+    setCurrentLine(null);
+    setView("editor");
+  };
+
+  const handleFileSwitch = (fileId) => {
+    if (!currentProject) return;
+    const file = currentProject.files.find(f => f.id === fileId);
+    if (!file) return;
+
+    // Save current work before switching? (Optional but good)
+    // handleSave(); 
+
+    setCurrentProject(prev => ({ ...prev, activeFileId: fileId }));
+    setLanguage(file.language || currentProject.project.language || "cpp");
+    setCode(file.code || "");
+
+    // Phase 9.2: Restore snapshots for the new file
+    if (file.last_snapshots?.length > 0) {
       setAnalysisResult({
         session_id: `restored_${file.id}`,
         status: "exited",
@@ -395,19 +432,80 @@ function App() {
     setRunResult(null);
     setRunError(null);
     setCurrentLine(null);
-    setView("editor");
+  };
+
+  const handleFileCreate = async (name) => {
+    if (!currentProject) return;
+    const { project } = currentProject;
+    
+    // Simple extension detection
+    const ext = name.split('.').pop().toLowerCase();
+    const lang = ext === 'py' ? 'python' : ext === 'java' ? 'java' : ext === 'c' ? 'c' : 'cpp';
+    
+    try {
+      setLoading(true);
+      const { file } = await createFile(project.id, name, lang, DEFAULT_CODES[lang] || "");
+      setCurrentProject(prev => ({
+        ...prev,
+        files: [...prev.files, file],
+        activeFileId: file.id
+      }));
+      setLanguage(lang);
+      setCode(file.code || "");
+      setAnalysisResult(null);
+      setError(null);
+      setRunResult(null);
+      setRunError(null);
+      setCurrentLine(null);
+    } catch (err) {
+      setError(err.message || "Failed to create file");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFileDelete = async (fileId) => {
+    if (!currentProject || currentProject.files.length <= 1) {
+      alert("Projects must have at least one file.");
+      return;
+    }
+    if (!window.confirm("Delete this file? This cannot be undone.")) return;
+
+    const { project } = currentProject;
+    try {
+      await deleteFile(project.id, fileId);
+      
+      setCurrentProject(prev => {
+        const nextFiles = prev.files.filter(f => f.id !== fileId);
+        let nextActiveId = prev.activeFileId;
+        
+        if (nextActiveId === fileId) {
+          nextActiveId = nextFiles[0]?.id;
+          const nextActiveFile = nextFiles[0];
+          setLanguage(nextActiveFile?.language || project.language || "cpp");
+          setCode(nextActiveFile?.code || "");
+        }
+        
+        return { ...prev, files: nextFiles, activeFileId: nextActiveId };
+      });
+    } catch (err) {
+      alert(err.message || "Failed to delete file");
+    }
   };
 
   // Save current code back to the open project file
   const handleSave = useCallback(async () => {
-    if (!currentProject?.file || !currentProject?.project) return;
-    const { project, file } = currentProject;
+    if (!currentProject?.activeFileId || !currentProject?.project) return;
+    const { project, activeFileId, files } = currentProject;
+    const file = files.find(f => f.id === activeFileId);
+    if (!file) return;
+
     try {
       await updateFile(project.id, file.id, file.name, language, code);
-      // Keep currentProject.file in sync with the latest language/code
+      // Update the file in our local list
       setCurrentProject(prev => ({
         ...prev,
-        file: { ...prev.file, language, code },
+        files: prev.files.map(f => f.id === activeFileId ? { ...f, language, code } : f)
       }));
     } catch (err) {
       console.error("Auto-save failed:", err);
@@ -416,11 +514,11 @@ function App() {
 
   // Phase 9.1: Copy permanent share link for a project/file
   const handleCopyProjectShareLink = useCallback(() => {
-    if (!currentProject?.project?.id || !currentProject?.file?.id) return;
+    if (!currentProject?.project?.id || !currentProject?.activeFileId) return;
     const url = new URL(window.location.origin);
-    url.searchParams.set("v", "editor");
+    url.searchParams.set("v", "view");
     url.searchParams.set("pid", currentProject.project.id);
-    url.searchParams.set("fid", currentProject.file.id);
+    url.searchParams.set("fid", currentProject.activeFileId);
     navigator.clipboard.writeText(url.toString());
   }, [currentProject]);
 
@@ -428,8 +526,11 @@ function App() {
   useEffect(() => {
     if (!currentProject || view !== "editor") return;
     
+    const activeFile = currentProject.files?.find(f => f.id === currentProject.activeFileId);
+    if (!activeFile) return;
+
     // Only save if code or language has changed relative to what's in the project record
-    const hasChanges = code !== currentProject.file?.code || language !== currentProject.file?.language;
+    const hasChanges = code !== activeFile.code || language !== activeFile.language;
     if (!hasChanges) return;
 
     const timer = setTimeout(() => {
@@ -565,7 +666,7 @@ function App() {
         abortControllerRef.current.signal, 
         language,
         currentProject?.project?.id,
-        currentProject?.file?.id
+        currentProject?.activeFileId
       );
       setServerDown(false);
       setAnalysisResult(result);
@@ -578,7 +679,7 @@ function App() {
       setLoading(false);
       abortControllerRef.current = null;
     }
-  }, [code, programInput, language]);
+  }, [code, programInput, language, currentProject]);
 
   const handleRun = useCallback(async () => {
     if (!code.trim()) {
@@ -749,6 +850,9 @@ function App() {
             onLanguageChange={handleLanguageChange}
             onGenerate={handleGenerate}
             generateLoading={generateLoading}
+            onFileSwitch={handleFileSwitch}
+            onFileCreate={handleFileCreate}
+            onFileDelete={handleFileDelete}
           />
         );
       case "visualizer":
