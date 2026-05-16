@@ -310,14 +310,30 @@ def create_app() -> FastAPI:
         if not request.code or not request.code.strip():
             raise HTTPException(status_code=400, detail="No code provided")
 
-        # If client supplies a project_id, verify ownership (P4.4)
-        if request.project_id and mongo_app_store.enabled:
-            caller = optional_user(http_request)
-            if caller:
-                owner_id = caller.get("user_id") or caller.get("sub", "")
-                proj = mongo_app_store.get_project(request.project_id)
-                if not proj or proj["owner_id"] != owner_id:
-                    raise HTTPException(status_code=403, detail="project_id does not belong to your account")
+        # ── P4.4 Guard: Guest vs Member debugger access ───────────────────────
+        caller = optional_user(http_request)
+        is_guest = not caller or caller.get("user", {}).get("role") == "guest"
+
+        if is_guest:
+            # Guests are ONLY allowed to use /run (plain execution), not /analyze (debugger)
+            # because the debugger consumes significant MongoDB snapshot space.
+            raise HTTPException(
+                status_code=403, 
+                detail="Debugger access is restricted. Please sign in with Google to enable step-through debugging."
+            )
+
+        # Member check: Require project_id and file_id for DB linking
+        if not request.project_id or not request.file_id:
+            raise HTTPException(
+                status_code=403,
+                detail="Please open or create a project to use the debugger features."
+            )
+
+        # Verify ownership
+        owner_id = caller.get("user_id") or caller.get("sub", "")
+        proj = mongo_app_store.get_project(request.project_id)
+        if not proj or proj["owner_id"] != owner_id:
+            raise HTTPException(status_code=403, detail="The selected project does not belong to your account.")
 
         # ── Python: trace-based debugger ──
         if lang == "python":
@@ -410,6 +426,25 @@ def create_app() -> FastAPI:
             first_snapshot = _to_execution_snapshot(started.state)
             snapshots = [first_snapshot] if first_snapshot is not None else []
             total_steps = len(started.history or [])
+
+            # ── P9.2: Save snapshots to MongoDB for persistence ──
+            if request.project_id and request.file_id and mongo_app_store.enabled:
+                try:
+                    # Retrieve the existing file info to keep the name
+                    file_info = mongo_app_store.get_file(request.project_id, request.file_id)
+                    if file_info:
+                        # Convert DTO snapshots to plain dicts for BSON storage
+                        raw_snapshots = [s.model_dump(mode="json") for s in snapshots]
+                        mongo_app_store.upsert_file(
+                            request.project_id,
+                            request.file_id,
+                            file_info["name"],
+                            file_info["language"],
+                            file_info["code"],
+                            snapshots=raw_snapshots
+                        )
+                except Exception as e:
+                    logger.error(f"Failed to persist snapshots to MongoDB: {e}")
 
             return AnalyzeCodeResponse(
                 session_id=started.session_id,
@@ -645,6 +680,22 @@ def create_app() -> FastAPI:
             return explain_code_ai(req.code, req.language or "cpp")
         except Exception as error:
             raise HTTPException(status_code=500, detail=f"AI explanation failed: {error}") from error
+
+    # ── Public View (P9.1) ──────────────────────────────────────────────────
+
+    @app.get("/view/{project_id}", tags=["public"])
+    def public_view(project_id: str):
+        """Returns project and its files without authentication (read-only)."""
+        proj = mongo_app_store.get_project(project_id)
+        if not proj:
+            raise HTTPException(status_code=404, detail="Project not found")
+        
+        files = mongo_app_store.list_files(project_id)
+        # Filter files to remove potentially sensitive DB internal fields if any
+        return {
+            "project": proj,
+            "files": files,
+        }
 
     # ── Projects (P4.5) ──────────────────────────────────────────────────────
 

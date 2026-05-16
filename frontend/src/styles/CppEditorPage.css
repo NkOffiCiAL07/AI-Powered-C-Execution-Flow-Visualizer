@@ -524,10 +524,67 @@
   line-height: 1.6;
 }
 
-@media (max-width: 1024px) {
-  .editor-page-main {
-    flex-direction: column;
-    height: auto;
-    overflow: visible;
-  }
+.visualise-btn {
+  padding: 6px 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font-weight: 700;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
 }
+
+.visualise-btn:hover:not(:disabled) {
+  background: var(--primary);
+  color: #131315;
+  border-color: transparent;
+}
+
+.visualise-btn .lock-icon {
+  font-size: 14px;
+  opacity: 0.6;
+}
+
+.editor-head-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.editor-title-stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-project-crumb {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.editor-back-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  transition: all 0.2s;
+}
+
+.editor-back-btn:hover {
+  background: var(--bg-hover);
+  color: #fff;
+}
+
+.editor-back-btn span { font-size: 16px; }

@@ -230,6 +230,7 @@ class FileDTO(BaseModel):
     language: str
     code: str
     updated_at: datetime
+    last_snapshots: list[dict] = Field(default_factory=list)
 
 
 class ProjectCreateRequest(BaseModel):
@@ -241,3 +242,4 @@ class FileUpsertRequest(BaseModel):
     name: str
     language: str
     code: str
+    snapshots: list[dict] | None = None

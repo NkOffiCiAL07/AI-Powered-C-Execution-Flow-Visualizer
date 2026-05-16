@@ -267,25 +267,35 @@ class MongoAppStore:
         name: str,
         language: str,
         code: str,
+        snapshots: list[dict] | None = None,
     ) -> str:
         now = datetime.now(timezone.utc)
+        update_data = {"name": name, "language": language, "code": code, "updated_at": now}
+        if snapshots is not None:
+            update_data["last_snapshots"] = snapshots
+
         if file_id:
             try:
                 self._db.files.update_one(
                     {"_id": self._ObjId(file_id), "project_id": project_id},
-                    {"$set": {"name": name, "language": language, "code": code, "updated_at": now}},
+                    {"$set": update_data},
                     upsert=True,
                 )
                 return file_id
             except Exception:
                 pass
-        result = self._db.files.insert_one({
+        
+        insert_data = {
             "project_id": project_id,
             "name": name.strip(),
             "language": language,
             "code": code,
             "updated_at": now,
-        })
+        }
+        if snapshots is not None:
+            insert_data["last_snapshots"] = snapshots
+
+        result = self._db.files.insert_one(insert_data)
         return str(result.inserted_id)
 
     def delete_file(self, project_id: str, file_id: str) -> bool:
@@ -321,6 +331,7 @@ class MongoAppStore:
             "language": doc.get("language", "cpp"),
             "code": doc.get("code", ""),
             "updated_at": doc.get("updated_at", now).isoformat(),
+            "last_snapshots": doc.get("last_snapshots", []),
         }
 
 

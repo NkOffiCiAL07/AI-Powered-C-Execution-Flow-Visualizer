@@ -52,10 +52,16 @@ async function apiFetch(url, options = {}) {
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
-export async function analyzeCode(code, stdin, signal, language = "cpp") {
+export async function analyzeCode(code, stdin, signal, language = "cpp", projectId = null, fileId = null) {
   return apiFetch(`${API_BASE_URL}/analyze`, {
     method: "POST",
-    body: JSON.stringify({ code, stdin: stdin || "", language }),
+    body: JSON.stringify({ 
+      code, 
+      stdin: stdin || "", 
+      language,
+      project_id: projectId,
+      file_id: fileId
+    }),
     signal,
   });
 }
@@ -100,6 +106,13 @@ export async function fetchProjects(signal) {
 
 export async function fetchProject(projectId, signal) {
   return apiFetch(`${API_BASE_URL}/projects/${projectId}`, { signal });
+}
+
+export async function fetchPublicProject(projectId, signal) {
+  // Uses regular fetch as it doesn't need auth/Bearer
+  const response = await fetch(`${API_BASE_URL}/view/${projectId}`, { signal });
+  if (!response.ok) throw new Error(`Public view failed: ${response.status}`);
+  return response.json();
 }
 
 export async function createProject(name, language, signal) {

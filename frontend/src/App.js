@@ -11,7 +11,11 @@ import PricingPage from "./components/PricingPage";
 import CommunityPage from "./components/CommunityPage";
 import LoginModal from "./components/LoginModal";
 import DashboardPage from "./components/DashboardPage";
-import { analyzeCode, runCode, stepAnalyzeSession, explainCode, generateCode, updateFile, fetchProject, fetchFiles, API_BASE_URL } from "./services/api";
+import DebuggerRestricted from "./components/DebuggerRestricted";
+import { 
+  analyzeCode, runCode, stepAnalyzeSession, explainCode, generateCode, 
+  updateFile, fetchProject, fetchFiles, fetchPublicProject, API_BASE_URL 
+} from "./services/api";
 import "./App.css";
 import "./styles/CppEditorPage.css";
 
@@ -265,7 +269,22 @@ function App() {
     // Restore view from URL params (only when a valid session exists)
     let projCtrl = null;
 
-    if (restoredUser) {
+    if (urlView === "view" && urlPid) {
+      // P9.1: Public read-only view
+      setView("editor"); // Map view → editor but with restricted props
+      projCtrl = new AbortController();
+      (async () => {
+        try {
+          const data = await fetchPublicProject(urlPid, projCtrl.signal);
+          const project = data.project;
+          const files   = data.files || [];
+          const file    = urlFid ? (files.find(f => f.id === urlFid) || files[0]) : files[0];
+          if (project && file) {
+            handleOpenProject({ project, file, code: file.code, language: file.language });
+          }
+        } catch {}
+      })();
+    } else if (restoredUser) {
       const isMember = restoredUser.role === "member";
 
       if (urlView === "dashboard" && isMember) {
@@ -355,7 +374,23 @@ function App() {
     setCurrentProject({ project, file });
     setLanguage(projectLang || project.language || "cpp");
     setCode(projectCode || "");
-    setAnalysisResult(null);
+    
+    // P9.2: Restore pre-computed snapshots if they exist
+    if (file?.last_snapshots?.length > 0) {
+      setAnalysisResult({
+        session_id: `restored_${file.id}`,
+        status: "exited",
+        cursor: 0,
+        total_recorded_steps: file.last_snapshots.length,
+        snapshots: file.last_snapshots,
+        total_steps: file.last_snapshots.length,
+        execution_mode: "restored",
+      });
+      setActiveTab("flow");
+    } else {
+      setAnalysisResult(null);
+    }
+
     setError(null);
     setRunResult(null);
     setRunError(null);
@@ -367,13 +402,42 @@ function App() {
   const handleSave = useCallback(async () => {
     if (!currentProject?.file || !currentProject?.project) return;
     const { project, file } = currentProject;
-    await updateFile(project.id, file.id, file.name, language, code);
-    // Keep currentProject.file in sync with the latest language/code
-    setCurrentProject(prev => ({
-      ...prev,
-      file: { ...prev.file, language, code },
-    }));
+    try {
+      await updateFile(project.id, file.id, file.name, language, code);
+      // Keep currentProject.file in sync with the latest language/code
+      setCurrentProject(prev => ({
+        ...prev,
+        file: { ...prev.file, language, code },
+      }));
+    } catch (err) {
+      console.error("Auto-save failed:", err);
+    }
   }, [currentProject, language, code]);
+
+  // Phase 9.1: Copy permanent share link for a project/file
+  const handleCopyProjectShareLink = useCallback(() => {
+    if (!currentProject?.project?.id || !currentProject?.file?.id) return;
+    const url = new URL(window.location.origin);
+    url.searchParams.set("v", "editor");
+    url.searchParams.set("pid", currentProject.project.id);
+    url.searchParams.set("fid", currentProject.file.id);
+    navigator.clipboard.writeText(url.toString());
+  }, [currentProject]);
+
+  // Phase 7.2: Auto-save effect
+  useEffect(() => {
+    if (!currentProject || view !== "editor") return;
+    
+    // Only save if code or language has changed relative to what's in the project record
+    const hasChanges = code !== currentProject.file?.code || language !== currentProject.file?.language;
+    if (!hasChanges) return;
+
+    const timer = setTimeout(() => {
+      handleSave();
+    }, 2000); // 2 second debounce
+
+    return () => clearTimeout(timer);
+  }, [code, language, currentProject, view, handleSave]);
 
   const handleExplain = useCallback(async () => {
     if (!code.trim()) {
@@ -495,7 +559,14 @@ function App() {
     setError(null);
     setAnalysisResult(null);
     try {
-      const result = await analyzeCode(codeToAnalyze, programInput, abortControllerRef.current.signal, language);
+      const result = await analyzeCode(
+        codeToAnalyze, 
+        programInput, 
+        abortControllerRef.current.signal, 
+        language,
+        currentProject?.project?.id,
+        currentProject?.file?.id
+      );
       setServerDown(false);
       setAnalysisResult(result);
       setActiveTab("flow");
@@ -655,10 +726,20 @@ function App() {
               setRunError(null);
             }}
             onRun={handleRun}
+            onAnalyze={() => {
+              if (!user || user.role === "guest") {
+                setShowLoginModal(true);
+              } else if (!currentProject) {
+                setView("dashboard");
+              } else {
+                handleAnalyze();
+              }
+            }}
             onExplain={handleExplain}
             onSave={currentProject ? handleSave : null}
             onBackToDashboard={currentProject ? () => setView("dashboard") : null}
             currentProject={currentProject}
+            user={user}
             loading={runLoading}
             error={runError}
             result={runResult}
@@ -671,6 +752,9 @@ function App() {
           />
         );
       case "visualizer":
+        const isGuest = !user || user.role === "guest";
+        const noProject = !currentProject;
+
         return (
           <main className="app-main" ref={debugContainerRef}>
             <section className="editor-section" style={{ width: `${debugLeftPct}%`, flex: "none", position: "relative" }}>
@@ -768,7 +852,23 @@ function App() {
               <div className="resize-handle-dots" />
             </div>
             <section className="visualizer-section" style={{ flex: 1, minWidth: 0 }}>
-              <div className="section-header">
+              {isGuest ? (
+                <DebuggerRestricted 
+                  reason="The high-fidelity debugger requires a signed-in account to store execution snapshots."
+                  actionLabel="Sign in with Google"
+                  onAction={() => setShowLoginModal(true)}
+                />
+              ) : noProject ? (
+                <DebuggerRestricted 
+                  reason="To use the debugger, you must open or create a project. This ensures your execution flow data is properly associated with your account."
+                  actionLabel="Go to Dashboard"
+                  onAction={() => setView("dashboard")}
+                  secondaryActionLabel="Open Editor"
+                  onSecondaryAction={() => setView("editor")}
+                />
+              ) : (
+                <>
+                  <div className="section-header">
                 <div className="tab-bar" role="tablist" aria-label="View tabs">
                   {['Execution Flow', 'AI Insights', 'Output & Details'].map(tab => (
                     <button
@@ -818,10 +918,13 @@ function App() {
                 <AiExplanation data={aiExplanation} loading={aiLoading} />
               ) : (
                 <OutputPanel result={analysisResult} loading={loading} />
-              )}
-            </section>
-          </main>
-        );
+                )}
+                </>
+                )}
+                </section>
+                </main>
+                );
+
       default:
         return <LandingPage onStart={() => setView("editor")} onSwitchView={setView} />;
     }

@@ -56,6 +56,8 @@ export default function CppEditorPage({
   onSave,
   onBackToDashboard,
   currentProject,
+  user,
+  onAnalyze,
   loading,
   generateLoading,
   error,
@@ -260,6 +262,17 @@ export default function CppEditorPage({
             </button>
           </div>
           <div className="section-header-actions">
+            <button
+              className="visualise-btn"
+              onClick={onAnalyze}
+              disabled={loading || aiLoading}
+              title={!user || user.role === "guest" ? "Sign in to use debugger" : !currentProject ? "Save to project to use debugger" : "Start high-fidelity debugging"}
+            >
+              <span className="material-symbols-outlined">bug_report</span>
+              Visualise
+              {(!user || user.role === "guest" || !currentProject) && <span className="material-symbols-outlined lock-icon">lock</span>}
+            </button>
+
             <button
               className="explain-btn"
               onClick={onExplain}

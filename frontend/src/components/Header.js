@@ -22,6 +22,13 @@ const NAV_PAGES = [
   { value: "community", label: "Community", icon: "groups"     },
 ];
 
+const LANG_OPTIONS = [
+  { value: "cpp",    label: "C++",    icon: "terminal" },
+  { value: "c",      label: "C",      icon: "terminal" },
+  { value: "python", label: "Python", icon: "terminal" },
+  { value: "java",   label: "Java",   icon: "terminal" },
+];
+
 function Dropdown({ trigger, children, align = "left" }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -45,20 +52,34 @@ function Dropdown({ trigger, children, align = "left" }) {
   );
 }
 
-export default function Header({ view, onSwitchView, user, onLogout, onSignIn }) {
+export default function Header({ view, onSwitchView, user, onLogout, onSignIn, language, onLanguageChange, currentProject }) {
   const { theme, setTheme } = useTheme();
   const inApp = view === "editor" || view === "visualizer";
   const currentView = VIEW_OPTIONS.find(o => o.value === view);
+  const currentLang = LANG_OPTIONS.find(o => o.value === (language || "cpp"));
 
   return (
     <header className="header">
 
-      {/* ── Left: brand + pages dropdown (app) or brand only ── */}
+      {/* ── Left: brand + breadcrumb ── */}
       <div className="header-left">
         <div className="header-brand" onClick={() => onSwitchView("landing")}>
           <span className="material-symbols-outlined header-brand-icon">terminal</span>
           <span className="brand-text">Traceon</span>
         </div>
+
+        {currentProject && (
+          <div className="header-breadcrumb">
+            <span className="breadcrumb-sep">/</span>
+            <span className="breadcrumb-item" onClick={() => onSwitchView("dashboard")}>
+              {currentProject.project?.name}
+            </span>
+            <span className="breadcrumb-sep">/</span>
+            <span className="breadcrumb-item file-crumb">
+              {currentProject.file?.name}
+            </span>
+          </div>
+        )}
 
         {/* Pages dropdown — only in app view */}
         {inApp && (
@@ -93,6 +114,30 @@ export default function Header({ view, onSwitchView, user, onLogout, onSignIn })
 
       {/* ── Right: app controls + theme + user ── */}
       <div className="header-right">
+
+        {/* Language switcher dropdown */}
+        {inApp && (
+          <Dropdown
+            trigger={(open) => (
+              <button className="view-dropdown-trigger lang-dropdown" aria-expanded={open} title="Change language">
+                <span className="material-symbols-outlined">language</span>
+                <span>{currentLang?.label}</span>
+                <span className={`material-symbols-outlined hdr-chevron ${open ? "open" : ""}`}>expand_more</span>
+              </button>
+            )}
+          >
+            {(close) => LANG_OPTIONS.map(opt => (
+              <li key={opt.value}
+                className={`hdr-dropdown-item ${opt.value === language ? "active" : ""}`}
+                role="menuitem"
+                onClick={() => { onLanguageChange(opt.value); close(); }}>
+                <span className="material-symbols-outlined">{opt.icon}</span>
+                {opt.label}
+                {opt.value === language && <span className="material-symbols-outlined hdr-check">check</span>}
+              </li>
+            ))}
+          </Dropdown>
+        )}
 
         {/* View switcher dropdown */}
         {inApp && currentView && (
