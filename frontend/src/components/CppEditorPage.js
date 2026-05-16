@@ -61,12 +61,20 @@ export default function CppEditorPage({
   onLanguageChange,
 }) {
   const [prompt, setPrompt] = useState("");
+  const [showPrompt, setShowPrompt] = useState(false);
+  const promptInputRef = useRef(null);
 
   const handleGenerate = () => {
     if (prompt.trim()) {
       onGenerate(prompt);
       setPrompt("");
+      setShowPrompt(false);
     }
+  };
+
+  const openPrompt = () => {
+    setShowPrompt(true);
+    setTimeout(() => promptInputRef.current?.focus(), 30);
   };
 
   const stdout = result?.stdout || "";
@@ -112,33 +120,56 @@ export default function CppEditorPage({
   return (
     <main className="editor-page-main" ref={containerRef}>
       {/* ── Left: code editor ── */}
-      <section className="editor-page-left" style={{ width: `${leftPct}%` }}>
+      <section className="editor-page-left" style={{ width: `${leftPct}%`, position: "relative" }}>
+        {/* ── AI Generate overlay ── */}
+        {showPrompt && (
+          <div className="ai-prompt-overlay" onClick={() => setShowPrompt(false)}>
+            <div className="ai-prompt-modal" onClick={(e) => e.stopPropagation()}>
+              <span className="material-symbols-outlined ai-prompt-modal-icon">auto_awesome</span>
+              <input
+                ref={promptInputRef}
+                className="ai-prompt-modal-input"
+                type="text"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleGenerate();
+                  if (e.key === "Escape") setShowPrompt(false);
+                }}
+                placeholder={`Describe what you want to build in ${language === "c" ? "C" : "C++"}…`}
+                disabled={generateLoading}
+                spellCheck="false"
+              />
+              <button
+                className="ai-prompt-modal-btn"
+                onClick={handleGenerate}
+                disabled={generateLoading || !prompt.trim()}
+              >
+                {generateLoading
+                  ? <span className="material-symbols-outlined spin">sync</span>
+                  : <span className="material-symbols-outlined">send</span>}
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="editor-page-card editor-card">
           <div className="editor-page-head">
             <h2>{language === "c" ? "C" : "C++"} Code Editor</h2>
-            <LangDropdown language={language} onChange={onLanguageChange} />
-          </div>
-          <div className="ai-prompt-bar">
-            <span className="material-symbols-outlined ai-prompt-icon">auto_awesome</span>
-            <input
-              className="ai-prompt-input"
-              type="text"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
-              placeholder={`Describe what you want to build in ${language === "c" ? "C" : "C++"}…`}
-              disabled={generateLoading}
-              spellCheck="false"
-            />
-            <button
-              className="ai-prompt-btn"
-              onClick={handleGenerate}
-              disabled={generateLoading || !prompt.trim()}
-            >
-              {generateLoading
-                ? <span className="material-symbols-outlined spin">sync</span>
-                : <span className="material-symbols-outlined">send</span>}
-            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <button
+                className="ai-gen-trigger"
+                onClick={openPrompt}
+                disabled={generateLoading}
+                title="Generate code with AI"
+              >
+                <span className={`material-symbols-outlined${generateLoading ? " spin" : ""}`}>
+                  {generateLoading ? "sync" : "auto_awesome"}
+                </span>
+                AI + Code
+              </button>
+              <LangDropdown language={language} onChange={onLanguageChange} />
+            </div>
           </div>
           <CodeEditor
             code={code}

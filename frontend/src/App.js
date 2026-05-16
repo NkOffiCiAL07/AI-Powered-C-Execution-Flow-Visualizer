@@ -14,8 +14,7 @@ import { analyzeCode, runCode, stepAnalyzeSession, explainCode, generateCode, AP
 import "./App.css";
 import "./styles/CppEditorPage.css";
 
-const EXAMPLE_CODES = {
-  simple_cpp: `#include <iostream>
+const DEFAULT_CODE = `#include <iostream>
 using namespace std;
 
 int main() {
@@ -24,124 +23,7 @@ int main() {
     int z = x + y;
     cout << "z = " << z << endl;
     return 0;
-}`,
-  counting_cpp: `#include <iostream>
-using namespace std;
-
-int main() {
-    for (int i = 1; i <= 5; i++) {
-        cout << i << endl;
-    }
-    return 0;
-}`,
-  ifStatement_cpp: `#include <iostream>
-using namespace std;
-
-int main() {
-    int age = 12;
-    if (age >= 13) {
-        cout << "Teen" << endl;
-    } else {
-        cout << "Kid" << endl;
-    }
-    return 0;
-}`,
-  fibonacci_cpp: `#include <iostream>
-using namespace std;
-
-int fib(int n) {
-    if (n <= 1) return n;
-    return fib(n - 1) + fib(n - 2);
-}
-
-int main() {
-    int n = 7;
-    cout << "fib(" << n << ") = " << fib(n) << endl;
-    return 0;
-}`,
-  functionCall_cpp: `#include <iostream>
-using namespace std;
-
-int add(int a, int b) {
-    int result = a + b;
-    return result;
-}
-
-int main() {
-    int x = 10, y = 20;
-    int sum = add(x, y);
-    cout << "Sum: " << sum << endl;
-    return 0;
-}`,
-  simple_c: `#include <stdio.h>
-
-int main() {
-    int x = 5;
-    int y = 3;
-    int z = x + y;
-    printf("z = %d\\n", z);
-    return 0;
-}`,
-  counting_c: `#include <stdio.h>
-
-int main() {
-    for (int i = 1; i <= 5; i++) {
-        printf("%d\\n", i);
-    }
-    return 0;
-}`,
-  ifStatement_c: `#include <stdio.h>
-
-int main() {
-    int age = 12;
-    if (age >= 13) {
-        printf("Teen\\n");
-    } else {
-        printf("Kid\\n");
-    }
-    return 0;
-}`,
-  fibonacci_c: `#include <stdio.h>
-
-int fib(int n) {
-    if (n <= 1) return n;
-    return fib(n - 1) + fib(n - 2);
-}
-
-int main() {
-    int n = 7;
-    printf("fib(%d) = %d\\n", n, fib(n));
-    return 0;
-}`,
-  functionCall_c: `#include <stdio.h>
-
-int add(int a, int b) {
-    int result = a + b;
-    return result;
-}
-
-int main() {
-    int x = 10, y = 20;
-    int sum = add(x, y);
-    printf("Sum: %d\\n", sum);
-    return 0;
-}`,
-};
-
-const DEFAULT_CODE = EXAMPLE_CODES.simple_cpp;
-
-const EXAMPLE_OPTIONS = [
-  { value: "simple_cpp",      lang: "cpp", label: "Simple Math"    },
-  { value: "counting_cpp",    lang: "cpp", label: "Counting Loop"  },
-  { value: "ifStatement_cpp", lang: "cpp", label: "If Statement"   },
-  { value: "fibonacci_cpp",   lang: "cpp", label: "Fibonacci"      },
-  { value: "functionCall_cpp",lang: "cpp", label: "Function Call"  },
-  { value: "simple_c",        lang: "c",   label: "Simple Math"    },
-  { value: "counting_c",      lang: "c",   label: "Counting Loop"  },
-  { value: "ifStatement_c",   lang: "c",   label: "If Statement"   },
-  { value: "fibonacci_c",     lang: "c",   label: "Fibonacci"      },
-  { value: "functionCall_c",  lang: "c",   label: "Function Call"  },
-];
+}`;
 
 const LANG_OPTIONS = [
   { value: "cpp", label: "C++" },
@@ -183,40 +65,6 @@ function LangDropdown({ language, onChange }) {
   );
 }
 
-function ExamplesDropdown({ selected, onChange, language = "cpp" }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-  const filtered = EXAMPLE_OPTIONS.filter(o => o.lang === language);
-  const current = filtered.find(o => o.value === selected) || filtered[0];
-
-  useEffect(() => {
-    if (!open) return;
-    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, [open]);
-
-  return (
-    <div className="ex-dropdown" ref={ref}>
-      <button className="ex-dropdown-trigger" onClick={() => setOpen(o => !o)}>
-        {current?.label}
-        <span className="material-symbols-outlined ex-chevron" style={{ transform: open ? "rotate(180deg)" : "none" }}>expand_more</span>
-      </button>
-      {open && (
-        <ul className="ex-dropdown-menu">
-          {filtered.map(opt => (
-            <li key={opt.value}
-              className={`ex-dropdown-item ${opt.value === selected ? "active" : ""}`}
-              onClick={() => { onChange(opt.value); setOpen(false); }}>
-              {opt.value === selected && <span className="material-symbols-outlined ex-check">check</span>}
-              {opt.label}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
 
 function App() {
   const [user, setUser] = useState(null);
@@ -231,13 +79,15 @@ function App() {
   const [activeTab, setActiveTab] = useState("flow");
   const [aiExplanation, setAiExplanation] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
-  const [selectedExample, setSelectedExample] = useState("simple_cpp");
   const [currentLine, setCurrentLine] = useState(null);
   const [runResult, setRunResult] = useState(null);
   const [runLoading, setRunLoading] = useState(false);
   const [runError, setRunError] = useState(null);
   const [generateLoading, setGenerateLoading] = useState(false);
   const generateAbortRef = useRef(null);
+  const [showDebugGenPrompt, setShowDebugGenPrompt] = useState(false);
+  const [debugGenPrompt, setDebugGenPrompt] = useState("");
+  const debugGenInputRef = useRef(null);
   const [serverDown, setServerDown] = useState(false);
   const [serverChecking, setServerChecking] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -372,18 +222,7 @@ function App() {
     }
   }, [code, language]);
 
-  const handleLoadExample = (exampleKey) => {
-    setSelectedExample(exampleKey);
-    const newCode = EXAMPLE_CODES[exampleKey];
-    setCode(newCode);
-    setCurrentLine(null);
-    setAnalysisResult(null);
-    setAiExplanation(null);
-    setError(null);
-    setStepLoading(false);
-  };
-
-  const handleGenerate = useCallback(async (prompt) => {
+const handleGenerate = useCallback(async (prompt) => {
     if (!prompt.trim()) return;
     if (generateAbortRef.current) generateAbortRef.current.abort();
     generateAbortRef.current = new AbortController();
@@ -407,9 +246,7 @@ function App() {
 
   const handleLanguageChange = (newLang) => {
     setLanguage(newLang);
-    const defaultKey = newLang === "c" ? "simple_c" : "simple_cpp";
-    setSelectedExample(defaultKey);
-    setCode(EXAMPLE_CODES[defaultKey]);
+    setCode("");
     setCurrentLine(null);
     setAnalysisResult(null);
     setAiExplanation(null);
@@ -606,13 +443,67 @@ function App() {
       case "visualizer":
         return (
           <main className="app-main" ref={debugContainerRef}>
-            <section className="editor-section" style={{ width: `${debugLeftPct}%`, flex: "none" }}>
+            <section className="editor-section" style={{ width: `${debugLeftPct}%`, flex: "none", position: "relative" }}>
+              {/* ── AI Generate overlay (debugger mode) ── */}
+              {showDebugGenPrompt && (
+                <div className="ai-prompt-overlay" onClick={() => setShowDebugGenPrompt(false)}>
+                  <div className="ai-prompt-modal" onClick={(e) => e.stopPropagation()}>
+                    <span className="material-symbols-outlined ai-prompt-modal-icon">auto_awesome</span>
+                    <input
+                      ref={debugGenInputRef}
+                      className="ai-prompt-modal-input"
+                      type="text"
+                      value={debugGenPrompt}
+                      onChange={(e) => setDebugGenPrompt(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && debugGenPrompt.trim()) {
+                          handleGenerate(debugGenPrompt);
+                          setDebugGenPrompt("");
+                          setShowDebugGenPrompt(false);
+                        }
+                        if (e.key === "Escape") setShowDebugGenPrompt(false);
+                      }}
+                      placeholder={`Describe what you want to build in ${language === "c" ? "C" : "C++"}…`}
+                      disabled={generateLoading}
+                      spellCheck="false"
+                      autoFocus
+                    />
+                    <button
+                      className="ai-prompt-modal-btn"
+                      onClick={() => {
+                        if (debugGenPrompt.trim()) {
+                          handleGenerate(debugGenPrompt);
+                          setDebugGenPrompt("");
+                          setShowDebugGenPrompt(false);
+                        }
+                      }}
+                      disabled={generateLoading || !debugGenPrompt.trim()}
+                    >
+                      {generateLoading
+                        ? <span className="material-symbols-outlined spin">sync</span>
+                        : <span className="material-symbols-outlined">send</span>}
+                    </button>
+                  </div>
+                </div>
+              )}
               <div className="section-header">
                 <h2>Your Code</h2>
                 <div className="examples-selector-container">
+                  <button
+                    className="ai-gen-trigger"
+                    onClick={() => {
+                      setShowDebugGenPrompt(true);
+                      setTimeout(() => debugGenInputRef.current?.focus(), 30);
+                    }}
+                    disabled={generateLoading}
+                    title="Generate code with AI"
+                  >
+                    <span className={`material-symbols-outlined${generateLoading ? " spin" : ""}`}>
+                      {generateLoading ? "sync" : "auto_awesome"}
+                    </span>
+                    AI + Code
+                  </button>
                   <LangDropdown language={language} onChange={handleLanguageChange} />
-                  <span className="selector-label">Examples:</span>
-                  <ExamplesDropdown selected={selectedExample} onChange={handleLoadExample} language={language} />
                 </div>
               </div>
               <CodeEditor
