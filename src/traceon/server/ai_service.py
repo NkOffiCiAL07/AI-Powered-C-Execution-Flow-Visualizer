@@ -9,9 +9,14 @@ logger = logging.getLogger(__name__)
 
 
 def generate_code_ai(prompt: str, language: str = "cpp") -> GenerateCodeResponse:
-    """Generate C or C++ code from a natural-language prompt using Gemini."""
+    """Generate C, C++, or Python code from a natural-language prompt using Gemini."""
     api_key = os.getenv("GEMINI_API_KEY")
-    lang_label = "C" if language == "c" else "C++"
+    if language == "python":
+        lang_label = "Python"
+    elif language == "c":
+        lang_label = "C"
+    else:
+        lang_label = "C++"
 
     if api_key:
         try:
@@ -29,14 +34,27 @@ def _gemini_generate(prompt: str, lang_label: str, api_key: str) -> GenerateCode
 
     client = genai.Client(api_key=api_key)
 
+    if lang_label == "Python":
+        rules = (
+            "- Return ONLY the raw source code. No markdown, no code fences, no explanation.\n"
+            "- The code must run with python3 with no errors.\n"
+            "- Always include a complete, runnable script (use if __name__ == '__main__' when appropriate).\n"
+            "- Keep it concise but complete."
+        )
+    else:
+        compiler = "clang++ -std=c++17" if lang_label == "C++" else "clang -std=c11"
+        rules = (
+            "- Return ONLY the raw source code. No markdown, no code fences, no explanation.\n"
+            "- Always include the necessary #include headers.\n"
+            "- Always include a complete main() function that demonstrates or tests the code.\n"
+            f"- The code must compile with {compiler} with no errors or warnings.\n"
+            "- Keep it concise but complete."
+        )
+
     system_prompt = f"""You are an expert {lang_label} programmer.
 The user will describe a program or function they want. Write clean, correct, well-commented {lang_label} code that satisfies the request.
 Rules:
-- Return ONLY the raw source code. No markdown, no code fences, no explanation.
-- Always include the necessary #include headers.
-- Always include a complete main() function that demonstrates or tests the code.
-- The code must compile with {'clang++ -std=c++17' if lang_label == 'C++' else 'clang -std=c11'} with no errors or warnings.
-- Keep it concise but complete."""
+{rules}"""
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",
@@ -54,27 +72,30 @@ Rules:
     return GenerateCodeResponse(code=code.strip())
 
 
-def explain_code_ai(code: str) -> ExplainCodeResponse:
-    """Analyze C++ code and return explanation, complexities, and key points."""
+def explain_code_ai(code: str, language: str = "cpp") -> ExplainCodeResponse:
+    """Analyze C, C++, or Python code and return explanation, complexities, and key points."""
     api_key = os.getenv("GEMINI_API_KEY")
 
     if api_key:
         try:
-            return _gemini_explanation(code, api_key)
+            return _gemini_explanation(code, api_key, language)
         except Exception as e:
             logger.warning(f"Gemini explanation failed, falling back to static analysis: {e}")
 
     return _static_explanation(code)
 
 
-def _gemini_explanation(code: str, api_key: str) -> ExplainCodeResponse:
+def _gemini_explanation(code: str, api_key: str, language: str = "cpp") -> ExplainCodeResponse:
     """Use Google Gemini API for deep code explanation."""
     from google import genai
     from google.genai import types
 
     client = genai.Client(api_key=api_key)
 
-    prompt = f"""Analyze this C++ code and provide a structured explanation.
+    lang_label = "Python" if language == "python" else ("C" if language == "c" else "C++")
+    fence = "python" if language == "python" else ("c" if language == "c" else "cpp")
+
+    prompt = f"""Analyze this {lang_label} code and provide a structured explanation.
 Return a JSON object with exactly these keys:
 - "explanation": a clear 2-3 sentence summary of what the code does and its purpose.
 - "time_complexity": the Big O time complexity with a brief justification (e.g. "O(n²) — nested loops each iterate over n elements").
@@ -84,7 +105,7 @@ Return a JSON object with exactly these keys:
 Return ONLY the raw JSON object. Do not include markdown code fences or any other text.
 
 Code:
-```cpp
+```{fence}
 {code}
 ```"""
 

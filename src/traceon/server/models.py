@@ -190,6 +190,7 @@ class GenerateCodeResponse(BaseModel):
 
 class ExplainCodeRequest(BaseModel):
     code: str
+    language: str = "cpp"
 
 
 class ExplainCodeResponse(BaseModel):

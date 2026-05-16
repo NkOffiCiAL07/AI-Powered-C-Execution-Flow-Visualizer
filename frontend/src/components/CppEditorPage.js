@@ -4,8 +4,9 @@ import AiExplanation from "./AiExplanation";
 import "../styles/CppEditorPage.css";
 
 const LANG_OPTIONS = [
-  { value: "cpp", label: "C++" },
-  { value: "c",   label: "C"   },
+  { value: "cpp",    label: "C++"    },
+  { value: "c",      label: "C"      },
+  { value: "python", label: "Python" },
 ];
 
 function LangDropdown({ language, onChange }) {
@@ -155,7 +156,7 @@ export default function CppEditorPage({
 
         <div className="editor-page-card editor-card">
           <div className="editor-page-head">
-            <h2>{language === "c" ? "C" : "C++"} Code Editor</h2>
+            <h2>{language === "python" ? "Python" : language === "c" ? "C" : "C++"} Code Editor</h2>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <button
                 className="ai-gen-trigger"

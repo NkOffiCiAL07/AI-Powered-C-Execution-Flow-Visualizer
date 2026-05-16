@@ -1,9 +1,14 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import os
+import subprocess
+import tempfile
+import uuid
 from contextlib import asynccontextmanager
+from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -54,6 +59,49 @@ from traceon.server.models import (
     SessionStatus,
     SourceFile,
 )
+
+
+@dataclass
+class _PythonSession:
+    session_id: str
+    snapshots: list
+    cursor: int = 0
+    created_at: datetime = field(default_factory=lambda: datetime.now(tz=timezone.utc))
+
+
+_python_sessions: dict[str, _PythonSession] = {}
+
+_TRACER_SCRIPT = Path(__file__).parent / "python_tracer.py"
+
+
+def _run_python_tracer(code: str, stdin_data: str = "") -> list:
+    with tempfile.TemporaryDirectory() as tmpdir:
+        code_path = Path(tmpdir) / "user_code.py"
+        stdin_path = Path(tmpdir) / "stdin.txt"
+        code_path.write_text(code)
+        stdin_path.write_text(stdin_data or "")
+        try:
+            result = subprocess.run(
+                ["python3", str(_TRACER_SCRIPT), str(code_path), str(stdin_path)],
+                capture_output=True, text=True, timeout=15,
+            )
+            if result.returncode != 0 and not result.stdout.strip():
+                raise ValueError(result.stderr.strip() or "Tracer failed")
+            return json.loads(result.stdout.strip() or "[]")
+        except subprocess.TimeoutExpired:
+            raise ValueError("Python execution timed out (15s limit)")
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Tracer output parse error: {e}")
+
+
+def _snapshot_from_dict(d: dict) -> ExecutionSnapshot:
+    return ExecutionSnapshot(
+        step=d["step"],
+        location=d["location"],
+        variables=d.get("variables", {}),
+        changed_variables=d.get("changed_variables", []),
+        call_stack=d.get("call_stack", []),
+    )
 
 
 def _prepare_c_code(code: str) -> str:
@@ -136,6 +184,12 @@ async def _session_cleanup_loop() -> None:
         await asyncio.sleep(60)
         try:
             cutoff = datetime.now(tz=timezone.utc) - timedelta(minutes=SESSION_TTL_MINUTES)
+            # Expire Python sessions
+            py_stale = [sid for sid, s in list(_python_sessions.items()) if s.created_at < cutoff]
+            for sid in py_stale:
+                _python_sessions.pop(sid, None)
+                logger.info("Expired Python session %s", sid)
+            # Expire C/C++ sessions
             stale = [
                 sid
                 for sid, record in list(session_manager._sessions.items())
@@ -189,9 +243,40 @@ def create_app() -> FastAPI:
 
     @app.post("/analyze", response_model=AnalyzeCodeResponse, tags=["analysis"])
     def analyze_code(request: AnalyzeCodeRequest):
-        is_c = (request.language or "cpp").lower() == "c"
+        lang = (request.language or "cpp").lower()
         if not request.code or not request.code.strip():
             raise HTTPException(status_code=400, detail="No code provided")
+
+        # ── Python: trace-based debugger ──
+        if lang == "python":
+            try:
+                snapshots = _run_python_tracer(request.code, request.stdin or "")
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e))
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Python trace failed: {e}")
+
+            if not snapshots:
+                raise HTTPException(status_code=400, detail="No executable statements found in Python code.")
+
+            session_id = f"py_{uuid.uuid4().hex[:12]}"
+            _python_sessions[session_id] = _PythonSession(
+                session_id=session_id,
+                snapshots=snapshots,
+                cursor=0,
+            )
+            return AnalyzeCodeResponse(
+                session_id=session_id,
+                status=SessionStatus.RUNNING,
+                cursor=0,
+                total_recorded_steps=len(snapshots),
+                snapshots=[_snapshot_from_dict(snapshots[0])],
+                total_steps=len(snapshots),
+                execution_mode="incremental",
+                message="Python session started. Click Next to step through.",
+            )
+
+        is_c = lang == "c"
 
         if is_c:
             wrapped_code = _prepare_c_code(request.code)
@@ -246,6 +331,36 @@ def create_app() -> FastAPI:
         if direction not in {"next", "back"}:
             raise HTTPException(status_code=400, detail="Direction must be either 'next' or 'back'")
 
+        # ── Python session ──
+        if session_id in _python_sessions:
+            py = _python_sessions[session_id]
+            total = len(py.snapshots)
+            if direction == "next":
+                if py.cursor < total - 1:
+                    py.cursor += 1
+                    accepted, msg = True, ""
+                else:
+                    accepted, msg = False, "Already at last step"
+            else:
+                if py.cursor > 0:
+                    py.cursor -= 1
+                    accepted, msg = True, ""
+                else:
+                    accepted, msg = False, "Already at first step"
+
+            at_end = py.cursor >= total - 1
+            status = SessionStatus.EXITED if at_end else SessionStatus.RUNNING
+            return AnalyzeStepResponse(
+                session_id=session_id,
+                accepted=accepted,
+                status=status,
+                cursor=py.cursor,
+                total_recorded_steps=total,
+                snapshot=_snapshot_from_dict(py.snapshots[py.cursor]),
+                message=msg,
+            )
+
+        # ── C / C++ session ──
         try:
             if direction == "next":
                 step_type = request.step_type or CommandType.STEP_OVER
@@ -273,23 +388,49 @@ def create_app() -> FastAPI:
         import tempfile
         from pathlib import Path
 
-        is_c = (request.language or "cpp").lower() == "c"
+        lang = (request.language or "cpp").lower()
         if not request.code or not request.code.strip():
             raise HTTPException(status_code=400, detail="No code provided")
 
-        if is_c:
-            wrapped_code = _prepare_c_code(request.code)
-            src_name, compiler, compile_flags = "main.c", "clang", ["-std=c11", "-O0"]
-        else:
-            wrapped_code = _prepare_cpp_code(request.code)
-            src_name, compiler, compile_flags = "main.cpp", "clang++", ["-std=c++17", "-O0"]
-
         with tempfile.TemporaryDirectory() as tmpdir:
+            # ── Python: no compilation ──
+            if lang == "python":
+                src_path = Path(tmpdir) / "main.py"
+                src_path.write_text(request.code)
+                try:
+                    run_proc = subprocess.run(
+                        ["python3", str(src_path)],
+                        input=request.stdin or "",
+                        capture_output=True, text=True,
+                        timeout=10,
+                    )
+                    return RunCodeResponse(
+                        success=run_proc.returncode == 0,
+                        stdout=run_proc.stdout,
+                        stderr=run_proc.stderr,
+                        exit_code=run_proc.returncode,
+                    )
+                except subprocess.TimeoutExpired:
+                    return RunCodeResponse(
+                        success=False,
+                        compile_error="",
+                        stdout="",
+                        stderr="Program timed out (10s limit)",
+                        exit_code=-1,
+                    )
+
+            # ── C / C++: compile then run ──
+            if lang == "c":
+                wrapped_code = _prepare_c_code(request.code)
+                src_name, compiler, compile_flags = "main.c", "clang", ["-std=c11", "-O0"]
+            else:
+                wrapped_code = _prepare_cpp_code(request.code)
+                src_name, compiler, compile_flags = "main.cpp", "clang++", ["-std=c++17", "-O0"]
+
             src_path = Path(tmpdir) / src_name
             exe_path = Path(tmpdir) / "program"
             src_path.write_text(wrapped_code)
 
-            # Compile
             compile_proc = subprocess.run(
                 [compiler, *compile_flags, "-o", str(exe_path), str(src_path)],
                 capture_output=True, text=True, timeout=15,
@@ -303,7 +444,6 @@ def create_app() -> FastAPI:
                     exit_code=compile_proc.returncode,
                 )
 
-            # Run
             try:
                 run_proc = subprocess.run(
                     [str(exe_path)],
@@ -338,10 +478,10 @@ def create_app() -> FastAPI:
     @app.post("/explain", response_model=ExplainCodeResponse, tags=["analysis"])
     def explain_code(request: ExplainCodeRequest):
         if not request.code or not request.code.strip():
-            raise HTTPException(status_code=400, detail="No C++ code provided")
+            raise HTTPException(status_code=400, detail="No code provided")
 
         try:
-            return explain_code_ai(request.code)
+            return explain_code_ai(request.code, request.language or "cpp")
         except Exception as error:
             raise HTTPException(status_code=500, detail=f"AI explanation failed: {error}") from error
 

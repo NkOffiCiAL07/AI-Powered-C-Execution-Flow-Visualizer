@@ -26,8 +26,9 @@ int main() {
 }`;
 
 const LANG_OPTIONS = [
-  { value: "cpp", label: "C++" },
-  { value: "c",   label: "C"   },
+  { value: "cpp",    label: "C++"    },
+  { value: "c",      label: "C"      },
+  { value: "python", label: "Python" },
 ];
 
 function LangDropdown({ language, onChange }) {
@@ -211,7 +212,7 @@ function App() {
     setError(null);
     setActiveTab("ai");
     try {
-      const result = await explainCode(code, aiAbortControllerRef.current.signal);
+      const result = await explainCode(code, aiAbortControllerRef.current.signal, language);
       setAiExplanation(result);
     } catch (err) {
       if (err.name === "AbortError") return;
@@ -517,7 +518,7 @@ const handleGenerate = useCallback(async (prompt) => {
               <div className="stdin-panel">
                 <div className="stdin-header">
                   <h3>Program Input</h3>
-                  <span>Optional stdin for `cin` or `getline`</span>
+                  <span>Optional stdin for `cin`, `input()`, etc.</span>
                 </div>
                 <textarea
                   className="stdin-textarea"
@@ -555,7 +556,12 @@ const handleGenerate = useCallback(async (prompt) => {
                     <span className="material-symbols-outlined">auto_awesome</span>
                     {aiLoading ? "Thinking…" : "AI Insights"}
                   </button>
-                  <button className="run-icon-btn" onClick={() => handleAnalyze()} disabled={loading || aiLoading}>
+                  <button
+                    className="run-icon-btn"
+                    onClick={() => handleAnalyze()}
+                    disabled={loading || aiLoading}
+                    title="Analyze & Run"
+                  >
                     <span className={`material-symbols-outlined${loading ? " spin" : ""}`}>{loading ? "sync" : "play_arrow"}</span>
                   </button>
                 </div>

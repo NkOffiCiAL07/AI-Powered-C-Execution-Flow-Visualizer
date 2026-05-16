@@ -429,6 +429,7 @@
 }
 
 /* ── Error banner ── */
+
 .error-banner {
   background-color: rgba(239, 68, 68, 0.08);
   border-left: 3px solid var(--accent-red);

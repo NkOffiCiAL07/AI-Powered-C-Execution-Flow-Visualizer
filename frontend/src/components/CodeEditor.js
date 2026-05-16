@@ -177,6 +177,93 @@ const cSnippets = [
   { label: "pow",        detail: "pow(base, exp)",       documentation: "Power function",
     insertText: "pow(${1:base}, ${2:exp})" },
 ];
+const pythonSnippets = [
+  // ── Boilerplate ──
+  { label: "main",      detail: 'if __name__ == "__main__"', documentation: "Main guard entry point",
+    insertText: ['if __name__ == "__main__":', "    ${1}"].join("\n") },
+  { label: "import",    detail: "import module",             documentation: "Import a module",
+    insertText: "import ${1:os}" },
+  { label: "from",      detail: "from module import name",   documentation: "From-import statement",
+    insertText: "from ${1:module} import ${2:name}" },
+
+  // ── Control flow ──
+  { label: "for",       detail: "for loop",                  documentation: "For loop",
+    insertText: ["for ${1:i} in ${2:range(10)}:", "    ${3}"].join("\n") },
+  { label: "forr",      detail: "for item in iterable",      documentation: "Iterate over a collection",
+    insertText: ["for ${1:item} in ${2:items}:", "    ${3}"].join("\n") },
+  { label: "while",     detail: "while loop",                documentation: "While loop",
+    insertText: ["while ${1:condition}:", "    ${2}"].join("\n") },
+  { label: "if",        detail: "if statement",              documentation: "If statement",
+    insertText: ["if ${1:condition}:", "    ${2}"].join("\n") },
+  { label: "ife",       detail: "if-else statement",         documentation: "If-else statement",
+    insertText: ["if ${1:condition}:", "    ${2}", "else:", "    ${3}"].join("\n") },
+  { label: "ifel",      detail: "if-elif-else",              documentation: "If-elif-else chain",
+    insertText: ["if ${1:cond1}:", "    ${2}", "elif ${3:cond2}:", "    ${4}", "else:", "    ${5}"].join("\n") },
+
+  // ── Functions & classes ──
+  { label: "def",       detail: "def function",              documentation: "Define a function",
+    insertText: ["def ${1:name}(${2:args}):", "    ${3}"].join("\n") },
+  { label: "class",     detail: "class definition",          documentation: "Define a class",
+    insertText: ["class ${1:Name}:", "    def __init__(self${2:, args}):", "        ${3}"].join("\n") },
+  { label: "method",    detail: "def method(self)",          documentation: "Class method",
+    insertText: ["def ${1:method}(self${2:, args}):", "    ${3}"].join("\n") },
+  { label: "property",  detail: "@property",                 documentation: "Property decorator",
+    insertText: ["@property", "def ${1:name}(self):", "    return self._${1:name}"].join("\n") },
+  { label: "lambda",    detail: "lambda args: expr",         documentation: "Lambda expression",
+    insertText: "lambda ${1:x}: ${2:x}" },
+
+  // ── I/O ──
+  { label: "print",     detail: "print(...)",                documentation: "Print to stdout",
+    insertText: 'print(${1:value})' },
+  { label: "printf",    detail: "print(f-string)",           documentation: "Print with f-string",
+    insertText: 'print(f"${1:value}")' },
+  { label: "input",     detail: "input(prompt)",             documentation: "Read from stdin",
+    insertText: '${1:val} = input("${2:Enter: }")' },
+  { label: "inputint",  detail: "int(input(...))",           documentation: "Read integer from stdin",
+    insertText: '${1:n} = int(input("${2:Enter: }"))' },
+
+  // ── Data structures ──
+  { label: "list",      detail: "list declaration",          documentation: "Empty list",
+    insertText: "${1:lst} = []" },
+  { label: "dict",      detail: "dict declaration",          documentation: "Empty dictionary",
+    insertText: "${1:d} = {}" },
+  { label: "set",       detail: "set declaration",           documentation: "Empty set",
+    insertText: "${1:s} = set()" },
+  { label: "tuple",     detail: "tuple declaration",         documentation: "Tuple literal",
+    insertText: "${1:t} = (${2:1}, ${3:2})" },
+  { label: "lc",        detail: "[x for x in ...]",          documentation: "List comprehension",
+    insertText: "[${1:x} for ${1:x} in ${2:items}]" },
+  { label: "dc",        detail: "{k: v for ...}",            documentation: "Dict comprehension",
+    insertText: "{${1:k}: ${2:v} for ${1:k}, ${2:v} in ${3:items}.items()}" },
+
+  // ── Error handling ──
+  { label: "try",       detail: "try-except block",          documentation: "Try-except exception handling",
+    insertText: ["try:", "    ${1}", "except ${2:Exception} as e:", "    print(e)"].join("\n") },
+  { label: "tryf",      detail: "try-except-finally",        documentation: "Try-except-finally",
+    insertText: ["try:", "    ${1}", "except ${2:Exception} as e:", "    ${3}", "finally:", "    ${4}"].join("\n") },
+  { label: "raise",     detail: "raise Exception",           documentation: "Raise an exception",
+    insertText: "raise ${1:ValueError}(\"${2:message}\")" },
+
+  // ── File & context ──
+  { label: "with",      detail: "with open(...) as f",       documentation: "Context manager / file open",
+    insertText: ["with open(\"${1:file.txt}\", \"${2:r}\") as ${3:f}:", "    ${4}"].join("\n") },
+
+  // ── Common builtins ──
+  { label: "range",     detail: "range(start, stop, step)",  documentation: "Range object",
+    insertText: "range(${1:start}, ${2:stop})" },
+  { label: "enumerate", detail: "enumerate(iterable)",       documentation: "Enumerate with index",
+    insertText: "enumerate(${1:items})" },
+  { label: "zip",       detail: "zip(a, b)",                 documentation: "Zip two iterables",
+    insertText: "zip(${1:a}, ${2:b})" },
+  { label: "map",       detail: "map(fn, iterable)",         documentation: "Map function over iterable",
+    insertText: "map(${1:fn}, ${2:items})" },
+  { label: "filter",    detail: "filter(fn, iterable)",      documentation: "Filter iterable",
+    insertText: "filter(${1:fn}, ${2:items})" },
+  { label: "sorted",    detail: "sorted(iterable)",          documentation: "Return sorted list",
+    insertText: "sorted(${1:items}, key=${2:None}, reverse=${3:False})" },
+  { label: "len",       detail: "len(obj)",                  documentation: "Length of object",
+    insertText: "len(${1:obj})" },
+];
 /* eslint-enable no-template-curly-in-string */
 
 const editorOptions = {
@@ -309,8 +396,9 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest,
       });
 
       completionProviderRef.current = [
-        monaco.languages.registerCompletionItemProvider("cpp", makeProvider(cppSnippets)),
-        monaco.languages.registerCompletionItemProvider("c",   makeProvider(cSnippets)),
+        monaco.languages.registerCompletionItemProvider("cpp",    makeProvider(cppSnippets)),
+        monaco.languages.registerCompletionItemProvider("c",      makeProvider(cSnippets)),
+        monaco.languages.registerCompletionItemProvider("python", makeProvider(pythonSnippets)),
       ];
     }
 
@@ -366,19 +454,19 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest,
 
   return (
     <div className="code-editor">
-      {!compact && <div className="editor-hint">{language === "c" ? "C" : "C++"} editor with syntax highlighting, indentation, and bracket matching</div>}
+      {!compact && <div className="editor-hint">{language === "python" ? "Python" : language === "c" ? "C" : "C++"} editor with syntax highlighting, indentation, and bracket matching</div>}
       <div className="editor-shell">
         {!compact && (
           <div className="editor-toolbar">
-            <span className="editor-language-pill">{language === "c" ? "C" : "C++"}</span>
+            <span className="editor-language-pill">{language === "python" ? "Python" : language === "c" ? "C" : "C++"}</span>
             <span className="editor-toolbar-tip">Write code, then run the existing analyzer and visualizer</span>
           </div>
         )}
         <Editor
           className="monaco-editor-pane"
           height="100%"
-          defaultLanguage={language === "c" ? "c" : "cpp"}
-          language={language === "c" ? "c" : "cpp"}
+          defaultLanguage={language === "python" ? "python" : language === "c" ? "c" : "cpp"}
+          language={language === "python" ? "python" : language === "c" ? "c" : "cpp"}
           value={code}
           onChange={(value) => onChange(value ?? "")}
           onMount={handleEditorMount}

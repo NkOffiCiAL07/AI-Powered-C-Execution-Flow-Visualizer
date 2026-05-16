@@ -35,7 +35,7 @@ export async function analyzeCode(code, stdin, signal, language = "cpp") {
   return response.json();
 }
 
-export async function runCode(code, stdin, signal) {
+export async function runCode(code, stdin, signal, language = "cpp") {
   let response;
   try {
     response = await fetch(`${API_BASE_URL}/run`, {
@@ -43,7 +43,7 @@ export async function runCode(code, stdin, signal) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ code, stdin: stdin || "" }),
+      body: JSON.stringify({ code, stdin: stdin || "", language }),
       signal,
     });
   } catch (err) {
@@ -104,7 +104,7 @@ export async function generateCode(prompt, language, signal) {
   return response.json();
 }
 
-export async function explainCode(code, signal) {
+export async function explainCode(code, signal, language = "cpp") {
   let response;
   try {
     response = await fetch(`${API_BASE_URL}/explain`, {
@@ -112,7 +112,7 @@ export async function explainCode(code, signal) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ code }),
+      body: JSON.stringify({ code, language }),
       signal,
     });
   } catch (err) {
