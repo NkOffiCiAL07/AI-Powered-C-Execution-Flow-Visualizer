@@ -30,42 +30,7 @@
   overflow-y: auto;
 }
 
-/* ── Resize divider ── */
-.resize-divider {
-  width: 5px;
-  background: var(--border);
-  cursor: col-resize;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s ease;
-  position: relative;
-  z-index: 10;
-}
-
-.resize-divider:hover,
-.resize-divider:active {
-  background: var(--border-accent);
-}
-
-.resize-handle-dots {
-  width: 3px;
-  height: 32px;
-  border-radius: 2px;
-  background: repeating-linear-gradient(
-    to bottom,
-    var(--text-muted) 0px,
-    var(--text-muted) 2px,
-    transparent 2px,
-    transparent 5px
-  );
-  opacity: 0.4;
-}
-
-.resize-divider:hover .resize-handle-dots {
-  opacity: 0.8;
-}
+/* resize-divider styles live in App.css (shared with debugger view) */
 
 /* ── Generic card ── */
 .editor-page-card {

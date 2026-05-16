@@ -128,6 +128,32 @@ function App() {
   const stepAbortControllerRef = useRef(null);
   const runAbortControllerRef = useRef(null);
 
+  // Debugger panel resize
+  const [debugLeftPct, setDebugLeftPct] = useState(40);
+  const debugDragging = useRef(false);
+  const debugContainerRef = useRef(null);
+  const onDebugDividerMouseDown = useCallback((e) => {
+    e.preventDefault();
+    debugDragging.current = true;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    const onMove = (ev) => {
+      if (!debugDragging.current || !debugContainerRef.current) return;
+      const rect = debugContainerRef.current.getBoundingClientRect();
+      const pct = ((ev.clientX - rect.left) / rect.width) * 100;
+      setDebugLeftPct(Math.min(Math.max(pct, 20), 75));
+    };
+    const onUp = () => {
+      debugDragging.current = false;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }, []);
+
   const checkServer = useCallback(async () => {
     setServerChecking(true);
     try {
@@ -421,8 +447,8 @@ function App() {
         );
       case "visualizer":
         return (
-          <main className="app-main">
-            <section className="editor-section">
+          <main className="app-main" ref={debugContainerRef}>
+            <section className="editor-section" style={{ width: `${debugLeftPct}%`, flex: "none" }}>
               <div className="section-header">
                 <h2>Your Code</h2>
                 <div className="examples-selector-container">
@@ -465,7 +491,10 @@ function App() {
                 />
               </div>
             </section>
-            <section className="visualizer-section">
+            <div className="resize-divider" onMouseDown={onDebugDividerMouseDown}>
+              <div className="resize-handle-dots" />
+            </div>
+            <section className="visualizer-section" style={{ flex: 1, minWidth: 0 }}>
               <div className="section-header">
                 <div className="tab-bar" role="tablist" aria-label="View tabs">
                   <button
