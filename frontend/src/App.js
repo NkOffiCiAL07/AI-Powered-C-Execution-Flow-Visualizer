@@ -144,9 +144,9 @@ function App() {
   // Health-check on mount
   useEffect(() => { checkServer(); }, [checkServer]);
 
-  // Redirect unauthenticated users back to landing view
+  // Only the editor/visualizer requires auth — redirect there if not signed in
   useEffect(() => {
-    if (!user && view !== "landing") {
+    if (!user && (view === "editor" || view === "visualizer")) {
       setView("landing");
     }
   }, [user, view]);
@@ -376,11 +376,6 @@ function App() {
   }, [analysisResult]);
 
   const renderView = () => {
-    // Access control: only landing page allowed if not logged in
-    if (!user && view !== "landing") {
-      return <LandingPage onStart={() => setView("editor")} onSwitchView={setView} onLogin={handleLogin} />;
-    }
-
     switch (view) {
       case "landing":
         return <LandingPage onStart={() => setView("editor")} onSwitchView={setView} onLogin={handleLogin} />;
