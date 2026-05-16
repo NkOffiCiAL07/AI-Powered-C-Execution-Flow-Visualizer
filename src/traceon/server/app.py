@@ -1,10 +1,18 @@
 from __future__ import annotations
 
+import asyncio
+import logging
 import os
+from contextlib import asynccontextmanager
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+
+logger = logging.getLogger(__name__)
+
+SESSION_TTL_MINUTES = 30
 
 
 def _load_local_env() -> None:
@@ -91,8 +99,49 @@ def _to_execution_snapshot(state) -> ExecutionSnapshot | None:
     )
 
 
+async def _session_cleanup_loop() -> None:
+    """Remove sessions idle for longer than SESSION_TTL_MINUTES and delete their temp dirs."""
+    while True:
+        await asyncio.sleep(60)
+        try:
+            cutoff = datetime.now(tz=timezone.utc) - timedelta(minutes=SESSION_TTL_MINUTES)
+            stale = [
+                sid
+                for sid, record in list(session_manager._sessions.items())
+                if record.created_at < cutoff
+            ]
+            for sid in stale:
+                record = session_manager._sessions.pop(sid, None)
+                if record is None:
+                    continue
+                if record.controller is not None:
+                    try:
+                        record.controller.close()
+                    except Exception:
+                        pass
+                if record.work_dir and record.work_dir.exists():
+                    import shutil
+                    shutil.rmtree(record.work_dir, ignore_errors=True)
+                logger.info("Expired session %s (age > %d min)", sid, SESSION_TTL_MINUTES)
+        except Exception:
+            logger.exception("Session cleanup task error")
+
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    task = asyncio.create_task(_session_cleanup_loop())
+    try:
+        yield
+    finally:
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+
+
 def create_app() -> FastAPI:
-    app = FastAPI(title="Traceon Debug Server", version="0.1.0")
+    app = FastAPI(title="Traceon Debug Server", version="0.1.0", lifespan=_lifespan)
 
     # Add CORS middleware for frontend access
     app.add_middleware(
