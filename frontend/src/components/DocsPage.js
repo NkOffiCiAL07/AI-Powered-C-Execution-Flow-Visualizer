@@ -10,6 +10,7 @@ const NAV = [
     { id: 'execution-flow', label: 'Execution Flow' },
     { id: 'variable-tracking', label: 'Variable Tracking' },
     { id: 'ai-insights', label: 'AI Insights' },
+    { id: 'python-debugging', label: 'Python Debugging' },
   ]},
   { group: 'Reference', items: [
     { id: 'keyboard-shortcuts', label: 'Keyboard Shortcuts' },
@@ -100,7 +101,7 @@ const DocsPage = () => (
           <p style={{ color: 'rgba(26,19,16,0.7)', lineHeight: '1.75', marginBottom: '14px' }}>
             Traceon is a C/C++ execution flow visualizer that bridges the gap between raw source code and your mental model of how it runs. It uses LLDB and Gemini AI to trace, snapshot, and explain every step of your program's execution.
           </p>
-          <Note>Traceon currently supports C and C++ programs compiled with Clang. GCC support is on the roadmap.</Note>
+          <Note>Traceon supports <strong>C</strong>, <strong>C++</strong> (compiled with Clang/LLDB), and <strong>Python</strong> (traced via <code style={{ fontFamily: 'monospace' }}>sys.settrace</code>). GCC support is on the roadmap.</Note>
         </Section>
 
         <Section id="installation" title="Installation">
@@ -120,7 +121,7 @@ python run_server.py
 
 # Frontend (port 3000) — in a separate terminal
 cd frontend && npm install && npm start`}</CodeBlock>
-          <p style={{ color: 'rgba(26,19,16,0.7)', lineHeight: '1.75', marginTop: '12px' }}>Open <strong>http://localhost:3000</strong>, paste your C++ code, and click <strong>Analyze &amp; Run</strong>.</p>
+          <p style={{ color: 'rgba(26,19,16,0.7)', lineHeight: '1.75', marginTop: '12px' }}>Open <strong>http://localhost:3000</strong>, paste your code (C, C++, or Python), select the language from the dropdown, and click <strong>Analyze &amp; Run</strong>.</p>
         </Section>
 
         <Section id="execution-flow" title="Execution Flow">
@@ -151,6 +152,18 @@ cd frontend && npm install && npm start`}</CodeBlock>
           <Note>Requires a valid <code style={{ fontFamily: 'monospace' }}>GEMINI_API_KEY</code> from aistudio.google.com. Without a key, a static analysis fallback is used.</Note>
         </Section>
 
+        <Section id="python-debugging" title="Python Debugging">
+          <p style={{ color: 'rgba(26,19,16,0.7)', lineHeight: '1.75', marginBottom: '14px' }}>
+            Python debugging uses a pre-computed trace approach powered by{' '}
+            <code style={{ background: 'var(--bg-card)', padding: '1px 6px', borderRadius: '4px', fontFamily: 'monospace', fontSize: '0.85em' }}>sys.settrace</code>.
+            When you click Analyze, the entire program runs once and all execution snapshots are captured upfront — then served step-by-step on demand.
+          </p>
+          <p style={{ color: 'rgba(26,19,16,0.7)', lineHeight: '1.75', marginBottom: '14px' }}>
+            Each Python snapshot captures: the current line, all local variables in scope, changed variables since the previous step, the call stack, and any <code style={{ background: 'var(--bg-card)', padding: '1px 6px', borderRadius: '4px', fontFamily: 'monospace', fontSize: '0.85em' }}>print()</code> output produced up to that point.
+          </p>
+          <Note>Python sessions have a 250-step limit and a 15-second execution timeout. For programs that use <code style={{ fontFamily: 'monospace' }}>input()</code>, provide values in the Program Input box before clicking Analyze.</Note>
+        </Section>
+
         <Section id="keyboard-shortcuts" title="Keyboard Shortcuts">
           <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '10px', overflow: 'hidden' }}>
             {shortcuts.map((s, i) => (
@@ -172,10 +185,11 @@ cd frontend && npm install && npm start`}</CodeBlock>
         <Section id="api" title="API Reference">
           <p style={{ color: 'rgba(26,19,16,0.7)', lineHeight: '1.75', marginBottom: '12px' }}>The FastAPI backend exposes the following endpoints at <code style={{ fontFamily: 'monospace', background: 'var(--bg-card)', padding: '1px 6px', borderRadius: '4px', fontSize: '0.85em' }}>http://localhost:8000</code>:</p>
           {[
-            { method: 'POST', path: '/analyze', desc: 'Compile & trace a C++ program, returns session + snapshots' },
-            { method: 'POST', path: '/run', desc: 'Compile & run code, returns stdout/stderr' },
+            { method: 'POST', path: '/analyze', desc: 'Compile & trace a C, C++, or Python program; returns session + snapshots' },
             { method: 'POST', path: '/analyze/{id}/step', desc: 'Step forward or backward in a debug session' },
-            { method: 'POST', path: '/explain', desc: 'Return AI-powered code explanation (Gemini)' },
+            { method: 'POST', path: '/run', desc: 'Compile & run code (C/C++/Python), returns stdout/stderr' },
+            { method: 'POST', path: '/generate', desc: 'Generate code from a natural language prompt (Gemini AI)' },
+            { method: 'POST', path: '/explain', desc: 'Return AI-powered code explanation (Gemini AI)' },
             { method: 'GET',  path: '/health', desc: 'Server health check' },
           ].map(e => (
             <div key={e.path} style={{
@@ -196,7 +210,7 @@ cd frontend && npm install && npm start`}</CodeBlock>
 
         <Section id="faq" title="FAQ">
           {[
-            { q: 'What languages are supported?', a: 'Currently C and C++ (compiled with Clang). Support for other languages is planned.' },
+            { q: 'What languages are supported?', a: 'C, C++, and Python. C/C++ programs are compiled with Clang and debugged via LLDB. Python programs are traced with sys.settrace — no compiler required.' },
             { q: 'Does it work without a Gemini API key?', a: 'Yes. Without a key, the AI Insights tab uses a static analysis fallback that estimates complexity from code patterns.' },
             { q: 'Is my code sent to a server?', a: 'Your code is sent to the local backend (port 8000) for compilation and tracing. If Gemini is enabled, the code is also sent to Google\'s API for analysis.' },
             { q: 'Can I run it fully offline?', a: 'Yes — remove the GEMINI_API_KEY from .env and the app runs entirely locally with no external calls.' },

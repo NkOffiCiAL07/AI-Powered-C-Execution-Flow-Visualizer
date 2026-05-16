@@ -4,15 +4,18 @@ import asyncio
 import json
 import logging
 import os
+import re
 import subprocess
 import tempfile
+import threading
+import time
 import uuid
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 logger = logging.getLogger(__name__)
@@ -37,9 +40,30 @@ def _load_local_env() -> None:
 
 _load_local_env()
 
+# ── Simple in-memory rate limiter (sliding window) ───────────────────────────
+_rl_store: dict[str, list[float]] = {}
+_rl_lock = threading.Lock()
+_RL_LIMIT = 10      # max requests
+_RL_WINDOW = 60.0   # per N seconds
+
+
+def _is_rate_limited(ip: str) -> bool:
+    now = time.monotonic()
+    with _rl_lock:
+        times = _rl_store.get(ip, [])
+        times = [t for t in times if now - t < _RL_WINDOW]
+        if len(times) >= _RL_LIMIT:
+            _rl_store[ip] = times
+            return True
+        times.append(now)
+        _rl_store[ip] = times
+        return False
+
+
 from traceon.server.api import router as sessions_router, session_manager
 from traceon.server.ai_service import explain_code_ai, generate_code_ai
-from traceon.server.auth import router as auth_router
+from traceon.server.auth import optional_user, require_member, router as auth_router
+from traceon.server.mongo_store import mongo_app_store
 from traceon.server.models import (
     AnalyzeCodeRequest,
     AnalyzeCodeResponse,
@@ -51,8 +75,10 @@ from traceon.server.models import (
     ExecutionSnapshot,
     ExplainCodeRequest,
     ExplainCodeResponse,
+    FileUpsertRequest,
     GenerateCodeRequest,
     GenerateCodeResponse,
+    ProjectCreateRequest,
     RunCodeRequest,
     RunCodeResponse,
     SessionSettings,
@@ -72,6 +98,7 @@ class _PythonSession:
 _python_sessions: dict[str, _PythonSession] = {}
 
 _TRACER_SCRIPT = Path(__file__).parent / "python_tracer.py"
+_JAVA_TRACER_SCRIPT = Path(__file__).parent / "java_tracer.py"
 
 
 def _run_python_tracer(code: str, stdin_data: str = "") -> list:
@@ -102,6 +129,36 @@ def _snapshot_from_dict(d: dict) -> ExecutionSnapshot:
         changed_variables=d.get("changed_variables", []),
         call_stack=d.get("call_stack", []),
     )
+
+
+def _run_java_tracer(code: str, stdin_data: str = "") -> list:
+    with tempfile.TemporaryDirectory() as tmpdir:
+        code_path = Path(tmpdir) / "user_code.java"
+        stdin_path = Path(tmpdir) / "stdin.txt"
+        code_path.write_text(code)
+        stdin_path.write_text(stdin_data or "")
+        try:
+            result = subprocess.run(
+                ["python3", str(_JAVA_TRACER_SCRIPT), str(code_path), str(stdin_path)],
+                capture_output=True, text=True, timeout=45,
+            )
+            if result.returncode != 0 and not result.stdout.strip():
+                raise ValueError(result.stderr.strip() or "Java tracer failed")
+            return json.loads(result.stdout.strip() or "[]")
+        except subprocess.TimeoutExpired:
+            raise ValueError("Java execution timed out (45s limit)")
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Tracer output parse error: {e}")
+
+
+def _detect_java_class_name(code: str) -> str:
+    m = re.search(r'\bpublic\s+class\s+(\w+)', code)
+    if m:
+        return m.group(1)
+    m = re.search(r'\bclass\s+(\w+)', code)
+    if m:
+        return m.group(1)
+    return "Main"
 
 
 def _prepare_c_code(code: str) -> str:
@@ -228,10 +285,12 @@ async def _lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     app = FastAPI(title="Traceon Debug Server", version="0.1.0", lifespan=_lifespan)
 
-    # Add CORS middleware for frontend access
+    # CORS — read from ALLOWED_ORIGINS env var (comma-separated); fallback to localhost:3000
+    _raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
+    _allowed_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # Allow all origins for development
+        allow_origins=_allowed_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -241,11 +300,24 @@ def create_app() -> FastAPI:
     def health() -> dict[str, str]:
         return {"status": "ok"}
 
+    @app.get("/health/db", tags=["system"])
+    def health_db() -> dict:
+        return {"mongo_connected": mongo_app_store.enabled}
+
     @app.post("/analyze", response_model=AnalyzeCodeResponse, tags=["analysis"])
-    def analyze_code(request: AnalyzeCodeRequest):
+    def analyze_code(request: AnalyzeCodeRequest, http_request: Request):
         lang = (request.language or "cpp").lower()
         if not request.code or not request.code.strip():
             raise HTTPException(status_code=400, detail="No code provided")
+
+        # If client supplies a project_id, verify ownership (P4.4)
+        if request.project_id and mongo_app_store.enabled:
+            caller = optional_user(http_request)
+            if caller:
+                owner_id = caller.get("user_id") or caller.get("sub", "")
+                proj = mongo_app_store.get_project(request.project_id)
+                if not proj or proj["owner_id"] != owner_id:
+                    raise HTTPException(status_code=403, detail="project_id does not belong to your account")
 
         # ── Python: trace-based debugger ──
         if lang == "python":
@@ -274,6 +346,35 @@ def create_app() -> FastAPI:
                 total_steps=len(snapshots),
                 execution_mode="incremental",
                 message="Python session started. Click Next to step through.",
+            )
+
+        # ── Java: jdb-based debugger ──
+        if lang == "java":
+            try:
+                snapshots = _run_java_tracer(request.code, request.stdin or "")
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e))
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Java trace failed: {e}")
+
+            if not snapshots:
+                raise HTTPException(status_code=400, detail="No executable statements found in Java code.")
+
+            session_id = f"jv_{uuid.uuid4().hex[:12]}"
+            _python_sessions[session_id] = _PythonSession(
+                session_id=session_id,
+                snapshots=snapshots,
+                cursor=0,
+            )
+            return AnalyzeCodeResponse(
+                session_id=session_id,
+                status=SessionStatus.RUNNING,
+                cursor=0,
+                total_recorded_steps=len(snapshots),
+                snapshots=[_snapshot_from_dict(snapshots[0])],
+                total_steps=len(snapshots),
+                execution_mode="incremental",
+                message="Java session started. Click Next to step through.",
             )
 
         is_c = lang == "c"
@@ -419,6 +520,61 @@ def create_app() -> FastAPI:
                         exit_code=-1,
                     )
 
+            # ── Java: compile with javac, run with java ──
+            if lang == "java":
+                class_name = _detect_java_class_name(request.code)
+                src_path = Path(tmpdir) / f"{class_name}.java"
+                src_path.write_text(request.code)
+                try:
+                    compile_proc = subprocess.run(
+                        ["javac", str(src_path)],
+                        capture_output=True, text=True, cwd=tmpdir, timeout=15,
+                    )
+                except FileNotFoundError:
+                    return RunCodeResponse(
+                        success=False,
+                        compile_error="javac not found. Please install JDK 11 or later.",
+                        stdout="", stderr="", exit_code=1,
+                    )
+                except subprocess.TimeoutExpired:
+                    return RunCodeResponse(
+                        success=False,
+                        compile_error="Compilation timed out (15s limit)",
+                        stdout="", stderr="", exit_code=1,
+                    )
+                if compile_proc.returncode != 0:
+                    return RunCodeResponse(
+                        success=False,
+                        compile_error=compile_proc.stderr.strip(),
+                        stdout="", stderr="", exit_code=compile_proc.returncode,
+                    )
+                try:
+                    run_proc = subprocess.run(
+                        ["java", "-classpath", tmpdir, class_name],
+                        input=request.stdin or "",
+                        capture_output=True, text=True, timeout=10,
+                    )
+                    return RunCodeResponse(
+                        success=run_proc.returncode == 0,
+                        stdout=run_proc.stdout,
+                        stderr=run_proc.stderr,
+                        exit_code=run_proc.returncode,
+                    )
+                except FileNotFoundError:
+                    return RunCodeResponse(
+                        success=False,
+                        compile_error="java not found. Please install JDK 11 or later.",
+                        stdout="", stderr="", exit_code=1,
+                    )
+                except subprocess.TimeoutExpired:
+                    return RunCodeResponse(
+                        success=False,
+                        compile_error="",
+                        stdout="",
+                        stderr="Program timed out (10s limit)",
+                        exit_code=-1,
+                    )
+
             # ── C / C++: compile then run ──
             if lang == "c":
                 wrapped_code = _prepare_c_code(request.code)
@@ -467,23 +623,104 @@ def create_app() -> FastAPI:
                 )
 
     @app.post("/generate", response_model=GenerateCodeResponse, tags=["analysis"])
-    def generate_code(request: GenerateCodeRequest):
-        if not request.prompt or not request.prompt.strip():
+    def generate_code(req: GenerateCodeRequest, http_request: Request):
+        client_ip = http_request.client.host if http_request.client else "unknown"
+        if _is_rate_limited(client_ip):
+            raise HTTPException(status_code=429, detail="Rate limit exceeded (10 req/min). Please wait before trying again.")
+        if not req.prompt or not req.prompt.strip():
             raise HTTPException(status_code=400, detail="No prompt provided")
         try:
-            return generate_code_ai(request.prompt.strip(), request.language or "cpp")
+            return generate_code_ai(req.prompt.strip(), req.language or "cpp")
         except Exception as error:
             raise HTTPException(status_code=500, detail=f"Code generation failed: {error}") from error
 
     @app.post("/explain", response_model=ExplainCodeResponse, tags=["analysis"])
-    def explain_code(request: ExplainCodeRequest):
-        if not request.code or not request.code.strip():
+    def explain_code(req: ExplainCodeRequest, http_request: Request):
+        client_ip = http_request.client.host if http_request.client else "unknown"
+        if _is_rate_limited(client_ip):
+            raise HTTPException(status_code=429, detail="Rate limit exceeded (10 req/min). Please wait before trying again.")
+        if not req.code or not req.code.strip():
             raise HTTPException(status_code=400, detail="No code provided")
-
         try:
-            return explain_code_ai(request.code, request.language or "cpp")
+            return explain_code_ai(req.code, req.language or "cpp")
         except Exception as error:
             raise HTTPException(status_code=500, detail=f"AI explanation failed: {error}") from error
+
+    # ── Projects (P4.5) ──────────────────────────────────────────────────────
+
+    @app.get("/projects", tags=["projects"])
+    def list_projects(payload: dict = Depends(require_member)):
+        owner_id = payload.get("user_id") or payload.get("sub", "")
+        return {"projects": mongo_app_store.list_projects(owner_id)}
+
+    @app.post("/projects", tags=["projects"], status_code=201)
+    def create_project(req: ProjectCreateRequest, payload: dict = Depends(require_member)):
+        owner_id = payload.get("user_id") or payload.get("sub", "")
+        if not mongo_app_store.enabled:
+            raise HTTPException(status_code=503, detail="Database not available. Connect MongoDB to use projects.")
+        if mongo_app_store.count_projects(owner_id) >= 10:
+            raise HTTPException(status_code=429, detail="Project limit reached (10 per account). Delete an existing project to create a new one.")
+        project_id = mongo_app_store.create_project(owner_id, req.name, req.language)
+        return {"project": mongo_app_store.get_project(project_id)}
+
+    @app.get("/projects/{project_id}", tags=["projects"])
+    def get_project(project_id: str, payload: dict = Depends(require_member)):
+        owner_id = payload.get("user_id") or payload.get("sub", "")
+        proj = mongo_app_store.get_project(project_id)
+        if not proj or proj["owner_id"] != owner_id:
+            raise HTTPException(status_code=404, detail="Project not found or access denied")
+        return {"project": proj}
+
+    @app.delete("/projects/{project_id}", tags=["projects"])
+    def delete_project(project_id: str, payload: dict = Depends(require_member)):
+        owner_id = payload.get("user_id") or payload.get("sub", "")
+        deleted = mongo_app_store.delete_project(owner_id, project_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Project not found or access denied")
+        return {"deleted": True}
+
+    # ── Files (P4.5) ─────────────────────────────────────────────────────────
+
+    @app.get("/projects/{project_id}/files", tags=["projects"])
+    def list_files(project_id: str, payload: dict = Depends(require_member)):
+        owner_id = payload.get("user_id") or payload.get("sub", "")
+        proj = mongo_app_store.get_project(project_id)
+        if not proj or proj["owner_id"] != owner_id:
+            raise HTTPException(status_code=404, detail="Project not found or access denied")
+        return {"files": mongo_app_store.list_files(project_id)}
+
+    @app.post("/projects/{project_id}/files", tags=["projects"], status_code=201)
+    def create_file(project_id: str, req: FileUpsertRequest, payload: dict = Depends(require_member)):
+        owner_id = payload.get("user_id") or payload.get("sub", "")
+        proj = mongo_app_store.get_project(project_id)
+        if not proj or proj["owner_id"] != owner_id:
+            raise HTTPException(status_code=404, detail="Project not found or access denied")
+        if mongo_app_store.count_files(project_id) >= 5:
+            raise HTTPException(status_code=429, detail="File limit reached (5 per project). Delete an existing file to add a new one.")
+        file_id = mongo_app_store.upsert_file(project_id, None, req.name, req.language, req.code)
+        mongo_app_store.touch_project(project_id)
+        return {"file": mongo_app_store.get_file(project_id, file_id)}
+
+    @app.put("/projects/{project_id}/files/{file_id}", tags=["projects"])
+    def update_file(project_id: str, file_id: str, req: FileUpsertRequest, payload: dict = Depends(require_member)):
+        owner_id = payload.get("user_id") or payload.get("sub", "")
+        proj = mongo_app_store.get_project(project_id)
+        if not proj or proj["owner_id"] != owner_id:
+            raise HTTPException(status_code=404, detail="Project not found or access denied")
+        mongo_app_store.upsert_file(project_id, file_id, req.name, req.language, req.code)
+        mongo_app_store.touch_project(project_id)
+        return {"file": mongo_app_store.get_file(project_id, file_id)}
+
+    @app.delete("/projects/{project_id}/files/{file_id}", tags=["projects"])
+    def delete_file(project_id: str, file_id: str, payload: dict = Depends(require_member)):
+        owner_id = payload.get("user_id") or payload.get("sub", "")
+        proj = mongo_app_store.get_project(project_id)
+        if not proj or proj["owner_id"] != owner_id:
+            raise HTTPException(status_code=404, detail="Project not found or access denied")
+        deleted = mongo_app_store.delete_file(project_id, file_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="File not found")
+        return {"deleted": True}
 
     app.include_router(sessions_router)
     app.include_router(auth_router)

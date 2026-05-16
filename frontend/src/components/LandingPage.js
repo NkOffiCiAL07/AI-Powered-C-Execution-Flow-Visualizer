@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import LoginModal from './LoginModal';
+import { useTheme, isDarkTheme } from '../theme';
 
 const STEPS = [
-  { icon: 'code',       n: '01', title: 'Write Your C++ Code',    desc: 'Use the built-in editor with full syntax highlighting and instant error feedback.' },
+  { icon: 'code',       n: '01', title: 'Write Your Code',         desc: 'Use the built-in editor with syntax highlighting for C, C++, and Python. Switch languages from the dropdown.' },
   { icon: 'play_circle',n: '02', title: 'Run Traceon Analysis',    desc: 'Our engine compiles, instruments, and traces your code in under 200ms.' },
   { icon: 'hub',        n: '03', title: 'Explore the Flow Graph',  desc: 'Navigate execution interactively. Click any node for deep-dive AI explanations.' },
 ];
@@ -48,6 +49,8 @@ const FOOTER_COLS = [
   { title: 'Company',   links: ['About', 'Community', 'Pricing', 'Contact'] },
 ];
 
+const GITHUB_URL = 'https://github.com/NkOffiCiAL07/AI-Powered-C-Execution-Flow-Visualizer';
+
 const T = 'rgba(201,106,72,'; // terracotta helper
 
 const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
@@ -59,7 +62,44 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
     return () => clearTimeout(t);
   }, []);
 
+  const { theme } = useTheme();
+  const dark = isDarkTheme(theme);
+
+  const textMuted55 = dark ? 'rgba(232,226,217,0.55)' : 'rgba(26,19,16,0.55)';
+  const textMuted50 = dark ? 'rgba(232,226,217,0.50)' : 'rgba(26,19,16,0.5)';
+  const textMuted38 = dark ? 'rgba(232,226,217,0.38)' : 'rgba(26,19,16,0.38)';
+  const textMuted40 = dark ? 'rgba(232,226,217,0.40)' : 'rgba(26,19,16,0.4)';
+  const textMuted35 = dark ? 'rgba(232,226,217,0.35)' : 'rgba(26,19,16,0.35)';
+  const textMuted30 = dark ? 'rgba(232,226,217,0.30)' : 'rgba(26,19,16,0.3)';
+  const textMuted25 = dark ? 'rgba(232,226,217,0.25)' : 'rgba(26,19,16,0.25)';
+  const demoCodeText = dark ? '#E8E2D9' : '#1A1310';
+  const demoEditorBg = dark ? '#1C1917' : '#F7F3EE';
+  const demoGraphBg  = dark ? '#141210' : '#F2EDE7';
+  const navBg        = dark ? 'rgba(35,31,28,0.94)'  : 'rgba(250,249,247,0.92)';
+  const border09 = dark ? 'rgba(232,226,217,0.09)' : 'rgba(100,70,40,0.09)';
+  const border10 = dark ? 'rgba(232,226,217,0.10)' : 'rgba(100,70,40,0.1)';
+  const border12 = dark ? 'rgba(232,226,217,0.12)' : 'rgba(100,70,40,0.12)';
+  const border14 = dark ? 'rgba(232,226,217,0.14)' : 'rgba(100,70,40,0.14)';
+  const border20 = dark ? 'rgba(232,226,217,0.20)' : 'rgba(100,70,40,0.2)';
+  const border25 = dark ? 'rgba(232,226,217,0.25)' : 'rgba(100,70,40,0.25)';
+  const border08 = dark ? 'rgba(232,226,217,0.08)' : 'rgba(100,70,40,0.08)';
+
   const launch = () => setIsLoginOpen(true);
+
+  const getFooterLinkAction = (label) => {
+    const actions = {
+      'Docs':          () => onSwitchView('docs'),
+      'Changelog':     () => window.open(`${GITHUB_URL}/commits/main`, '_blank'),
+      'Roadmap':       () => window.open(`${GITHUB_URL}/blob/main/plan.md`, '_blank'),
+      'Tutorials':     () => onSwitchView('docs'),
+      'Examples':      () => onSwitchView('editor'),
+      'API Reference': () => onSwitchView('docs'),
+      'Community':     () => onSwitchView('community'),
+      'Pricing':       () => onSwitchView('pricing'),
+      'Contact':       () => window.open('mailto:nishantkumar19041@gmail.com', '_blank'),
+    };
+    return actions[label] || null;
+  };
 
   const handleViewDemo = () => {
     if (localStorage.getItem('traceon_demo_used')) {
@@ -74,7 +114,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
     <div className="landing-root" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)', minHeight: '100vh', fontFamily: 'Inter, sans-serif', overflowX: 'hidden' }}>
 
       {/* ── NAVBAR ── */}
-      <header className="fixed top-0 w-full z-50" style={{ background: 'rgba(250,249,247,0.92)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(100,70,40,0.1)' }}>
+      <header className="fixed top-0 w-full z-50" style={{ background: navBg, backdropFilter: 'blur(20px)', borderBottom: `1px solid ${border10}` }}>
         <div className="flex justify-between items-center px-6 md:px-12 h-16 w-full max-w-7xl mx-auto">
           <button className="flex items-center gap-3" onClick={() => onSwitchView('landing')}>
             <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
@@ -125,8 +165,8 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
             </h1>
 
             <p className="mb-10 max-w-2xl mx-auto leading-relaxed"
-              style={{ fontSize: 'clamp(1rem,2.2vw,1.2rem)', color: 'rgba(26,19,16,0.55)' }}>
-              Transform complex C/C++ execution paths into intuitive, high-fidelity visual graphs.
+              style={{ fontSize: 'clamp(1rem,2.2vw,1.2rem)', color: textMuted55 }}>
+              Transform complex C, C++, and Python execution paths into intuitive, high-fidelity visual graphs.
               Debug with precision using{' '}
               <span style={{ color: '#C96A48', fontWeight: 600 }}>AI-driven flow analysis</span>.
             </p>
@@ -146,15 +186,15 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
               {STATS.map((s, i) => (
                 <div key={i} className="flex flex-col items-center">
                   <span className="text-2xl font-extrabold" style={{ color: '#C96A48', fontFamily: 'Space Grotesk, sans-serif' }}>{s.value}</span>
-                  <span className="text-xs font-bold uppercase tracking-widest mt-1" style={{ color: 'rgba(26,19,16,0.38)' }}>{s.label}</span>
+                  <span className="text-xs font-bold uppercase tracking-widest mt-1" style={{ color: textMuted38 }}>{s.label}</span>
                 </div>
               ))}
             </div>
           </div>
 
           <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-40 select-none">
-            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'rgba(26,19,16,0.5)' }}>Scroll</span>
-            <div className="w-5 h-8 rounded-full border flex items-start justify-center pt-1.5" style={{ borderColor: 'rgba(100,70,40,0.25)' }}>
+            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: textMuted50 }}>Scroll</span>
+            <div className="w-5 h-8 rounded-full border flex items-start justify-center pt-1.5" style={{ borderColor: border25 }}>
               <div className="w-1 h-2.5 rounded-full animate-scroll-bounce" style={{ background: '#C96A48' }} />
             </div>
           </div>
@@ -171,7 +211,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
               Everything You Need to{' '}
               <span className="gradient-text-alt">Debug Faster</span>
             </h2>
-            <p className="text-lg max-w-2xl mx-auto" style={{ color: 'rgba(26,19,16,0.5)' }}>
+            <p className="text-lg max-w-2xl mx-auto" style={{ color: textMuted50 }}>
               From execution tracing to AI-driven explanations, Traceon is your complete debugging intelligence platform.
             </p>
           </div>
@@ -181,7 +221,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
             {/* Large card — Predictive Path */}
             <div className="md:col-span-2 p-8 rounded-2xl border relative overflow-hidden landing-card"
               style={{ background: `${T}0.04)`, borderColor: `${T}0.14)` }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = `${T}0.38)`; e.currentTarget.style.background = `${T}0.08)`; e.currentTarget.style.boxShadow = '0 24px 64px rgba(100,70,40,0.10), 0 0 32px rgba(201,106,72,0.08)'; }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = `${T}0.38)`; e.currentTarget.style.background = `${T}0.08)`; e.currentTarget.style.boxShadow = dark ? '0 24px 64px rgba(232,226,217,0.07), 0 0 32px rgba(201,106,72,0.08)' : '0 24px 64px rgba(100,70,40,0.10), 0 0 32px rgba(201,106,72,0.08)'; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = `${T}0.14)`; e.currentTarget.style.background = `${T}0.04)`; e.currentTarget.style.boxShadow = 'none'; }}>
               <div className="absolute top-0 right-0 w-56 h-56 rounded-full blur-[90px] pointer-events-none" style={{ background: `${T}0.10)` }} />
               <div className="relative z-10">
@@ -190,7 +230,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
                   <span className="material-symbols-outlined" style={{ color: '#C96A48', fontSize: '24px' }}>troubleshoot</span>
                 </div>
                 <h3 className="text-2xl font-bold mb-3" style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--text-primary)' }}>Predictive Path Analysis</h3>
-                <p className="text-base leading-relaxed mb-6" style={{ color: 'rgba(26,19,16,0.55)' }}>
+                <p className="text-base leading-relaxed mb-6" style={{ color: textMuted55 }}>
                   Leverage Traceon's LLM-assisted forecasting to identify potential race conditions and memory leaks before they occur in production. Get probabilistic hotspot detection on complex codebases.
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -220,7 +260,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
                     <span className="material-symbols-outlined" style={{ color: '#C96A48', fontSize: '20px' }}>{card.icon}</span>
                   </div>
                   <h3 className="text-lg font-bold mb-2" style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--text-primary)' }}>{card.title}</h3>
-                  <p className="text-sm leading-relaxed" style={{ color: 'rgba(26,19,16,0.55)' }}>{card.desc}</p>
+                  <p className="text-sm leading-relaxed" style={{ color: textMuted55 }}>{card.desc}</p>
                 </div>
               </div>
             ))}
@@ -228,7 +268,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
             {/* Large card — AI Explanation */}
             <div className="md:col-span-2 p-8 rounded-2xl border relative overflow-hidden landing-card"
               style={{ background: `${T}0.04)`, borderColor: `${T}0.14)` }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = `${T}0.38)`; e.currentTarget.style.background = `${T}0.08)`; e.currentTarget.style.boxShadow = '0 24px 64px rgba(100,70,40,0.10)'; }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = `${T}0.38)`; e.currentTarget.style.background = `${T}0.08)`; e.currentTarget.style.boxShadow = dark ? '0 24px 64px rgba(232,226,217,0.07)' : '0 24px 64px rgba(100,70,40,0.10)'; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = `${T}0.14)`; e.currentTarget.style.background = `${T}0.04)`; e.currentTarget.style.boxShadow = 'none'; }}>
               <div className="absolute top-0 left-0 w-56 h-56 rounded-full blur-[90px] pointer-events-none" style={{ background: `${T}0.10)` }} />
               <div className="relative z-10">
@@ -237,7 +277,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
                   <span className="material-symbols-outlined" style={{ color: '#C96A48', fontSize: '24px' }}>psychology</span>
                 </div>
                 <h3 className="text-2xl font-bold mb-3" style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--text-primary)' }}>AI Code Explanation</h3>
-                <p className="text-base leading-relaxed mb-6" style={{ color: 'rgba(26,19,16,0.55)' }}>
+                <p className="text-base leading-relaxed mb-6" style={{ color: textMuted55 }}>
                   Instant AI-generated summaries, Big-O complexity analysis, and optimization hints powered by advanced language models. Understand any execution path at a glance, no expertise required.
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -252,7 +292,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
         </section>
 
         {/* ── HOW IT WORKS ── */}
-        <section className="max-w-6xl mx-auto px-6 py-28 border-t" style={{ borderColor: 'rgba(100,70,40,0.09)' }}>
+        <section className="max-w-6xl mx-auto px-6 py-28 border-t" style={{ borderColor: border09 }}>
           <div className="text-center mb-20">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-widest mb-4"
               style={{ borderColor: `${T}0.28)`, color: '#C96A48', background: `${T}0.07)` }}>
@@ -263,7 +303,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
               From Code to Insight in{' '}
               <span className="gradient-text">3 Steps</span>
             </h2>
-            <p className="text-lg max-w-xl mx-auto" style={{ color: 'rgba(26,19,16,0.5)' }}>
+            <p className="text-lg max-w-xl mx-auto" style={{ color: textMuted50 }}>
               No configuration required. Traceon integrates directly into your dev workflow.
             </p>
           </div>
@@ -284,14 +324,14 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
                   </div>
                 </div>
                 <h3 className="text-xl font-bold mb-3" style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--text-primary)' }}>{step.title}</h3>
-                <p className="text-sm leading-relaxed max-w-xs" style={{ color: 'rgba(26,19,16,0.55)' }}>{step.desc}</p>
+                <p className="text-sm leading-relaxed max-w-xs" style={{ color: textMuted55 }}>{step.desc}</p>
               </div>
             ))}
           </div>
         </section>
 
         {/* ── LIVE DEMO PREVIEW ── */}
-        <section className="max-w-7xl mx-auto px-6 py-28 border-t" style={{ borderColor: 'rgba(100,70,40,0.09)' }}>
+        <section className="max-w-7xl mx-auto px-6 py-28 border-t" style={{ borderColor: border09 }}>
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-widest mb-4"
               style={{ borderColor: 'rgba(34,197,94,0.3)', color: '#16a34a', background: 'rgba(34,197,94,0.07)' }}>
@@ -302,22 +342,22 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
               Execution Graph{' '}
               <span className="gradient-text-alt">Visualizer</span>
             </h2>
-            <p className="text-lg max-w-xl mx-auto" style={{ color: 'rgba(26,19,16,0.5)' }}>
+            <p className="text-lg max-w-xl mx-auto" style={{ color: textMuted50 }}>
               Synchronized source-to-flow mapping for deep architectural inspection.
             </p>
           </div>
 
           {/* Demo window */}
           <div className="rounded-2xl border overflow-hidden"
-            style={{ borderColor: 'rgba(100,70,40,0.14)', background: 'var(--bg-card)', boxShadow: '0 32px 80px rgba(100,70,40,0.12), 0 0 0 1px rgba(100,70,40,0.06)' }}>
+            style={{ borderColor: border14, background: 'var(--bg-card)', boxShadow: dark ? '0 32px 80px rgba(232,226,217,0.05), 0 0 0 1px rgba(232,226,217,0.04)' : '0 32px 80px rgba(100,70,40,0.12), 0 0 0 1px rgba(100,70,40,0.06)' }}>
             {/* Window chrome */}
             <div className="flex items-center gap-2 px-6 py-3.5 border-b"
-              style={{ background: 'var(--bg-secondary)', borderColor: 'rgba(100,70,40,0.1)' }}>
+              style={{ background: 'var(--bg-secondary)', borderColor: border10 }}>
               <div className="w-3 h-3 rounded-full" style={{ background: '#ef4444', opacity: 0.7 }} />
               <div className="w-3 h-3 rounded-full" style={{ background: '#f59e0b', opacity: 0.7 }} />
               <div className="w-3 h-3 rounded-full" style={{ background: '#22c55e', opacity: 0.7 }} />
               <div className="ml-4 px-4 py-1 rounded border text-xs"
-                style={{ borderColor: 'rgba(100,70,40,0.12)', color: 'rgba(26,19,16,0.4)', background: 'var(--bg-primary)', fontFamily: 'JetBrains Mono, monospace' }}>
+                style={{ borderColor: border12, color: textMuted40, background: 'var(--bg-primary)', fontFamily: 'JetBrains Mono, monospace' }}>
                 traceon — main.cpp
               </div>
               <div className="ml-auto flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold"
@@ -331,9 +371,9 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
             <div className="flex flex-col md:flex-row h-[520px]">
               {/* Code editor — light theme matching the app */}
               <div className="w-full md:w-2/5 flex flex-col border-b md:border-b-0 md:border-r"
-                style={{ background: '#F7F3EE', borderColor: 'rgba(100,70,40,0.1)' }}>
+                style={{ background: demoEditorBg, borderColor: border10 }}>
                 <div className="flex items-center gap-2 px-4 py-2.5 border-b text-xs font-bold"
-                  style={{ borderColor: 'rgba(100,70,40,0.08)', color: 'rgba(26,19,16,0.4)' }}>
+                  style={{ borderColor: border08, color: textMuted40 }}>
                   <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#C96A48' }}>code</span>
                   main.cpp
                   <span className="ml-auto px-2 py-0.5 rounded text-[10px]"
@@ -344,11 +384,11 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
                     <div key={i} className="flex gap-3 px-2 rounded transition-all duration-300"
                       style={{ background: line.active ? 'rgba(201,106,72,0.1)' : 'transparent' }}>
                       <span className="w-5 text-right select-none shrink-0 text-xs"
-                        style={{ color: line.active ? '#C96A48' : 'rgba(26,19,16,0.25)', paddingTop: '1px' }}>{line.n}</span>
+                        style={{ color: line.active ? '#C96A48' : textMuted25, paddingTop: '1px' }}>{line.n}</span>
                       <span>
                         {line.parts.length === 0
                           ? <span>&nbsp;</span>
-                          : line.parts.map((p, j) => <span key={j} style={{ color: p.c }}>{p.t}</span>)}
+                          : line.parts.map((p, j) => <span key={j} style={{ color: p.c === '#1A1310' ? demoCodeText : p.c }}>{p.t}</span>)}
                       </span>
                     </div>
                   ))}
@@ -356,7 +396,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
               </div>
 
               {/* Graph panel — keep subtle warm bg */}
-              <div className="flex-1 relative overflow-hidden" style={{ background: '#F2EDE7' }}>
+              <div className="flex-1 relative overflow-hidden" style={{ background: demoGraphBg }}>
                 <div className="absolute inset-0 pointer-events-none"
                   style={{ backgroundImage: `radial-gradient(circle, rgba(201,106,72,0.15) 1px, transparent 1px)`, backgroundSize: '28px 28px', opacity: 0.6 }} />
                 <svg className="absolute inset-0 w-full h-full" style={{ overflow: 'visible' }}>
@@ -393,7 +433,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
         </section>
 
         {/* ── OPEN SOURCE CTA ── */}
-        <section className="max-w-7xl mx-auto px-6 py-28 border-t" style={{ borderColor: 'rgba(100,70,40,0.09)' }}>
+        <section className="max-w-7xl mx-auto px-6 py-28 border-t" style={{ borderColor: border09 }}>
           <div className="relative rounded-3xl px-10 py-20 md:px-24 text-center overflow-hidden border"
             style={{ background: `${T}0.05)`, borderColor: `${T}0.16)` }}>
             <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full blur-[130px] pointer-events-none" style={{ background: `${T}0.12)` }} />
@@ -411,7 +451,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
                 Open Core.{' '}
                 <span className="gradient-text">Community Driven.</span>
               </h2>
-              <p className="max-w-2xl mx-auto mb-12 leading-relaxed" style={{ fontSize: '1.125rem', color: 'rgba(26,19,16,0.55)' }}>
+              <p className="max-w-2xl mx-auto mb-12 leading-relaxed" style={{ fontSize: '1.125rem', color: textMuted55 }}>
                 Transparent Traceon algorithms for a transparent future. Join{' '}
                 <strong style={{ color: '#C96A48' }}>12,000+</strong> engineers building the next generation of C++ debugging tools.
               </p>
@@ -422,7 +462,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
                   onClick={() => window.open('https://github.com/NkOffiCiAL07/AI-Powered-C-Execution-Flow-Visualizer', '_blank')}>
                   <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#C96A48' }}>star</span>
                   Star on GitHub
-                  <div className="w-px h-4 mx-1" style={{ background: 'rgba(100,70,40,0.2)' }} />
+                  <div className="w-px h-4 mx-1" style={{ background: border20 }} />
                   <span style={{ color: '#C96A48', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px' }}>12.4k</span>
                 </button>
                 <button className="cta-primary flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm" onClick={launch}>
@@ -431,11 +471,11 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
                 </button>
               </div>
 
-              <div className="flex flex-wrap items-center justify-center gap-10 mt-16 pt-14 border-t" style={{ borderColor: 'rgba(100,70,40,0.1)' }}>
+              <div className="flex flex-wrap items-center justify-center gap-10 mt-16 pt-14 border-t" style={{ borderColor: border10 }}>
                 {[{ value: '12.4k', label: 'GitHub Stars' }, { value: '50k+', label: 'Traces Analyzed' }, { value: '< 200ms', label: 'Avg. Analysis' }, { value: '99.9%', label: 'Uptime' }].map((s, i) => (
                   <div key={i} className="text-center">
                     <div className="text-3xl font-extrabold mb-1" style={{ color: '#C96A48', fontFamily: 'Space Grotesk, sans-serif' }}>{s.value}</div>
-                    <div className="text-xs uppercase tracking-widest font-bold" style={{ color: 'rgba(26,19,16,0.38)' }}>{s.label}</div>
+                    <div className="text-xs uppercase tracking-widest font-bold" style={{ color: textMuted38 }}>{s.label}</div>
                   </div>
                 ))}
               </div>
@@ -446,7 +486,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
       </main>
 
       {/* ── FOOTER ── */}
-      <footer className="border-t py-16" style={{ borderColor: 'rgba(100,70,40,0.1)', background: 'var(--bg-secondary)' }}>
+      <footer className="border-t py-16" style={{ borderColor: border10, background: 'var(--bg-secondary)' }}>
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-12 mb-14">
             <div className="col-span-2">
@@ -457,12 +497,18 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
                 </div>
                 <span className="text-lg font-bold" style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--text-primary)' }}>Traceon</span>
               </button>
-              <p className="text-sm leading-relaxed mb-6" style={{ color: 'rgba(26,19,16,0.5)', maxWidth: 280 }}>
-                The AI-powered C/C++ execution flow visualizer for engineers who demand precision.
+              <p className="text-sm leading-relaxed mb-6" style={{ color: textMuted50, maxWidth: 280 }}>
+                The AI-powered C, C++, and Python execution flow visualizer for engineers who demand precision.
               </p>
               <div className="flex gap-2.5">
-                {[{ icon: 'terminal', label: 'GitHub' }, { icon: 'description', label: 'Docs' }, { icon: 'group', label: 'Community' }, { icon: 'mail', label: 'Email' }].map(s => (
-                  <a key={s.label} href="#0" aria-label={s.label} className="social-icon">
+                {[
+                  { icon: 'terminal',    label: 'GitHub',    onClick: () => window.open(GITHUB_URL, '_blank') },
+                  { icon: 'description', label: 'Docs',      onClick: () => onSwitchView('docs') },
+                  { icon: 'group',       label: 'Community', onClick: () => onSwitchView('community') },
+                  { icon: 'mail',        label: 'Email',     onClick: () => window.open('mailto:nishantkumar19041@gmail.com', '_blank') },
+                ].map(s => (
+                  <a key={s.label} href="#0" aria-label={s.label} className="social-icon"
+                     onClick={(e) => { e.preventDefault(); s.onClick(); }}>
                     <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>{s.icon}</span>
                   </a>
                 ))}
@@ -470,24 +516,33 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
             </div>
             {FOOTER_COLS.map(col => (
               <div key={col.title}>
-                <div className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: 'rgba(26,19,16,0.38)' }}>{col.title}</div>
+                <div className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: textMuted38 }}>{col.title}</div>
                 <ul className="flex flex-col gap-3">
-                  {col.links.map(link => (
-                    <li key={link}><a href="#0" className="footer-link">{link}</a></li>
-                  ))}
+                  {col.links.map(link => {
+                    const action = getFooterLinkAction(link);
+                    return (
+                      <li key={link}>
+                        <a
+                          href="#0"
+                          className="footer-link"
+                          onClick={action ? (e) => { e.preventDefault(); action(); } : undefined}
+                        >{link}</a>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             ))}
           </div>
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 pt-8 border-t" style={{ borderColor: 'rgba(100,70,40,0.1)' }}>
-            <p className="text-xs uppercase tracking-widest" style={{ color: 'rgba(26,19,16,0.3)', fontFamily: 'JetBrains Mono, monospace' }}>
-              © 2025 TRACEON SYSTEMS. ALL RIGHTS RESERVED.
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 pt-8 border-t" style={{ borderColor: border10 }}>
+            <p className="text-xs uppercase tracking-widest" style={{ color: textMuted30, fontFamily: 'JetBrains Mono, monospace' }}>
+              © {new Date().getFullYear()} TRACEON SYSTEMS. ALL RIGHTS RESERVED.
             </p>
             <div className="flex gap-6">
               {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map(link => (
-                <a key={link} href="#0" className="text-xs transition-colors" style={{ color: 'rgba(26,19,16,0.35)' }}
+                <a key={link} href="#0" className="text-xs transition-colors" style={{ color: textMuted35 }}
                   onMouseEnter={e => e.currentTarget.style.color = '#C96A48'}
-                  onMouseLeave={e => e.currentTarget.style.color = 'rgba(26,19,16,0.35)'}>
+                  onMouseLeave={e => e.currentTarget.style.color = textMuted35}>
                   {link}
                 </a>
               ))}

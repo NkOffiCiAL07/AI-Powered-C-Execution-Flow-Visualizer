@@ -72,6 +72,96 @@
   opacity: 0.8;
 }
 
+/* ── Editor head left (back btn + title stack) ── */
+.editor-head-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.editor-back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+
+.editor-back-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.editor-back-btn .material-symbols-outlined { font-size: 16px; }
+
+.editor-title-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.editor-project-crumb {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--primary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.8;
+}
+
+/* ── Save button ── */
+.editor-save-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 5px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.editor-save-btn .material-symbols-outlined { font-size: 13px; }
+
+.editor-save-btn:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-glow);
+}
+
+.editor-save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.editor-save-btn.editor-save-saving .material-symbols-outlined { animation: spin 0.7s linear infinite; }
+
+.editor-save-btn.editor-save-saved {
+  border-color: rgba(42, 122, 80, 0.35);
+  color: var(--accent-green);
+  background: rgba(42, 122, 80, 0.08);
+}
+
+.editor-save-btn.editor-save-error {
+  border-color: rgba(192, 57, 43, 0.35);
+  color: var(--accent-red);
+  background: rgba(192, 57, 43, 0.08);
+}
+
 /* ── Run button ── */
 .editor-run-btn {
   margin: 10px 14px;

@@ -98,6 +98,7 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
       email: '',
       avatar: '',
       provider: 'guest',
+      role: 'guest',
     };
     onLogin(guest, null);
     onClose();
@@ -119,7 +120,7 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
             </span>
           </div>
           <h2>Welcome to Traceon</h2>
-          <p>Sign in to access the C++ execution visualizer</p>
+          <p>Sign in to save projects and access all languages</p>
         </div>
 
         {error && (

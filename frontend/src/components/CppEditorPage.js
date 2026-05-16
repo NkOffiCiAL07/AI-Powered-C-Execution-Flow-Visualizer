@@ -7,6 +7,7 @@ const LANG_OPTIONS = [
   { value: "cpp",    label: "C++"    },
   { value: "c",      label: "C"      },
   { value: "python", label: "Python" },
+  { value: "java",   label: "Java"   },
 ];
 
 function LangDropdown({ language, onChange }) {
@@ -52,6 +53,9 @@ export default function CppEditorPage({
   onRun,
   onExplain,
   onGenerate,
+  onSave,
+  onBackToDashboard,
+  currentProject,
   loading,
   generateLoading,
   error,
@@ -63,7 +67,26 @@ export default function CppEditorPage({
 }) {
   const [prompt, setPrompt] = useState("");
   const [showPrompt, setShowPrompt] = useState(false);
+  const [saveState, setSaveState] = useState("idle"); // "idle" | "saving" | "saved" | "error"
   const promptInputRef = useRef(null);
+  const saveTimerRef = useRef(null);
+
+  const handleSave = async () => {
+    if (!onSave || saveState === "saving") return;
+    setSaveState("saving");
+    try {
+      await onSave();
+      setSaveState("saved");
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => setSaveState("idle"), 2000);
+    } catch {
+      setSaveState("error");
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => setSaveState("idle"), 2500);
+    }
+  };
+
+  useEffect(() => () => clearTimeout(saveTimerRef.current), []);
 
   const handleGenerate = () => {
     if (prompt.trim()) {
@@ -137,7 +160,7 @@ export default function CppEditorPage({
                   if (e.key === "Enter") handleGenerate();
                   if (e.key === "Escape") setShowPrompt(false);
                 }}
-                placeholder={`Describe what you want to build in ${language === "c" ? "C" : "C++"}…`}
+                placeholder={`Describe what you want to build in ${language === "c" ? "C" : language === "python" ? "Python" : language === "java" ? "Java" : "C++"}…`}
                 disabled={generateLoading}
                 spellCheck="false"
               />
@@ -156,8 +179,33 @@ export default function CppEditorPage({
 
         <div className="editor-page-card editor-card">
           <div className="editor-page-head">
-            <h2>{language === "python" ? "Python" : language === "c" ? "C" : "C++"} Code Editor</h2>
+            <div className="editor-head-left">
+              {currentProject && onBackToDashboard && (
+                <button className="editor-back-btn" onClick={onBackToDashboard} title="Back to dashboard">
+                  <span className="material-symbols-outlined">arrow_back</span>
+                </button>
+              )}
+              <div className="editor-title-stack">
+                {currentProject && (
+                  <span className="editor-project-crumb">{currentProject.project?.name}</span>
+                )}
+                <h2>{language === "python" ? "Python" : language === "c" ? "C" : language === "java" ? "Java" : "C++"} Editor</h2>
+              </div>
+            </div>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              {currentProject && onSave && (
+                <button
+                  className={`editor-save-btn editor-save-${saveState}`}
+                  onClick={handleSave}
+                  disabled={saveState === "saving"}
+                  title="Save to project"
+                >
+                  <span className="material-symbols-outlined">
+                    {saveState === "saving" ? "sync" : saveState === "saved" ? "check_circle" : saveState === "error" ? "error" : "save"}
+                  </span>
+                  {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved" : saveState === "error" ? "Failed" : "Save"}
+                </button>
+              )}
               <button
                 className="ai-gen-trigger"
                 onClick={openPrompt}
@@ -167,7 +215,7 @@ export default function CppEditorPage({
                 <span className={`material-symbols-outlined${generateLoading ? " spin" : ""}`}>
                   {generateLoading ? "sync" : "auto_awesome"}
                 </span>
-                AI + Code
+                AI
               </button>
               <LangDropdown language={language} onChange={onLanguageChange} />
             </div>
@@ -179,6 +227,7 @@ export default function CppEditorPage({
             onEditRequest={() => {}}
             language={language}
             compact
+            compileError={result?.compile_error || null}
           />
         </div>
       </section>

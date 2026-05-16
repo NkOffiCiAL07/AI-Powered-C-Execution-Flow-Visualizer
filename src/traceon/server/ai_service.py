@@ -9,12 +9,14 @@ logger = logging.getLogger(__name__)
 
 
 def generate_code_ai(prompt: str, language: str = "cpp") -> GenerateCodeResponse:
-    """Generate C, C++, or Python code from a natural-language prompt using Gemini."""
+    """Generate C, C++, Python, or Java code from a natural-language prompt using Gemini."""
     api_key = os.getenv("GEMINI_API_KEY")
     if language == "python":
         lang_label = "Python"
     elif language == "c":
         lang_label = "C"
+    elif language == "java":
+        lang_label = "Java"
     else:
         lang_label = "C++"
 
@@ -39,6 +41,14 @@ def _gemini_generate(prompt: str, lang_label: str, api_key: str) -> GenerateCode
             "- Return ONLY the raw source code. No markdown, no code fences, no explanation.\n"
             "- The code must run with python3 with no errors.\n"
             "- Always include a complete, runnable script (use if __name__ == '__main__' when appropriate).\n"
+            "- Keep it concise but complete."
+        )
+    elif lang_label == "Java":
+        rules = (
+            "- Return ONLY the raw source code. No markdown, no code fences, no explanation.\n"
+            "- Always define a public class named Main with a public static void main(String[] args) method.\n"
+            "- The code must compile with javac 11 or later with no errors.\n"
+            "- Import only standard Java library classes (java.util.*, java.io.*, etc.).\n"
             "- Keep it concise but complete."
         )
     else:
@@ -67,7 +77,7 @@ Rules:
 
     code = response.text.strip()
     # Strip markdown fences if the model adds them anyway
-    code = re.sub(r"^```(?:cpp|c|c\+\+)?\n?", "", code)
+    code = re.sub(r"^```(?:cpp|c|c\+\+|java|python)?\n?", "", code)
     code = re.sub(r"\n?```$", "", code)
     return GenerateCodeResponse(code=code.strip())
 
@@ -82,7 +92,7 @@ def explain_code_ai(code: str, language: str = "cpp") -> ExplainCodeResponse:
         except Exception as e:
             logger.warning(f"Gemini explanation failed, falling back to static analysis: {e}")
 
-    return _static_explanation(code)
+    return _static_explanation(code, language)
 
 
 def _gemini_explanation(code: str, api_key: str, language: str = "cpp") -> ExplainCodeResponse:
@@ -92,8 +102,14 @@ def _gemini_explanation(code: str, api_key: str, language: str = "cpp") -> Expla
 
     client = genai.Client(api_key=api_key)
 
-    lang_label = "Python" if language == "python" else ("C" if language == "c" else "C++")
-    fence = "python" if language == "python" else ("c" if language == "c" else "cpp")
+    if language == "python":
+        lang_label, fence = "Python", "python"
+    elif language == "c":
+        lang_label, fence = "C", "c"
+    elif language == "java":
+        lang_label, fence = "Java", "java"
+    else:
+        lang_label, fence = "C++", "cpp"
 
     prompt = f"""Analyze this {lang_label} code and provide a structured explanation.
 Return a JSON object with exactly these keys:
@@ -169,17 +185,18 @@ def _detect_nested_loops(code: str) -> bool:
     return len(loop_depths) >= 2 and len(set(loop_depths)) > 1
 
 
-def _static_explanation(code: str) -> ExplainCodeResponse:
+def _static_explanation(code: str, language: str = "cpp") -> ExplainCodeResponse:
     """Static analysis fallback used when no API key is configured."""
     lines = [l for l in code.splitlines() if l.strip()]
 
-    has_loops = bool(re.search(r'\b(for|while|do)\s*\(', code))
+    has_loops = bool(re.search(r'\b(for|while|do)\s*[\s(]', code))
     has_nested_loops = _detect_nested_loops(code)
     has_vectors = bool(re.search(r'\bvector\s*<', code))
     has_recursion = _detect_recursion(code)
     has_pointers = bool(re.search(r'[*&]\s*\w+\s*[;,=\)]', code))
     has_classes = bool(re.search(r'\bclass\s+\w+', code))
     has_templates = bool(re.search(r'\btemplate\s*<', code))
+    has_collections = bool(re.search(r'\b(ArrayList|HashMap|LinkedList|TreeMap|HashSet)\s*<', code))
     function_names = re.findall(r'\b\w+\s+(\w+)\s*\([^)]*\)\s*\{', code)
 
     # Complexity estimation
@@ -213,16 +230,18 @@ def _static_explanation(code: str) -> ExplainCodeResponse:
         key_points.append("Contains nested loops — watch for O(n²) or worse performance on large inputs.")
     elif has_loops:
         key_points.append("Uses iterative constructs (for/while loops).")
-    if has_vectors:
+    if has_collections:
+        key_points.append("Uses Java Collections (ArrayList/HashMap/etc.) for dynamic data storage.")
+    elif has_vectors:
         key_points.append("Uses std::vector for dynamic array storage.")
-    if has_pointers:
+    if has_pointers and language != "java":
         key_points.append("Uses pointers or references — manual memory awareness required.")
     if not key_points:
         key_points.append("Straightforward procedural logic with no complex control flow.")
     key_points.append(f"Source spans {len(lines)} non-empty lines.")
 
     return ExplainCodeResponse(
-        explanation=_build_summary(code, has_loops, has_recursion, has_classes, function_names),
+        explanation=_build_summary(code, has_loops, has_recursion, has_classes, function_names, language),
         time_complexity=time_c,
         space_complexity=space_c,
         key_points=key_points[:5],
@@ -257,15 +276,24 @@ def _detect_recursion(code: str) -> bool:
 
 
 def _build_summary(code: str, has_loops: bool, has_recursion: bool,
-                   has_classes: bool, function_names: list) -> str:
+                   has_classes: bool, function_names: list, language: str = "cpp") -> str:
+    if language == "python":
+        lang_name = "Python"
+    elif language == "c":
+        lang_name = "C"
+    elif language == "java":
+        lang_name = "Java"
+    else:
+        lang_name = "C++"
+
     parts = []
     if has_classes:
-        parts.append("This C++ program defines classes and uses object-oriented patterns.")
+        parts.append(f"This {lang_name} program defines classes and uses object-oriented patterns.")
     elif function_names and len(function_names) > 1:
         shown = ", ".join(function_names[:3])
-        parts.append(f"This C++ program defines multiple functions ({shown}) to solve its task.")
+        parts.append(f"This {lang_name} program defines multiple functions ({shown}) to solve its task.")
     else:
-        parts.append("This is a C++ program.")
+        parts.append(f"This is a {lang_name} program.")
 
     if has_recursion:
         parts.append("It uses recursion as a core control-flow strategy.")

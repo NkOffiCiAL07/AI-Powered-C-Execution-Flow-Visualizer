@@ -10,11 +10,37 @@ import DocsPage from "./components/DocsPage";
 import PricingPage from "./components/PricingPage";
 import CommunityPage from "./components/CommunityPage";
 import LoginModal from "./components/LoginModal";
-import { analyzeCode, runCode, stepAnalyzeSession, explainCode, generateCode, API_BASE_URL } from "./services/api";
+import DashboardPage from "./components/DashboardPage";
+import { analyzeCode, runCode, stepAnalyzeSession, explainCode, generateCode, updateFile, fetchProject, fetchFiles, API_BASE_URL } from "./services/api";
 import "./App.css";
 import "./styles/CppEditorPage.css";
 
-const DEFAULT_CODE = `#include <iostream>
+// Captured once at module load — before React StrictMode double-mounts any
+// effects and before the URL-sync effect can overwrite window.location.search.
+const _initialParams = new URLSearchParams(window.location.search);
+
+// Decode JWT payload and merge role / user_id into the stored user object.
+// Guests always get role:"guest"; authenticated users get role from the token
+// (defaults to "member" if the backend doesn't set it yet).
+function normalizeUser(userData, token) {
+  if (userData.provider === "guest" || userData.role === "guest") {
+    return { ...userData, role: "guest" };
+  }
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      return {
+        ...userData,
+        role: payload.role || "member",
+        user_id: payload.sub || payload.user_id || userData.id,
+      };
+    } catch {}
+  }
+  return { ...userData, role: "member" };
+}
+
+const DEFAULT_CODES = {
+  cpp: `#include <iostream>
 using namespace std;
 
 int main() {
@@ -23,12 +49,39 @@ int main() {
     int z = x + y;
     cout << "z = " << z << endl;
     return 0;
-}`;
+}`,
+  c: `#include <stdio.h>
+
+int main() {
+    int x = 5;
+    int y = 3;
+    int z = x + y;
+    printf("z = %d\\n", z);
+    return 0;
+}`,
+  python: `def main():
+    x = 5
+    y = 3
+    z = x + y
+    print(f"z = {z}")
+
+if __name__ == "__main__":
+    main()`,
+  java: `public class Main {
+    public static void main(String[] args) {
+        int x = 5;
+        int y = 3;
+        int z = x + y;
+        System.out.println("z = " + z);
+    }
+}`,
+};
 
 const LANG_OPTIONS = [
   { value: "cpp",    label: "C++"    },
   { value: "c",      label: "C"      },
   { value: "python", label: "Python" },
+  { value: "java",   label: "Java"   },
 ];
 
 function LangDropdown({ language, onChange }) {
@@ -70,7 +123,7 @@ function LangDropdown({ language, onChange }) {
 function App() {
   const [user, setUser] = useState(null);
   const [language, setLanguage] = useState("cpp");
-  const [code, setCode] = useState(DEFAULT_CODE);
+  const [code, setCode] = useState(DEFAULT_CODES.cpp);
   const [programInput, setProgramInput] = useState("");
   const [analysisResult, setAnalysisResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -92,6 +145,8 @@ function App() {
   const [serverDown, setServerDown] = useState(false);
   const [serverChecking, setServerChecking] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [sessionExpiredBanner, setSessionExpiredBanner] = useState(false);
+  const [currentProject, setCurrentProject] = useState(null);
   const abortControllerRef = useRef(null);
   const aiAbortControllerRef = useRef(null);
   const stepAbortControllerRef = useRef(null);
@@ -149,19 +204,51 @@ function App() {
     }
   }, [user, view]);
 
+  // Listen for 401 responses fired by apiFetch in api.js
   useEffect(() => {
-    const savedUser = localStorage.getItem("traceon_user");
+    const onExpired = () => {
+      setUser(null);
+      setView("landing");
+      setSessionExpiredBanner(true);
+    };
+    window.addEventListener("traceon:session-expired", onExpired);
+    return () => window.removeEventListener("traceon:session-expired", onExpired);
+  }, []);
+
+  useEffect(() => {
+    // Use module-level snapshot — immune to StrictMode double-mount and to
+    // replaceState calls made by the URL-sync effect between the two mounts.
+    const urlView = _initialParams.get("v");
+    const urlPid  = _initialParams.get("pid");
+    const urlFid  = _initialParams.get("fid");
+
+    // Restore hash-based code share (existing feature)
+    try {
+      const hash = new URLSearchParams(window.location.hash.slice(1));
+      const lang = hash.get("lang");
+      const encoded = hash.get("code");
+      if (lang && ["cpp", "c", "python", "java"].includes(lang)) {
+        setLanguage(lang);
+        if (encoded) setCode(decodeURIComponent(escape(atob(encoded))));
+      }
+    } catch {}
+
+    // Restore user from localStorage
+    let restoredUser = null;
+    const savedUser  = localStorage.getItem("traceon_user");
     const savedToken = localStorage.getItem("traceon_auth_token");
 
     if (savedUser) {
       try {
         const parsed = JSON.parse(savedUser);
-        if (parsed.provider === "guest") {
-          setUser(parsed);
+        if (parsed.provider === "guest" || parsed.role === "guest") {
+          restoredUser = normalizeUser(parsed, null);
+          setUser(restoredUser);
         } else if (savedToken) {
           const payload = JSON.parse(atob(savedToken.split(".")[1]));
           if (payload.exp && payload.exp * 1000 > Date.now()) {
-            setUser(parsed);
+            restoredUser = normalizeUser(parsed, savedToken);
+            setUser(restoredUser);
           } else {
             localStorage.removeItem("traceon_user");
             localStorage.removeItem("traceon_auth_token");
@@ -175,27 +262,118 @@ function App() {
       }
     }
 
+    // Restore view from URL params (only when a valid session exists)
+    let projCtrl = null;
+
+    if (restoredUser) {
+      const isMember = restoredUser.role === "member";
+
+      if (urlView === "dashboard" && isMember) {
+        setView("dashboard");
+
+      } else if (urlView === "docs" || urlView === "pricing" || urlView === "community") {
+        setView(urlView);
+
+      } else if (urlView === "editor" || urlView === "visualizer") {
+        // Visualizer can't be replayed from URL — restore as editor
+        setView("editor");
+        if (urlPid && isMember) {
+          projCtrl = new AbortController();
+          (async () => {
+            try {
+              const [projData, filesData] = await Promise.all([
+                fetchProject(urlPid, projCtrl.signal),
+                fetchFiles(urlPid, projCtrl.signal),
+              ]);
+              const project = projData.project;
+              const files   = filesData.files || [];
+              const file    = urlFid ? (files.find(f => f.id === urlFid) || files[0]) : files[0];
+              if (project && file) {
+                setCurrentProject({ project, file });
+                setCode(file.code || "");
+                setLanguage(file.language || project.language || "cpp");
+              }
+            } catch (err) {
+              if (err.name !== "AbortError") {
+                // Project was deleted or inaccessible — stay in plain editor
+              }
+            }
+          })();
+        }
+
+      } else {
+        // No URL view param → use role-based default
+        setView(isMember ? "dashboard" : "editor");
+      }
+    }
+
     return () => {
-      if (abortControllerRef.current) abortControllerRef.current.abort();
-      if (aiAbortControllerRef.current) aiAbortControllerRef.current.abort();
+      if (abortControllerRef.current)    abortControllerRef.current.abort();
+      if (aiAbortControllerRef.current)  aiAbortControllerRef.current.abort();
       if (stepAbortControllerRef.current) stepAbortControllerRef.current.abort();
       if (runAbortControllerRef.current) runAbortControllerRef.current.abort();
+      if (projCtrl) projCtrl.abort();
     };
   }, []);
 
+  // Sync view + project → URL so refresh restores the same screen
+  useEffect(() => {
+    const params = new URLSearchParams();
+    const SYNCABLE = ["dashboard", "editor", "visualizer", "docs", "pricing", "community"];
+    if (SYNCABLE.includes(view)) {
+      params.set("v", view);
+      if ((view === "editor" || view === "visualizer") && currentProject?.project) {
+        params.set("pid", currentProject.project.id);
+        if (currentProject.file) params.set("fid", currentProject.file.id);
+      }
+    }
+    const search = params.toString() ? "?" + params.toString() : "";
+    const hash   = window.location.hash;
+    window.history.replaceState(null, "", (search || window.location.pathname) + hash);
+  }, [view, currentProject]);
+
   const handleLogin = (userData, token) => {
-    setUser(userData);
-    localStorage.setItem("traceon_user", JSON.stringify(userData));
+    const normalized = normalizeUser(userData, token);
+    setUser(normalized);
+    localStorage.setItem("traceon_user", JSON.stringify(normalized));
     if (token) localStorage.setItem("traceon_auth_token", token);
-    setView("editor");
+    setSessionExpiredBanner(false);
+    // Guests go straight to sandbox; members land on their dashboard
+    setView(normalized.role === "guest" ? "editor" : "dashboard");
   };
 
   const handleLogout = () => {
     setUser(null);
+    setCurrentProject(null);
     localStorage.removeItem("traceon_user");
     localStorage.removeItem("traceon_auth_token");
     setView("landing");
   };
+
+  // Open a saved project in the editor
+  const handleOpenProject = ({ project, file, code: projectCode, language: projectLang }) => {
+    setCurrentProject({ project, file });
+    setLanguage(projectLang || project.language || "cpp");
+    setCode(projectCode || "");
+    setAnalysisResult(null);
+    setError(null);
+    setRunResult(null);
+    setRunError(null);
+    setCurrentLine(null);
+    setView("editor");
+  };
+
+  // Save current code back to the open project file
+  const handleSave = useCallback(async () => {
+    if (!currentProject?.file || !currentProject?.project) return;
+    const { project, file } = currentProject;
+    await updateFile(project.id, file.id, file.name, language, code);
+    // Keep currentProject.file in sync with the latest language/code
+    setCurrentProject(prev => ({
+      ...prev,
+      file: { ...prev.file, language, code },
+    }));
+  }, [currentProject, language, code]);
 
   const handleExplain = useCallback(async () => {
     if (!code.trim()) {
@@ -223,7 +401,37 @@ function App() {
     }
   }, [code, language]);
 
-const handleGenerate = useCallback(async (prompt) => {
+  const handleExportTrace = useCallback(() => {
+    if (!analysisResult) return;
+    const data = {
+      exported_at: new Date().toISOString(),
+      language,
+      code,
+      total_steps: analysisResult.total_recorded_steps,
+      snapshots: analysisResult.snapshots,
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `traceon-${language}-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [analysisResult, language, code]);
+
+  const handleCopyShareLink = useCallback(() => {
+    try {
+      const hash = new URLSearchParams();
+      hash.set("lang", language);
+      if (code.length <= 2000) {
+        hash.set("code", btoa(unescape(encodeURIComponent(code))));
+      }
+      window.history.replaceState(null, "", `#${hash.toString()}`);
+      navigator.clipboard.writeText(window.location.href);
+    } catch {}
+  }, [language, code]);
+
+  const handleGenerate = useCallback(async (prompt) => {
     if (!prompt.trim()) return;
     if (generateAbortRef.current) generateAbortRef.current.abort();
     generateAbortRef.current = new AbortController();
@@ -247,7 +455,7 @@ const handleGenerate = useCallback(async (prompt) => {
 
   const handleLanguageChange = (newLang) => {
     setLanguage(newLang);
-    setCode("");
+    setCode(DEFAULT_CODES[newLang] || "");
     setCurrentLine(null);
     setAnalysisResult(null);
     setAiExplanation(null);
@@ -264,10 +472,14 @@ const handleGenerate = useCallback(async (prompt) => {
       return;
     }
 
-    const usesInput = language === "cpp" 
+    const usesInput = language === "python"
+      ? /\binput\s*\(/.test(codeToAnalyze)
+      : language === "java"
+      ? /\b(Scanner|BufferedReader|nextInt|nextLine|nextDouble|readLine)\s*\(/.test(codeToAnalyze)
+      : language === "cpp"
       ? /\b(cin\s*>>|getline\s*\(|scanf\s*\()/.test(codeToAnalyze)
       : /\b(scanf\s*\(|gets\s*\(|fgets\s*\()/.test(codeToAnalyze);
-      
+
     if (usesInput && !programInput.trim()) {
       setError("Your code reads input but no input was provided. Please add input in the Program Input box below.");
       return;
@@ -303,7 +515,11 @@ const handleGenerate = useCallback(async (prompt) => {
       return;
     }
 
-    const usesInput = language === "cpp" 
+    const usesInput = language === "python"
+      ? /\binput\s*\(/.test(code)
+      : language === "java"
+      ? /\b(Scanner|BufferedReader|nextInt|nextLine|nextDouble|readLine)\s*\(/.test(code)
+      : language === "cpp"
       ? /\b(cin\s*>>|getline\s*\(|scanf\s*\()/.test(code)
       : /\b(scanf\s*\(|gets\s*\(|fgets\s*\()/.test(code);
 
@@ -399,6 +615,16 @@ const handleGenerate = useCallback(async (prompt) => {
     switch (view) {
       case "landing":
         return <LandingPage onStart={() => setView("editor")} onSwitchView={setView} onLogin={handleLogin} />;
+      case "dashboard":
+        return (
+          <DashboardPage
+            user={user}
+            onLogout={handleLogout}
+            onOpenProject={handleOpenProject}
+            onOpenPlayground={() => { setCurrentProject(null); setView("editor"); }}
+            onSwitchView={setView}
+          />
+        );
       case "docs":
         return <DocsPage />;
       case "pricing":
@@ -430,6 +656,9 @@ const handleGenerate = useCallback(async (prompt) => {
             }}
             onRun={handleRun}
             onExplain={handleExplain}
+            onSave={currentProject ? handleSave : null}
+            onBackToDashboard={currentProject ? () => setView("dashboard") : null}
+            currentProject={currentProject}
             loading={runLoading}
             error={runError}
             result={runResult}
@@ -464,7 +693,7 @@ const handleGenerate = useCallback(async (prompt) => {
                         }
                         if (e.key === "Escape") setShowDebugGenPrompt(false);
                       }}
-                      placeholder={`Describe what you want to build in ${language === "c" ? "C" : "C++"}…`}
+                      placeholder={`Describe what you want to build in ${language === "c" ? "C" : language === "python" ? "Python" : language === "java" ? "Java" : "C++"}…`}
                       disabled={generateLoading}
                       spellCheck="false"
                       autoFocus
@@ -509,16 +738,17 @@ const handleGenerate = useCallback(async (prompt) => {
               </div>
               <CodeEditor
                 code={code}
-                onChange={(newCode) => { setCode(newCode); setCurrentLine(null); setAnalysisResult(null); }}
+                onChange={(newCode) => { setCode(newCode); setCurrentLine(null); setAnalysisResult(null); setError(null); }}
                 currentLine={currentLine}
                 onEditRequest={() => { setCurrentLine(null); setAnalysisResult(null); }}
                 language={language}
                 compact
+                compileError={error}
               />
               <div className="stdin-panel">
                 <div className="stdin-header">
                   <h3>Program Input</h3>
-                  <span>Optional stdin for `cin`, `input()`, etc.</span>
+                  <span>Optional stdin for `cin`, `input()`, `Scanner`, etc.</span>
                 </div>
                 <textarea
                   className="stdin-textarea"
@@ -552,6 +782,16 @@ const handleGenerate = useCallback(async (prompt) => {
                   ))}
                 </div>
                 <div className="section-header-actions">
+                  {analysisResult && (
+                    <>
+                      <button className="icon-action-btn" onClick={handleExportTrace} title="Export trace as JSON">
+                        <span className="material-symbols-outlined">download</span>
+                      </button>
+                      <button className="icon-action-btn" onClick={handleCopyShareLink} title="Copy share link">
+                        <span className="material-symbols-outlined">share</span>
+                      </button>
+                    </>
+                  )}
                   <button className="explain-btn" onClick={handleExplain} disabled={aiLoading || loading}>
                     <span className="material-symbols-outlined">auto_awesome</span>
                     {aiLoading ? "Thinking…" : "AI Insights"}
@@ -589,7 +829,7 @@ const handleGenerate = useCallback(async (prompt) => {
 
   return (
     <div className="app">
-      {view !== "landing" && (
+      {view !== "landing" && view !== "dashboard" && (
         <Header
           view={view}
           onSwitchView={setView}
@@ -598,7 +838,7 @@ const handleGenerate = useCallback(async (prompt) => {
           onSignIn={() => setShowLoginModal(true)}
         />
       )}
-      {serverDown && (view === "editor" || view === "visualizer") && (
+      {serverDown && (view === "editor" || view === "visualizer" || view === "dashboard") && (
         <div className="server-down-banner">
           <div className="server-down-inner">
             <span className="server-down-icon material-symbols-outlined">wifi_off</span>
@@ -614,8 +854,24 @@ const handleGenerate = useCallback(async (prompt) => {
           </button>
         </div>
       )}
+      {sessionExpiredBanner && (
+        <div className="server-down-banner" style={{ background: "rgba(239,68,68,0.08)", borderBottom: "1px solid rgba(239,68,68,0.2)" }}>
+          <div className="server-down-inner">
+            <span className="server-down-icon material-symbols-outlined" style={{ color: "var(--accent-red)" }}>lock</span>
+            <div className="server-down-text">
+              <strong style={{ color: "var(--accent-red)" }}>Session expired.</strong>
+              <span> Please sign in again to continue.</span>
+            </div>
+          </div>
+          <button className="server-retry-btn" style={{ color: "var(--accent-red)", borderColor: "rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)" }}
+            onClick={() => { setSessionExpiredBanner(false); setShowLoginModal(true); }}>
+            <span className="material-symbols-outlined">login</span>
+            Sign in
+          </button>
+        </div>
+      )}
       {renderView()}
-      <LoginModal isOpen={showLoginModal} onLogin={(userData) => { handleLogin(userData); setShowLoginModal(false); }} onClose={() => setShowLoginModal(false)} />
+      <LoginModal isOpen={showLoginModal} onLogin={(userData, token) => { handleLogin(userData, token); setShowLoginModal(false); }} onClose={() => setShowLoginModal(false)} />
     </div>
   );
 }

@@ -274,6 +274,68 @@ const pythonSnippets = [
   { label: "len",       detail: "len(obj)",                  documentation: "Length of object",
     insertText: "len(${1:obj})" },
 ];
+
+const javaSnippets = [
+  // ── Boilerplate ──
+  { label: "main",       detail: "public class Main",          documentation: "Standard Java main class",
+    insertText: ["public class Main {", "    public static void main(String[] args) {", "        ${1}", "    }", "}"].join("\n") },
+  { label: "import",     detail: "import statement",           documentation: "Import a Java class",
+    insertText: "import ${1:java.util.ArrayList};" },
+  { label: "sout",       detail: "System.out.println(...)",    documentation: "Print to stdout",
+    insertText: 'System.out.println(${1:value});' },
+  { label: "serr",       detail: "System.err.println(...)",    documentation: "Print to stderr",
+    insertText: 'System.err.println(${1:value});' },
+  { label: "soutf",      detail: "System.out.printf(...)",     documentation: "Formatted print",
+    insertText: 'System.out.printf("${1:%s}%n", ${2:value});' },
+
+  // ── Control flow ──
+  { label: "for",        detail: "for loop",                   documentation: "Classic for loop",
+    insertText: ["for (int ${1:i} = 0; ${1:i} < ${2:n}; ${1:i}++) {", "    ${3}", "}"].join("\n") },
+  { label: "forr",       detail: "enhanced for",               documentation: "Enhanced for-each loop",
+    insertText: ["for (${1:String} ${2:item} : ${3:collection}) {", "    ${4}", "}"].join("\n") },
+  { label: "while",      detail: "while loop",                 documentation: "While loop",
+    insertText: ["while (${1:condition}) {", "    ${2}", "}"].join("\n") },
+  { label: "dowhile",    detail: "do-while loop",              documentation: "Do-while loop",
+    insertText: ["do {", "    ${1}", "} while (${2:condition});"].join("\n") },
+  { label: "if",         detail: "if statement",               documentation: "If statement",
+    insertText: ["if (${1:condition}) {", "    ${2}", "}"].join("\n") },
+  { label: "ife",        detail: "if-else statement",          documentation: "If-else statement",
+    insertText: ["if (${1:condition}) {", "    ${2}", "} else {", "    ${3}", "}"].join("\n") },
+  { label: "switch",     detail: "switch statement",           documentation: "Switch statement",
+    insertText: ["switch (${1:var}) {", "    case ${2:val}:", "        ${3}", "        break;", "    default:", "        break;", "}"].join("\n") },
+
+  // ── Classes & methods ──
+  { label: "class",      detail: "class definition",           documentation: "Define a Java class",
+    insertText: ["public class ${1:Name} {", "    public ${1:Name}() {", "        ${2}", "    }", "}"].join("\n") },
+  { label: "method",     detail: "public method",              documentation: "Define a public method",
+    insertText: ["public ${1:void} ${2:name}(${3:int x}) {", "    ${4}", "}"].join("\n") },
+  { label: "static",     detail: "static method",              documentation: "Define a static method",
+    insertText: ["public static ${1:void} ${2:name}(${3:int x}) {", "    ${4}", "}"].join("\n") },
+
+  // ── Collections ──
+  { label: "list",       detail: "ArrayList<T>",               documentation: "ArrayList declaration",
+    insertText: "ArrayList<${1:String}> ${2:list} = new ArrayList<>();" },
+  { label: "map",        detail: "HashMap<K,V>",               documentation: "HashMap declaration",
+    insertText: "HashMap<${1:String}, ${2:Integer}> ${3:map} = new HashMap<>();" },
+  { label: "set",        detail: "HashSet<T>",                 documentation: "HashSet declaration",
+    insertText: "HashSet<${1:String}> ${2:set} = new HashSet<>();" },
+
+  // ── I/O ──
+  { label: "scanner",    detail: "Scanner(System.in)",         documentation: "Read from stdin",
+    insertText: ["Scanner ${1:sc} = new Scanner(System.in);"].join("\n") },
+  { label: "readint",    detail: "scanner.nextInt()",          documentation: "Read integer from stdin",
+    insertText: "int ${1:n} = ${2:sc}.nextInt();" },
+  { label: "readline",   detail: "scanner.nextLine()",         documentation: "Read line from stdin",
+    insertText: 'String ${1:line} = ${2:sc}.nextLine();' },
+
+  // ── Exception handling ──
+  { label: "try",        detail: "try-catch block",            documentation: "Try-catch exception handling",
+    insertText: ["try {", "    ${1}", "} catch (${2:Exception} e) {", "    System.err.println(e.getMessage());", "}"].join("\n") },
+  { label: "tryf",       detail: "try-catch-finally",          documentation: "Try-catch-finally",
+    insertText: ["try {", "    ${1}", "} catch (${2:Exception} e) {", "    ${3}", "} finally {", "    ${4}", "}"].join("\n") },
+  { label: "throw",      detail: "throw new Exception",        documentation: "Throw an exception",
+    insertText: 'throw new ${1:IllegalArgumentException}("${2:message}");' },
+];
 /* eslint-enable no-template-curly-in-string */
 
 const editorOptions = {
@@ -308,10 +370,36 @@ const editorOptions = {
   wordWrap: "on",
 };
 
-export default function CodeEditor({ code, onChange, currentLine, onEditRequest, language = "cpp", compact = false }) {
+function parseErrorMarkers(errorText, lang) {
+  if (!errorText) return [];
+  const markers = [];
+  if (lang === 'python') {
+    const m = errorText.match(/line (\d+)/);
+    if (m) {
+      const lastLine = errorText.trim().split('\n').filter(l => l.trim()).pop() || errorText;
+      markers.push({ startLineNumber: +m[1], endLineNumber: +m[1], startColumn: 1, endColumn: 9999, message: lastLine, severity: 8 });
+    }
+  } else if (lang === 'java') {
+    const re = /\w+\.java:(\d+):\s*error:\s*(.*)/g;
+    let m;
+    while ((m = re.exec(errorText)) !== null) {
+      markers.push({ startLineNumber: +m[1], endLineNumber: +m[1], startColumn: 1, endColumn: 9999, message: m[2], severity: 8 });
+    }
+  } else {
+    const re = /(?:main\.[a-z]+):(\d+):(\d+):\s*(error|warning):\s*(.*)/g;
+    let m;
+    while ((m = re.exec(errorText)) !== null) {
+      markers.push({ startLineNumber: +m[1], endLineNumber: +m[1], startColumn: +m[2] || 1, endColumn: 9999, message: m[4], severity: m[3] === 'error' ? 8 : 4 });
+    }
+  }
+  return markers;
+}
+
+export default function CodeEditor({ code, onChange, currentLine, onEditRequest, language = "cpp", compact = false, compileError = null }) {
   const lineRefs = useRef({});
   const completionProviderRef = useRef(null);
   const monacoRef = useRef(null);
+  const editorRef = useRef(null);
   const { theme } = useTheme();
   const isDark = isDarkTheme(theme);
 
@@ -321,8 +409,16 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest,
     }
   }, [theme]);
 
+  useEffect(() => {
+    if (!monacoRef.current || !editorRef.current) return;
+    const model = editorRef.current.getModel();
+    if (!model) return;
+    monacoRef.current.editor.setModelMarkers(model, 'traceon', parseErrorMarkers(compileError, language));
+  }, [compileError, language]);
+
   const handleEditorMount = (editor, monaco) => {
     monacoRef.current = monaco;
+    editorRef.current = editor;
 
     monaco.editor.defineTheme("traceon-light", {
       base: "vs",
@@ -477,6 +573,7 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest,
         monaco.languages.registerCompletionItemProvider("cpp",    makeProvider(cppSnippets)),
         monaco.languages.registerCompletionItemProvider("c",      makeProvider(cSnippets)),
         monaco.languages.registerCompletionItemProvider("python", makeProvider(pythonSnippets)),
+        monaco.languages.registerCompletionItemProvider("java",   makeProvider(javaSnippets)),
       ];
     }
 
@@ -532,19 +629,19 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest,
 
   return (
     <div className="code-editor">
-      {!compact && <div className="editor-hint">{language === "python" ? "Python" : language === "c" ? "C" : "C++"} editor with syntax highlighting, indentation, and bracket matching</div>}
+      {!compact && <div className="editor-hint">{language === "python" ? "Python" : language === "c" ? "C" : language === "java" ? "Java" : "C++"} editor with syntax highlighting, indentation, and bracket matching</div>}
       <div className="editor-shell">
         {!compact && (
           <div className="editor-toolbar">
-            <span className="editor-language-pill">{language === "python" ? "Python" : language === "c" ? "C" : "C++"}</span>
+            <span className="editor-language-pill">{language === "python" ? "Python" : language === "c" ? "C" : language === "java" ? "Java" : "C++"}</span>
             <span className="editor-toolbar-tip">Write code, then run the existing analyzer and visualizer</span>
           </div>
         )}
         <Editor
           className="monaco-editor-pane"
           height="100%"
-          defaultLanguage={language === "python" ? "python" : language === "c" ? "c" : "cpp"}
-          language={language === "python" ? "python" : language === "c" ? "c" : "cpp"}
+          defaultLanguage={language === "python" ? "python" : language === "c" ? "c" : language === "java" ? "java" : "cpp"}
+          language={language === "python" ? "python" : language === "c" ? "c" : language === "java" ? "java" : "cpp"}
           value={code}
           onChange={(value) => onChange(value ?? "")}
           onMount={handleEditorMount}

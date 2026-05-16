@@ -8,8 +8,10 @@ import urllib.parse
 
 import httpx
 import jwt
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
+
+from traceon.server.mongo_store import mongo_app_store
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -107,17 +109,34 @@ async def google_callback(
 
         profile = profile_resp.json()
 
+    google_id = profile.get("sub", "")
+    email = profile.get("email", "")
+    name = profile.get("name", "")
+    avatar_url = profile.get("picture", "")
+
+    # Upsert into MongoDB (no-op if DB disabled — returns google_id as fallback id)
+    user_id = mongo_app_store.upsert_user(google_id, email, name, avatar_url)
+
     user = {
-        "id": profile.get("sub", ""),
-        "name": profile.get("name", ""),
-        "email": profile.get("email", ""),
-        "avatar": profile.get("picture", ""),
+        "id": user_id,
+        "google_id": google_id,
+        "name": name,
+        "email": email,
+        "avatar": avatar_url,
         "provider": "google",
+        "role": "member",
     }
 
     now = int(time.time())
     token = jwt.encode(
-        {"sub": user["id"], "user": user, "iat": now, "exp": now + 7 * 24 * 3600},
+        {
+            "sub": user_id,
+            "user_id": user_id,
+            "user": user,
+            "role": "member",
+            "iat": now,
+            "exp": now + 7 * 24 * 3600,
+        },
         _jwt_secret(),
         algorithm="HS256",
     )
@@ -140,6 +159,41 @@ def get_me(request: Request):
         raise HTTPException(status_code=401, detail="Token expired — please sign in again")
     except jwt.InvalidTokenError as exc:
         raise HTTPException(status_code=401, detail=f"Invalid token: {exc}")
+
+
+def require_member(request: Request) -> dict:
+    """FastAPI dependency — extracts and validates the Bearer JWT.
+    Raises 401 if missing/expired, 403 if the token belongs to a guest."""
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    raw = auth.removeprefix("Bearer ").strip()
+    try:
+        payload = jwt.decode(raw, _jwt_secret(), algorithms=["HS256"])
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired — please sign in again")
+    except jwt.InvalidTokenError as exc:
+        raise HTTPException(status_code=401, detail=f"Invalid token: {exc}")
+
+    role = payload.get("role", "member")
+    if role == "guest":
+        raise HTTPException(status_code=403, detail="This feature requires a signed-in account")
+
+    return payload
+
+
+def optional_user(request: Request) -> dict | None:
+    """FastAPI dependency — returns the JWT payload if a valid Bearer token is
+    present, or None if no/invalid token.  Does not raise."""
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        return None
+    raw = auth.removeprefix("Bearer ").strip()
+    try:
+        return jwt.decode(raw, _jwt_secret(), algorithms=["HS256"])
+    except jwt.InvalidTokenError:
+        return None
 
 
 def _popup_html(

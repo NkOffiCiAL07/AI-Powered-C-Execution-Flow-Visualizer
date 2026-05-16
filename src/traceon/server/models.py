@@ -141,6 +141,8 @@ class AnalyzeCodeRequest(BaseModel):
     code: str
     stdin: str = ""
     language: str = "cpp"
+    project_id: str | None = None
+    file_id: str | None = None
 
 
 class AnalyzeStepRequest(BaseModel):
@@ -198,3 +200,44 @@ class ExplainCodeResponse(BaseModel):
     time_complexity: str
     space_complexity: str
     key_points: list[str] = Field(default_factory=list)
+
+
+# ── Project / File DTOs (P4) ─────────────────────────────────────────────────
+
+class UserDTO(BaseModel):
+    id: str
+    google_id: str
+    email: str
+    name: str
+    avatar_url: str
+    role: str
+    created_at: datetime
+
+
+class ProjectDTO(BaseModel):
+    id: str
+    owner_id: str
+    name: str
+    language: str
+    created_at: datetime
+    last_accessed: datetime
+
+
+class FileDTO(BaseModel):
+    id: str
+    project_id: str
+    name: str
+    language: str
+    code: str
+    updated_at: datetime
+
+
+class ProjectCreateRequest(BaseModel):
+    name: str
+    language: str = "cpp"
+
+
+class FileUpsertRequest(BaseModel):
+    name: str
+    language: str
+    code: str
