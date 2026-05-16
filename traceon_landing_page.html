@@ -110,10 +110,6 @@
   }
   .pulse-ring { animation: pulseRing 2.2s cubic-bezier(.66,0,0,1) infinite; }
 
-  /* ── Marquee ── */
-  @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
-  .marquee-track { animation: marquee 28s linear infinite; white-space:nowrap; display:flex; }
-
   /* ── Scroll bounce ── */
   @keyframes scrollBounce { 0%,100%{transform:translateY(0);opacity:.6} 50%{transform:translateY(7px);opacity:1} }
   .scroll-bounce { animation: scrollBounce 1.7s ease-in-out infinite; }
@@ -259,29 +255,6 @@
     </div>
   </div>
 </section>
-
-<!-- ── MARQUEE BELT ── -->
-<div style="border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.012);padding:18px 0;overflow:hidden;">
-  <div class="marquee-track">
-    <span style="color:#3a3343;margin:0 24px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;">C/C++ Support</span><span style="color:#3a3343;">•</span>
-    <span style="color:#3a3343;margin:0 24px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;">AI-Powered Analysis</span><span style="color:#3a3343;">•</span>
-    <span style="color:#3a3343;margin:0 24px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;">Sub-200ms Traces</span><span style="color:#3a3343;">•</span>
-    <span style="color:#3a3343;margin:0 24px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;">Memory Leak Detection</span><span style="color:#3a3343;">•</span>
-    <span style="color:#3a3343;margin:0 24px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;">Thread Visualization</span><span style="color:#3a3343;">•</span>
-    <span style="color:#3a3343;margin:0 24px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;">Open Source Core</span><span style="color:#3a3343;">•</span>
-    <span style="color:#3a3343;margin:0 24px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;">Zero Config Setup</span><span style="color:#3a3343;">•</span>
-    <span style="color:#3a3343;margin:0 24px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;">CI/CD Integration</span><span style="color:#3a3343;">•</span>
-    <!-- duplicate for seamless loop -->
-    <span style="color:#3a3343;margin:0 24px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;">C/C++ Support</span><span style="color:#3a3343;">•</span>
-    <span style="color:#3a3343;margin:0 24px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;">AI-Powered Analysis</span><span style="color:#3a3343;">•</span>
-    <span style="color:#3a3343;margin:0 24px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;">Sub-200ms Traces</span><span style="color:#3a3343;">•</span>
-    <span style="color:#3a3343;margin:0 24px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;">Memory Leak Detection</span><span style="color:#3a3343;">•</span>
-    <span style="color:#3a3343;margin:0 24px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;">Thread Visualization</span><span style="color:#3a3343;">•</span>
-    <span style="color:#3a3343;margin:0 24px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;">Open Source Core</span><span style="color:#3a3343;">•</span>
-    <span style="color:#3a3343;margin:0 24px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;">Zero Config Setup</span><span style="color:#3a3343;">•</span>
-    <span style="color:#3a3343;margin:0 24px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;">CI/CD Integration</span><span style="color:#3a3343;">•</span>
-  </div>
-</div>
 
 <!-- ── FEATURES ── -->
 <section style="max-width:1280px;margin:0 auto;padding:128px 48px;">

@@ -156,16 +156,6 @@ body {
   color: #1A1310;
 }
 
-/* ── Landing Page – Marquee ── */
-@keyframes marquee {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
-}
-.animate-marquee {
-  animation: marquee 28s linear infinite;
-  will-change: transform;
-}
-
 /* ── Landing Page – Float Orbs ── */
 @keyframes floatOrb {
   0%, 100% { transform: translateY(0) scale(1); }
@@ -195,9 +185,9 @@ body {
 
 /* ── Landing Page – Pulsing dot ── */
 @keyframes pulseRing {
-  0%   { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.5); }
-  70%  { box-shadow: 0 0 0 8px rgba(168, 85, 247, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0); }
+  0%   { box-shadow: 0 0 0 0 rgba(201, 106, 72, 0.5); }
+  70%  { box-shadow: 0 0 0 8px rgba(201, 106, 72, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(201, 106, 72, 0); }
 }
 .animate-pulse-ring {
   animation: pulseRing 2s cubic-bezier(0.66, 0, 0, 1) infinite;
@@ -220,20 +210,20 @@ body {
 }
 .step-icon:hover {
   transform: scale(1.12);
-  box-shadow: 0 0 32px rgba(168, 85, 247, 0.25);
-  background: rgba(168, 85, 247, 0.18) !important;
-  border-color: rgba(168, 85, 247, 0.5) !important;
+  box-shadow: 0 0 32px rgba(201, 106, 72, 0.22);
+  background: rgba(201, 106, 72, 0.12) !important;
+  border-color: rgba(201, 106, 72, 0.4) !important;
 }
 
 /* ── Landing Page – Gradient text ── */
 .gradient-text {
-  background: linear-gradient(135deg, #ddb7ff 0%, #a855f7 50%, #6366f1 100%);
+  background: linear-gradient(135deg, #E8A87C 0%, #C96A48 55%, #8B3E24 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 .gradient-text-alt {
-  background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+  background: linear-gradient(135deg, #C96A48 0%, #8B3E24 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -252,7 +242,7 @@ body {
 
 /* ── Landing Page – Nav link ── */
 .nav-link {
-  color: #988d9f;
+  color: rgba(26,19,16,0.55);
   padding: 6px 16px;
   border-radius: 8px;
   font-size: 14px;
@@ -260,45 +250,45 @@ body {
   transition: color 0.2s ease, background 0.2s ease;
 }
 .nav-link:hover, .nav-link.active {
-  color: #ddb7ff;
-  background: rgba(221, 183, 255, 0.08);
+  color: #C96A48;
+  background: rgba(201,106,72,0.08);
 }
 
 /* ── Landing Page – CTA primary button ── */
 .cta-primary {
-  background: linear-gradient(135deg, #a855f7, #6366f1);
+  background: linear-gradient(135deg, #C96A48, #8B3E24);
   color: #fff;
-  box-shadow: 0 8px 32px rgba(168, 85, 247, 0.35);
+  box-shadow: 0 8px 32px rgba(201,106,72,0.32);
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 .cta-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 14px 44px rgba(168, 85, 247, 0.52);
+  box-shadow: 0 14px 44px rgba(201,106,72,0.48);
 }
 
 /* ── Landing Page – CTA secondary button ── */
 .cta-secondary {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #e5e1e4;
+  background: rgba(201,106,72,0.04);
+  border: 1px solid rgba(100,70,40,0.2);
+  color: rgba(26,19,16,0.8);
   transition: border-color 0.25s ease, background 0.25s ease, transform 0.25s ease;
 }
 .cta-secondary:hover {
-  border-color: rgba(168, 85, 247, 0.4);
-  background: rgba(168, 85, 247, 0.07);
+  border-color: rgba(201,106,72,0.4);
+  background: rgba(201,106,72,0.07);
   transform: translateY(-2px);
 }
 
 /* ── Landing Page – Ghost button ── */
 .ghost-btn {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #e5e1e4;
+  background: rgba(201,106,72,0.04);
+  border: 1px solid rgba(100,70,40,0.18);
+  color: rgba(26,19,16,0.8);
   transition: border-color 0.25s ease, background 0.25s ease, transform 0.25s ease;
 }
 .ghost-btn:hover {
-  border-color: rgba(168, 85, 247, 0.45);
-  background: rgba(168, 85, 247, 0.1);
+  border-color: rgba(201,106,72,0.4);
+  background: rgba(201,106,72,0.08);
   transform: translateY(-2px);
 }
 
@@ -313,11 +303,11 @@ body {
 
 /* ── Landing Page – Footer link ── */
 .footer-link {
-  color: #988d9f;
+  color: rgba(26,19,16,0.45);
   font-size: 14px;
   transition: color 0.2s ease;
 }
-.footer-link:hover { color: #ddb7ff; }
+.footer-link:hover { color: #C96A48; }
 
 /* ── Landing Page – Social icon ── */
 .social-icon {
@@ -327,12 +317,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #4d4354;
+  border: 1px solid rgba(100,70,40,0.14);
+  color: rgba(26,19,16,0.35);
   transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
 }
 .social-icon:hover {
-  border-color: rgba(168, 85, 247, 0.4);
-  color: #a855f7;
-  background: rgba(168, 85, 247, 0.1);
+  border-color: rgba(201,106,72,0.4);
+  color: #C96A48;
+  background: rgba(201,106,72,0.08);
 }
