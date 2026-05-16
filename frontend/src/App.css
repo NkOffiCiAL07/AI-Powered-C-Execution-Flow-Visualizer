@@ -170,29 +170,77 @@
   letter-spacing: 0.5px;
 }
 
-.example-dropdown {
-  background-color: var(--bg-primary);
+/* ── Custom examples dropdown (replaces native select) ── */
+.ex-dropdown { position: relative; }
+
+.ex-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-primary);
   border: 1px solid var(--border);
-  color: var(--text-primary);
   border-radius: var(--radius-sm);
-  padding: 6px 12px;
+  padding: 5px 10px;
   font-size: 12px;
   font-family: var(--font-sans);
   font-weight: 500;
+  color: var(--text-primary);
   cursor: pointer;
-  outline: none;
-  transition: all 0.2s var(--ease-out);
-  min-width: 160px;
+  min-width: 148px;
+  justify-content: space-between;
+  transition: border-color 0.18s, background 0.18s;
 }
-
-.example-dropdown:hover {
+.ex-dropdown-trigger:hover {
   border-color: var(--border-strong);
-  background-color: var(--bg-hover);
+  background: var(--bg-hover);
 }
 
-.example-dropdown:focus {
-  border-color: var(--accent-blue);
-  box-shadow: 0 0 0 2px var(--accent-blue-glow);
+.ex-chevron {
+  font-size: 16px !important;
+  color: var(--text-muted);
+  transition: transform 0.18s ease;
+  flex-shrink: 0;
+}
+
+.ex-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 100%;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  list-style: none;
+  padding: 4px;
+  margin: 0;
+  z-index: 300;
+  animation: exDropIn 0.14s var(--ease-out) forwards;
+}
+
+@keyframes exDropIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.ex-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: calc(var(--radius-md) - 2px);
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.13s, color 0.13s;
+}
+.ex-dropdown-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+.ex-dropdown-item.active { color: var(--primary); font-weight: 600; }
+
+.ex-check {
+  font-size: 14px !important;
+  color: var(--primary);
+  flex-shrink: 0;
 }
 
 /* ── Tabs ── */

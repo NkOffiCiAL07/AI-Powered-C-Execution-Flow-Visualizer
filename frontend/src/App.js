@@ -103,6 +103,48 @@ int main() {
 
 const DEFAULT_CODE = EXAMPLE_CODES.simple;
 
+const EXAMPLE_OPTIONS = [
+  { value: "simple",       label: "Simple Math"   },
+  { value: "counting",     label: "Counting Loop"  },
+  { value: "ifStatement",  label: "If Statement"   },
+  { value: "fibonacci",    label: "Fibonacci"      },
+  { value: "functionCall", label: "Function Call"  },
+];
+
+function ExamplesDropdown({ selected, onChange }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const current = EXAMPLE_OPTIONS.find(o => o.value === selected);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+
+  return (
+    <div className="ex-dropdown" ref={ref}>
+      <button className="ex-dropdown-trigger" onClick={() => setOpen(o => !o)}>
+        {current?.label}
+        <span className="material-symbols-outlined ex-chevron" style={{ transform: open ? "rotate(180deg)" : "none" }}>expand_more</span>
+      </button>
+      {open && (
+        <ul className="ex-dropdown-menu">
+          {EXAMPLE_OPTIONS.map(opt => (
+            <li key={opt.value}
+              className={`ex-dropdown-item ${opt.value === selected ? "active" : ""}`}
+              onClick={() => { onChange(opt.value); setOpen(false); }}>
+              {opt.value === selected && <span className="material-symbols-outlined ex-check">check</span>}
+              {opt.label}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function App() {
   const [user, setUser] = useState(null);
   const [code, setCode] = useState(DEFAULT_CODE);
@@ -453,17 +495,7 @@ function App() {
                 <h2>Your Code</h2>
                 <div className="examples-selector-container">
                   <span className="selector-label">Examples:</span>
-                  <select 
-                    className="example-dropdown"
-                    value={selectedExample}
-                    onChange={(e) => handleLoadExample(e.target.value)}
-                  >
-                    <option value="simple">Simple Math</option>
-                    <option value="counting">Counting Loop</option>
-                    <option value="ifStatement">If Statement</option>
-                    <option value="fibonacci">Fibonacci</option>
-                    <option value="functionCall">Function Call</option>
-                  </select>
+                  <ExamplesDropdown selected={selectedExample} onChange={handleLoadExample} />
                 </div>
               </div>
               <CodeEditor
