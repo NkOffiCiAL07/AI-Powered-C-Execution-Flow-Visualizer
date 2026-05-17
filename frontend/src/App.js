@@ -1082,16 +1082,6 @@ function App() {
                   ))}
                 </div>
                 <div className="section-header-actions">
-                  {analysisResult && (
-                    <>
-                      <button className="icon-action-btn" onClick={handleExportTrace} title="Export trace as JSON">
-                        <span className="material-symbols-outlined">download</span>
-                      </button>
-                      <button className="icon-action-btn" onClick={handleCopyProjectShareLink} title="Copy share link">
-                        <span className="material-symbols-outlined">share</span>
-                      </button>
-                    </>
-                  )}
                   <button className="explain-btn explain-btn--ai" onClick={handleExplain} disabled={aiLoading || loading}>
                     <span className="material-symbols-outlined">auto_awesome</span>
                     {aiLoading ? "Thinking…" : "AI Insights"}
