@@ -65,10 +65,16 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [heroReady, setHeroReady] = useState(false);
   const [githubStars, setGithubStars] = useState(null);
+  const [activeNodeIdx, setActiveNodeIdx] = useState(0);
 
   useEffect(() => {
     const t = setTimeout(() => setHeroReady(true), 80);
     return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => setActiveNodeIdx(n => (n + 1) % GRAPH_NODES.length), 1800);
+    return () => clearInterval(id);
   }, []);
 
   useEffect(() => {
@@ -422,7 +428,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 relative">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 relative" style={{ alignItems: 'start' }}>
             <div className="hidden md:block absolute"
               style={{ top: 40, left: '20%', right: '20%', height: 1, background: 'linear-gradient(90deg,transparent,rgba(201,106,72,0.35),rgba(139,62,36,0.3),transparent)' }} />
             {STEPS.map((step, i) => (
@@ -439,6 +445,108 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
                 </div>
                 <h3 className="text-xl font-bold mb-3" style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--text-primary)' }}>{step.title}</h3>
                 <p className="text-sm leading-relaxed max-w-xs" style={{ color: textMuted55 }}>{step.desc}</p>
+
+                {/* ── Step 3 only: mini animated flow graph ── */}
+                {i === 2 && (
+                  <div style={{
+                    marginTop: '20px', width: '100%', maxWidth: '260px',
+                    borderRadius: '14px', overflow: 'hidden',
+                    border: `1px solid ${T}0.18)`,
+                    background: dark ? 'rgba(20,18,16,0.7)' : 'rgba(242,237,231,0.8)',
+                    boxShadow: dark
+                      ? '0 8px 32px rgba(0,0,0,0.35)'
+                      : '0 8px 32px rgba(100,70,40,0.10)',
+                  }}>
+                    {/* Mini toolbar */}
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      padding: '8px 12px',
+                      borderBottom: `1px solid ${T}0.12)`,
+                      background: dark ? 'rgba(28,25,23,0.9)' : 'rgba(250,248,245,0.9)',
+                    }}>
+                      {['#ff5f57','#febc2e','#28c840'].map(c => (
+                        <div key={c} style={{ width: 8, height: 8, borderRadius: '50%', background: c }} />
+                      ))}
+                      <span style={{ marginLeft: 6, fontSize: '10px', fontWeight: 700, color: textMuted38, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                        Flow Graph
+                      </span>
+                    </div>
+
+                    {/* Graph canvas */}
+                    <div style={{ position: 'relative', height: '190px' }}>
+                      {/* SVG edges */}
+                      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+                        {GRAPH_EDGES.map((e, ei) => {
+                          const fromNode = GRAPH_NODES[Math.floor(ei / 1.5)] ?? null;
+                          const isActive = fromNode && GRAPH_NODES.indexOf(fromNode) === activeNodeIdx;
+                          return (
+                            <line key={ei}
+                              x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2}
+                              stroke={isActive ? 'rgba(201,106,72,0.7)' : (dark ? 'rgba(232,226,217,0.12)' : 'rgba(100,70,40,0.14)')}
+                              strokeWidth={isActive ? 1.5 : 1}
+                              strokeDasharray={isActive ? 'none' : '4 3'}
+                              style={{ transition: 'stroke 0.4s, stroke-width 0.4s' }}
+                            />
+                          );
+                        })}
+                      </svg>
+
+                      {/* Nodes */}
+                      {GRAPH_NODES.map((node, ni) => {
+                        const isActive = ni === activeNodeIdx;
+                        return (
+                          <div key={node.id} style={{
+                            position: 'absolute',
+                            left: `calc(${node.x}% - 28px)`,
+                            top: `calc(${node.y}% - 12px)`,
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                          }}>
+                            <div style={{
+                              width: 56, height: 24, borderRadius: 6,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              fontSize: '9px', fontWeight: 700, letterSpacing: '0.02em',
+                              background: isActive ? node.color : (dark ? 'rgba(40,35,30,0.9)' : 'rgba(255,252,248,0.95)'),
+                              color: isActive ? '#fff' : textMuted55,
+                              border: `1px solid ${isActive ? node.color : (dark ? 'rgba(232,226,217,0.12)' : 'rgba(100,70,40,0.15)')}`,
+                              boxShadow: isActive ? `0 0 12px rgba(${node.rgb},0.55)` : 'none',
+                              transition: 'all 0.4s ease',
+                              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                              maxWidth: 56,
+                              fontFamily: 'Space Grotesk, monospace',
+                            }}>
+                              {node.label.length > 9 ? node.label.slice(0, 8) + '…' : node.label}
+                            </div>
+                            {isActive && (
+                              <div style={{
+                                fontSize: '8px', fontWeight: 700, padding: '1px 5px',
+                                borderRadius: 4, background: `rgba(${node.rgb},0.15)`,
+                                color: node.color, letterSpacing: '0.06em',
+                              }}>
+                                {node.type}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Step counter footer */}
+                    <div style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                      padding: '7px 12px',
+                      borderTop: `1px solid ${T}0.10)`,
+                    }}>
+                      {GRAPH_NODES.map((_, ni) => (
+                        <div key={ni} style={{
+                          width: ni === activeNodeIdx ? 16 : 5, height: 5,
+                          borderRadius: 3,
+                          background: ni === activeNodeIdx ? '#C96A48' : (dark ? 'rgba(232,226,217,0.18)' : 'rgba(100,70,40,0.18)'),
+                          transition: 'all 0.35s ease',
+                        }} />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
