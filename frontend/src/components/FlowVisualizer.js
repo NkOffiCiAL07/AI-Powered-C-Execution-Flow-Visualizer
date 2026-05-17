@@ -2,6 +2,217 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import "../styles/FlowVisualizer.css";
 import VariableTracker from "./VariableTracker";
 import ExecutionTimeline from "./ExecutionTimeline";
+import { useTheme, isDarkTheme } from "../theme";
+
+// ── Call Graph Builder ────────────────────────────────────────────────────────
+const NODE_W = 110, NODE_H = 30, H_GAP = 24, V_GAP = 44, PAD = 16;
+
+function buildCallGraph(snapshots, upTo) {
+  const nodeDepth = {}; // funcName -> min depth (0 = main / outermost)
+  const edgeSet = new Set();
+  const edges = [];
+
+  for (let i = 0; i <= upTo; i++) {
+    const stack = (snapshots[i]?.call_stack || []).slice().reverse(); // outermost first
+    stack.forEach((frame, depth) => {
+      if (nodeDepth[frame.function] === undefined || depth < nodeDepth[frame.function]) {
+        nodeDepth[frame.function] = depth;
+      }
+      if (depth > 0) {
+        const caller = stack[depth - 1].function;
+        const key = `${caller}→${frame.function}`;
+        if (!edgeSet.has(key)) {
+          edgeSet.add(key);
+          edges.push({ from: caller, to: frame.function });
+        }
+      }
+    });
+  }
+
+  // Group by depth, preserve discovery order within each level
+  const byDepth = {};
+  const seen = [];
+  // Walk snapshots again in order to maintain consistent left-to-right ordering
+  for (let i = 0; i <= upTo; i++) {
+    const stack = (snapshots[i]?.call_stack || []).slice().reverse();
+    stack.forEach((frame) => {
+      if (!seen.includes(frame.function)) seen.push(frame.function);
+    });
+  }
+
+  seen.forEach((fn) => {
+    const d = nodeDepth[fn] ?? 0;
+    if (!byDepth[d]) byDepth[d] = [];
+    if (!byDepth[d].includes(fn)) byDepth[d].push(fn);
+  });
+
+  // Compute x/y positions
+  const positions = {};
+  Object.entries(byDepth).forEach(([depthStr, funcs]) => {
+    const depth = Number(depthStr);
+    const rowWidth = funcs.length * NODE_W + (funcs.length - 1) * H_GAP;
+    funcs.forEach((fn, col) => {
+      positions[fn] = {
+        x: PAD + col * (NODE_W + H_GAP),
+        y: PAD + depth * (NODE_H + V_GAP),
+        rowWidth,
+      };
+    });
+  });
+
+  const maxX = Math.max(...Object.values(positions).map(p => p.x + NODE_W), 200) + PAD;
+  const maxY = Math.max(...Object.values(positions).map(p => p.y + NODE_H), 80) + PAD;
+
+  return { nodes: seen, positions, edges, svgW: maxX, svgH: maxY };
+}
+
+function CallGraphPanel({ snapshots, currentStep, dark }) {
+  const graph = useMemo(
+    () => buildCallGraph(snapshots, currentStep),
+    [snapshots, currentStep]
+  );
+  const currentFn = snapshots[currentStep]?.location?.function;
+
+  if (graph.nodes.length === 0) return null;
+
+  const accent = '#C96A48';
+  const nodeBg = dark ? '#1E1A17' : '#FFF8F4';
+  const nodeBorder = dark ? 'rgba(232,226,217,0.14)' : 'rgba(201,106,72,0.22)';
+  const edgeColor = dark ? 'rgba(232,226,217,0.18)' : 'rgba(100,70,40,0.2)';
+  const textColor = dark ? '#E8E2D9' : '#1A1310';
+  const mutedText = dark ? 'rgba(232,226,217,0.45)' : 'rgba(26,19,16,0.45)';
+
+  return (
+    <div className="call-graph-wrap">
+      <div className="call-graph-label">
+        <span className="material-symbols-outlined" style={{ fontSize: 14, color: accent }}>account_tree</span>
+        Execution Call Graph
+        <span className="call-graph-hint">({graph.nodes.length} function{graph.nodes.length !== 1 ? 's' : ''} traced)</span>
+      </div>
+      <div className="call-graph-scroll">
+        <svg
+          width={graph.svgW}
+          height={graph.svgH}
+          style={{ display: 'block', minWidth: graph.svgW }}
+          aria-label="Execution call graph"
+        >
+          {/* Edges */}
+          {graph.edges.map(({ from, to }, ei) => {
+            const fp = graph.positions[from];
+            const tp = graph.positions[to];
+            if (!fp || !tp) return null;
+            const isSelf = from === to;
+            const x1 = fp.x + NODE_W / 2;
+            const y1 = fp.y + NODE_H;
+            const x2 = tp.x + NODE_W / 2;
+            const y2 = tp.y;
+            const isActive = from === currentFn || to === currentFn;
+
+            if (isSelf) {
+              // Self-edge (recursion): arc on the right side
+              const rx = fp.x + NODE_W + 10;
+              const ry = fp.y + NODE_H / 2;
+              return (
+                <g key={ei}>
+                  <path
+                    d={`M ${fp.x + NODE_W} ${ry - 8} Q ${rx + 18} ${ry} ${fp.x + NODE_W} ${ry + 8}`}
+                    fill="none"
+                    stroke={isActive ? accent : edgeColor}
+                    strokeWidth={isActive ? 1.8 : 1.2}
+                    strokeDasharray={isActive ? 'none' : '5 3'}
+                  />
+                  <polygon
+                    points={`${fp.x + NODE_W},${ry + 8} ${fp.x + NODE_W - 4},${ry + 14} ${fp.x + NODE_W + 4},${ry + 14}`}
+                    fill={isActive ? accent : edgeColor}
+                  />
+                </g>
+              );
+            }
+
+            const midY = (y1 + y2) / 2;
+            const cx1 = x1;
+            const cy1 = midY;
+            const cx2 = x2;
+            const cy2 = midY;
+
+            return (
+              <g key={ei}>
+                <path
+                  d={`M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`}
+                  fill="none"
+                  stroke={isActive ? accent : edgeColor}
+                  strokeWidth={isActive ? 1.8 : 1.2}
+                  strokeDasharray={isActive ? 'none' : '5 3'}
+                />
+                {/* Arrowhead */}
+                <polygon
+                  points={`${x2},${y2} ${x2 - 4},${y2 - 8} ${x2 + 4},${y2 - 8}`}
+                  fill={isActive ? accent : edgeColor}
+                />
+              </g>
+            );
+          })}
+
+          {/* Nodes */}
+          {graph.nodes.map((fn) => {
+            const pos = graph.positions[fn];
+            if (!pos) return null;
+            const isActive = fn === currentFn;
+            const label = fn.length > 14 ? fn.slice(0, 13) + '…' : fn;
+            return (
+              <g key={fn}>
+                <rect
+                  x={pos.x} y={pos.y}
+                  width={NODE_W} height={NODE_H}
+                  rx={7} ry={7}
+                  fill={isActive ? accent : nodeBg}
+                  stroke={isActive ? accent : nodeBorder}
+                  strokeWidth={isActive ? 2 : 1}
+                  filter={isActive ? 'url(#glow)' : 'none'}
+                />
+                <text
+                  x={pos.x + NODE_W / 2}
+                  y={pos.y + NODE_H / 2 + 4.5}
+                  textAnchor="middle"
+                  fontSize={11}
+                  fontWeight={isActive ? 700 : 500}
+                  fontFamily="Space Grotesk, monospace"
+                  fill={isActive ? '#fff' : textColor}
+                >
+                  {label}
+                </text>
+              </g>
+            );
+          })}
+
+          {/* Glow filter for active node */}
+          <defs>
+            <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+            </filter>
+          </defs>
+        </svg>
+      </div>
+      {graph.nodes.length > 0 && (
+        <div className="call-graph-legend">
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ width: 10, height: 10, borderRadius: 2, background: accent, display: 'inline-block' }} />
+            <span style={{ color: mutedText, fontSize: 10 }}>active</span>
+          </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <svg width="20" height="6"><line x1="0" y1="3" x2="14" y2="3" stroke={edgeColor} strokeWidth="1.2" strokeDasharray="4 2"/></svg>
+            <span style={{ color: mutedText, fontSize: 10 }}>call edge</span>
+          </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <svg width="20" height="6"><line x1="0" y1="3" x2="14" y2="3" stroke={accent} strokeWidth="1.8"/></svg>
+            <span style={{ color: mutedText, fontSize: 10 }}>active edge</span>
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function buildExplanation(snapshot, prevSnapshot, stepIndex) {
   const line = snapshot.location.line;
@@ -43,6 +254,9 @@ export default function FlowVisualizer({
   onBack,
   onExplainStep,
 }) {
+  const { theme } = useTheme();
+  const dark = isDarkTheme(theme);
+
   const [currentStep, setCurrentStep] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1000);
@@ -345,6 +559,8 @@ export default function FlowVisualizer({
           </button>
         )}
       </div>
+
+      <CallGraphPanel snapshots={visibleSnapshots} currentStep={safeCurrentStep} dark={dark} />
 
       <div className="var-section-label">
         Variable Boxes — active in <span className="active-function-pill">{snap.location.function}</span>

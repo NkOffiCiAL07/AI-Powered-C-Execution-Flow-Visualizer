@@ -12,6 +12,54 @@
   height: 100%;
 }
 
+/* ── Execution Call Graph ── */
+.call-graph-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.call-graph-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.call-graph-hint {
+  font-weight: 400;
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: none;
+  letter-spacing: 0;
+  margin-left: 2px;
+}
+
+.call-graph-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 4px 2px;
+  min-height: 80px;
+  max-height: 220px;
+}
+
+.call-graph-legend {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 5px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+
 /* ── Empty / Loading ── */
 .flow-visualizer-loading,
 .flow-visualizer-empty {
