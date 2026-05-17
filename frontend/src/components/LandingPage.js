@@ -51,6 +51,20 @@ const FOOTER_COLS = [
 
 const GITHUB_URL = 'https://github.com/NkOffiCiAL07/AI-Powered-C-Execution-Flow-Visualizer';
 
+// ─── Set this to your YouTube embed URL or Loom embed URL to activate the demo video.
+// YouTube format:  "https://www.youtube.com/embed/YOUR_VIDEO_ID"
+// Loom format:     "https://www.loom.com/embed/YOUR_LOOM_ID"
+const DEMO_VIDEO_URL = null;
+
+const DEMO_TIMESTAMPS = [
+  { time: '0:00', label: 'Editor overview' },
+  { time: '0:30', label: 'Compile & run' },
+  { time: '1:05', label: 'Step debugger' },
+  { time: '1:50', label: 'Memory Spectrometer' },
+  { time: '2:30', label: 'AI explain & optimize' },
+  { time: '3:10', label: 'Projects & dashboard' },
+];
+
 const T = 'rgba(201,106,72,'; // terracotta helper
 
 const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
@@ -210,6 +224,86 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
             <div className="w-5 h-8 rounded-full border flex items-start justify-center pt-1.5" style={{ borderColor: border25 }}>
               <div className="w-1 h-2.5 rounded-full animate-scroll-bounce" style={{ background: '#C96A48' }} />
             </div>
+          </div>
+        </section>
+
+        {/* ── DEMO VIDEO ── */}
+        <section className="max-w-5xl mx-auto px-6 py-20">
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-widest mb-4"
+              style={{ borderColor: `${T}0.28)`, color: '#C96A48', background: `${T}0.07)` }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>play_circle</span>
+              Walkthrough
+            </div>
+            <h2 className="font-extrabold mb-3"
+              style={{ fontSize: 'clamp(1.6rem,3.5vw,2.4rem)', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
+              See Traceon in Action
+            </h2>
+            <p style={{ color: textMuted55, fontSize: '0.95rem', maxWidth: 420, margin: '0 auto' }}>
+              A 4-minute walkthrough covering the editor, debugger, Memory Spectrometer, and AI features.
+            </p>
+          </div>
+
+          {/* Video frame */}
+          <div style={{
+            position: 'relative', borderRadius: '18px', overflow: 'hidden',
+            border: `1px solid ${T}0.18)`,
+            boxShadow: dark
+              ? '0 32px 80px rgba(0,0,0,0.45), 0 0 0 1px rgba(232,226,217,0.06)'
+              : '0 32px 80px rgba(100,70,40,0.12), 0 0 0 1px rgba(201,106,72,0.08)',
+            aspectRatio: '16/9', background: dark ? '#141210' : '#F2EDE7',
+          }}>
+            {DEMO_VIDEO_URL ? (
+              <iframe
+                src={DEMO_VIDEO_URL}
+                title="Traceon Walkthrough"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+              />
+            ) : (
+              /* Placeholder — shown until DEMO_VIDEO_URL is set */
+              <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+                {/* Decorative mock UI lines */}
+                <div style={{ position: 'absolute', inset: 0, opacity: 0.08, pointerEvents: 'none' }}>
+                  {[15, 30, 45, 60, 75].map(top => (
+                    <div key={top} style={{ position: 'absolute', left: '8%', right: '8%', top: `${top}%`, height: '1px', background: '#C96A48' }} />
+                  ))}
+                  {[20, 40, 60, 80].map(left => (
+                    <div key={left} style={{ position: 'absolute', top: '10%', bottom: '10%', left: `${left}%`, width: '1px', background: '#C96A48' }} />
+                  ))}
+                </div>
+                <div style={{
+                  width: 72, height: 72, borderRadius: '50%',
+                  background: `${T}0.15)`, border: `2px solid ${T}0.35)`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  position: 'relative', zIndex: 1,
+                }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: 36, color: '#C96A48', marginLeft: 4 }}>play_arrow</span>
+                </div>
+                <p style={{ fontSize: '0.85rem', fontWeight: 600, color: textMuted40, position: 'relative', zIndex: 1 }}>
+                  Demo video coming soon
+                </p>
+                <p style={{ fontSize: '0.75rem', color: textMuted30, position: 'relative', zIndex: 1, maxWidth: 260, textAlign: 'center', lineHeight: 1.6 }}>
+                  Record with <strong style={{ color: textMuted40 }}>Cmd+Shift+5</strong> or Loom, then set <code style={{ fontSize: '0.7rem', padding: '1px 5px', background: `${T}0.1)`, borderRadius: 4, color: '#C96A48' }}>DEMO_VIDEO_URL</code>
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Timestamp chips */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 20 }}>
+            {DEMO_TIMESTAMPS.map(ts => (
+              <span key={ts.time} style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '5px 12px', borderRadius: '999px',
+                border: `1px solid ${T}0.2)`, background: `${T}0.06)`,
+                fontSize: '0.78rem', color: textMuted55, fontWeight: 500,
+              }}>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', color: '#C96A48', fontWeight: 700, fontSize: '0.72rem' }}>{ts.time}</span>
+                {ts.label}
+              </span>
+            ))}
           </div>
         </section>
 
