@@ -895,7 +895,7 @@ function App() {
       case "docs":
         return <DocsPage />;
       case "pricing":
-        return <PricingPage onStart={() => setView("editor")} />;
+        return <PricingPage onStart={() => setView("editor")} onSignIn={() => setShowLoginModal(true)} />;
       case "community":
         return <CommunityPage onStart={() => setView("editor")} />;
       case "editor":
