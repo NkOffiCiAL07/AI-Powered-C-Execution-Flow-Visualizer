@@ -31,7 +31,9 @@ export default function CppEditorPage({
   onFileCreate,
   onFileDelete,
   onFileRename,
+  onSignIn,
 }) {
+  const isGuest = !user || user.role === "guest";
   const [prompt, setPrompt] = useState("");
   const [showPrompt, setShowPrompt] = useState(false);
   const [saveState, setSaveState] = useState("idle"); // "idle" | "saving" | "saved" | "error"
@@ -283,15 +285,16 @@ export default function CppEditorPage({
                 </button>
               )}
               <button
-                className="ai-gen-trigger"
-                onClick={openPrompt}
+                className={`ai-gen-trigger${isGuest ? " ai-gen-locked" : ""}`}
+                onClick={isGuest ? onSignIn : openPrompt}
                 disabled={generateLoading}
-                title="Generate code with AI"
+                title={isGuest ? "Sign in to generate code with AI" : "Generate code with AI"}
               >
                 <span className={`material-symbols-outlined${generateLoading ? " spin" : ""}`}>
                   {generateLoading ? "sync" : "auto_awesome"}
                 </span>
                 AI
+                {isGuest && <span className="material-symbols-outlined ai-gen-lock-icon">lock</span>}
               </button>
               <LangDropdown language={language} onChange={onLanguageChange} />
             </div>
@@ -352,23 +355,25 @@ export default function CppEditorPage({
 
             <button
               className="tab-action-btn"
-              onClick={onExplain}
-              disabled={aiLoading || loading}
-              title="AI Insights"
+              onClick={isGuest ? onSignIn : onExplain}
+              disabled={!isGuest && (aiLoading || loading)}
+              title={isGuest ? "Sign in to use AI Insights" : "Explain with AI"}
             >
               <span className={`material-symbols-outlined${aiLoading ? " spin" : ""}`}>
                 {aiLoading ? "sync" : "auto_awesome"}
               </span>
+              {isGuest && <span className="material-symbols-outlined tab-action-lock">lock</span>}
             </button>
 
             {performance && (
               <button
                 className="tab-action-btn"
-                onClick={onOptimize}
-                disabled={aiLoading || loading}
-                title="Optimize with AI"
+                onClick={isGuest ? onSignIn : onOptimize}
+                disabled={!isGuest && (aiLoading || loading)}
+                title={isGuest ? "Sign in to optimize with AI" : "Optimize with AI"}
               >
                 <span className="material-symbols-outlined">speed</span>
+                {isGuest && <span className="material-symbols-outlined tab-action-lock">lock</span>}
               </button>
             )}
 
@@ -427,6 +432,27 @@ export default function CppEditorPage({
                   <pre>{stderr || "(empty)"}</pre>
                 </div>
               </div>
+            </div>
+          </div>
+        ) : isGuest ? (
+          <div className="editor-ai-gate">
+            <div className="ai-gate-icon">
+              <span className="material-symbols-outlined">auto_awesome</span>
+            </div>
+            <h3 className="ai-gate-title">AI Features — Pro Only</h3>
+            <p className="ai-gate-desc">
+              Sign in to unlock AI code explanation, generation, optimization, and step-level insights.
+            </p>
+            <button className="ai-gate-btn" onClick={onSignIn}>
+              <span className="material-symbols-outlined">login</span>
+              Sign In to Unlock
+            </button>
+            <div className="ai-gate-perks">
+              {['AI explain & generate', 'AI optimize', 'Step-level insights'].map(p => (
+                <span key={p} className="ai-gate-perk">
+                  <span className="material-symbols-outlined">check_circle</span>{p}
+                </span>
+              ))}
             </div>
           </div>
         ) : (

@@ -951,6 +951,7 @@ function App() {
             onFileCreate={handleFileCreate}
             onFileDelete={handleFileDelete}
             onFileRename={handleFileRename}
+            onSignIn={() => setShowLoginModal(true)}
           />
         );
       case "visualizer":

@@ -14,9 +14,9 @@ const TIERS = [
     features: [
       { text: 'Code editor — C, C++, Python, Java', available: true },
       { text: 'Compile & run code', available: true },
-      { text: 'AI code generation', available: true },
-      { text: 'AI code explanation', available: true },
       { text: 'Basic output panel', available: true },
+      { text: 'AI code generation', available: false },
+      { text: 'AI code explanation', available: false },
       { text: 'Step-by-step debugger', available: false },
       { text: 'Projects & file management', available: false },
       { text: 'Memory Spectrometer', available: false },
