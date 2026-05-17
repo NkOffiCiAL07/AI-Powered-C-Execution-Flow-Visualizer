@@ -66,20 +66,62 @@ The user will describe a program or function they want. Write clean, correct, we
 Rules:
 {rules}"""
 
+    full_prompt = f"{system_prompt}\n\nRequest: {prompt}"
+
     response = client.models.generate_content(
         model="gemini-2.5-flash",
-        contents=f"{system_prompt}\n\nRequest: {prompt}",
+        contents=full_prompt,
         config=types.GenerateContentConfig(
-            max_output_tokens=2048,
+            max_output_tokens=8192,
             temperature=0.3,
         ),
     )
 
     code = response.text.strip()
-    # Strip markdown fences if the model adds them anyway
     code = re.sub(r"^```(?:cpp|c|c\+\+|java|python)?\n?", "", code)
     code = re.sub(r"\n?```$", "", code)
+    code = code.strip()
+
+    # If the model was still cut off, continue from where it stopped
+    finish_reason = None
+    try:
+        finish_reason = response.candidates[0].finish_reason
+    except Exception:
+        pass
+
+    if finish_reason and str(finish_reason) in ("MAX_TOKENS", "FinishReason.MAX_TOKENS", "2") or _is_code_truncated(code, lang_label):
+        logger.warning("Generated code appears truncated; requesting continuation.")
+        continuation_prompt = (
+            f"The following {lang_label} code was cut off. Continue it from exactly where it stopped "
+            f"and complete it. Return ONLY the continuation — do not repeat anything already written. "
+            f"No markdown fences.\n\nCut-off code:\n{code}"
+        )
+        cont_response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=continuation_prompt,
+            config=types.GenerateContentConfig(
+                max_output_tokens=4096,
+                temperature=0.1,
+            ),
+        )
+        continuation = cont_response.text.strip()
+        continuation = re.sub(r"^```(?:cpp|c|c\+\+|java|python)?\n?", "", continuation)
+        continuation = re.sub(r"\n?```$", "", continuation)
+        code = code + "\n" + continuation.strip()
+
     return GenerateCodeResponse(code=code.strip())
+
+
+def _is_code_truncated(code: str, lang_label: str) -> bool:
+    """Return True if the code looks syntactically incomplete (unbalanced braces)."""
+    if lang_label == "Python":
+        # Python: check for trailing colon without a body, or def/class with no body
+        stripped = code.rstrip()
+        return stripped.endswith(":") or stripped.endswith("\\")
+    # C, C++, Java: open braces must match close braces
+    opens = code.count("{")
+    closes = code.count("}")
+    return opens > closes
 
 
 def explain_code_ai(code: str, language: str = "cpp") -> ExplainCodeResponse:
