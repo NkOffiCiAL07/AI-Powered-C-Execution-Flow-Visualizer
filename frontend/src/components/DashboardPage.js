@@ -1,9 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import NewProjectModal from './NewProjectModal';
 import { fetchProjects, deleteProject, fetchFiles, fetchTrash, restoreProject, emptyTrash } from '../services/api';
+import { useTheme } from '../theme';
 import '../styles/DashboardPage.css';
 
 const LANG_LABELS = { cpp: 'C++', c: 'C', python: 'Python', java: 'Java' };
+
+const THEME_OPTIONS = [
+  { value: 'light',    label: 'Light',    swatch: '#C96A48' },
+  { value: 'dark',     label: 'Dark',     swatch: '#D97757' },
+  { value: 'ocean',    label: 'Ocean',    swatch: '#58A6FF' },
+  { value: 'forest',   label: 'Forest',   swatch: '#57C87A' },
+  { value: 'midnight', label: 'Midnight', swatch: '#A855F7' },
+];
 
 function relativeTime(iso) {
   if (!iso) return '';
@@ -19,6 +28,7 @@ function relativeTime(iso) {
 }
 
 const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwitchView }) => {
+  const { theme, setTheme } = useTheme();
   const [activeNav, setActiveNav]       = useState('projects');
   const [projects, setProjects]         = useState([]);
   const [trash, setTrash]               = useState([]);
@@ -173,6 +183,26 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
             Settings
           </button>
         </nav>
+
+        <div className="dash-divider" />
+
+        {/* ── Theme picker ── */}
+        <div className="dash-theme-section">
+          <div className="dash-theme-label">Theme</div>
+          <div className="dash-theme-swatches">
+            {THEME_OPTIONS.map(opt => (
+              <button
+                key={opt.value}
+                className={`dash-theme-swatch ${theme === opt.value ? 'active' : ''}`}
+                style={{ '--swatch': opt.swatch }}
+                onClick={() => setTheme(opt.value)}
+                title={opt.label}
+                aria-label={opt.label}
+              />
+            ))}
+          </div>
+          <div className="dash-theme-name">{THEME_OPTIONS.find(o => o.value === theme)?.label}</div>
+        </div>
 
         <div className="dash-divider" />
 
