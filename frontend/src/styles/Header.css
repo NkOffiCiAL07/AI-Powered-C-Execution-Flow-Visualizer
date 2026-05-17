@@ -155,6 +155,35 @@
 /* ── Shared dropdown system ── */
 .hdr-dropdown { position: relative; }
 
+.hdr-dashboard-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.hdr-dashboard-btn .material-symbols-outlined {
+  font-size: 15px;
+  color: var(--primary);
+}
+
+.hdr-dashboard-btn:hover {
+  background: var(--bg-elevated);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
 .hdr-pages-trigger {
   display: flex;
   align-items: center;
