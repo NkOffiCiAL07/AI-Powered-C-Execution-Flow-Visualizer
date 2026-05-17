@@ -1067,9 +1067,9 @@ function App() {
                   {[
                     { id: "flow",   label: "Execution Flow",      icon: "account_tree" },
                     { id: "memory", label: "Memory Spectrometer", icon: "memory_alt" },
-                    { id: "ai",     label: "AI Insights",         icon: "auto_awesome" },
+                    { id: "ai",     label: "AI Insights",         icon: "auto_awesome", hidden: !aiExplanation && !aiLoading },
                     { id: "output", label: "Output",              icon: "terminal" },
-                  ].map(({ id, label, icon }) => (
+                  ].filter(t => !t.hidden).map(({ id, label, icon }) => (
                     <button
                       key={id}
                       className={`tab ${activeTab === id ? "active" : ""}`}
