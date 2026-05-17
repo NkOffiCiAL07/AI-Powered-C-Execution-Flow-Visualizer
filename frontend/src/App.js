@@ -585,18 +585,6 @@ function App() {
     URL.revokeObjectURL(url);
   }, [analysisResult, language, code]);
 
-  const handleCopyShareLink = useCallback(() => {
-    try {
-      const hash = new URLSearchParams();
-      hash.set("lang", language);
-      if (code.length <= 2000) {
-        hash.set("code", btoa(unescape(encodeURIComponent(code))));
-      }
-      window.history.replaceState(null, "", `#${hash.toString()}`);
-      navigator.clipboard.writeText(window.location.href);
-    } catch {}
-  }, [language, code]);
-
   const handleGenerate = useCallback(async (prompt) => {
     if (!prompt.trim()) return;
     if (generateAbortRef.current) generateAbortRef.current.abort();

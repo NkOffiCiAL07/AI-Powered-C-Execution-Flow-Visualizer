@@ -8,12 +8,6 @@ const STEPS = [
   { icon: 'hub',        n: '03', title: 'Explore the Flow Graph',  desc: 'Navigate execution interactively. Click any node for deep-dive AI explanations.' },
 ];
 
-const STATS = [
-  { value: '12.4k',   label: 'GitHub Stars' },
-  { value: '< 200ms', label: 'Avg. Analysis' },
-  { value: '50k+',    label: 'Traces Run' },
-  { value: '99.9%',   label: 'Uptime SLA' },
-];
 
 const CODE_LINES = [
   { n: 1,  parts: [{ t: '#include', c: '#7C3AED' }, { t: ' <iostream>', c: '#2D6A4F' }] },
@@ -167,62 +161,75 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
       <main>
 
         {/* ── HERO ── */}
-        <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 pt-16 overflow-hidden">
+        <section className="relative min-h-screen flex flex-col overflow-hidden">
+          {/* Background decorations */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
             <div className="cyber-grid absolute inset-0 opacity-20" />
             <div className="absolute rounded-full blur-[140px] animate-float-orb"
               style={{ width: 560, height: 560, top: '10%', left: '20%', background: `radial-gradient(circle,${T}0.14) 0%,transparent 70%)` }} />
             <div className="absolute rounded-full blur-[120px] animate-float-orb"
-              style={{ width: 440, height: 440, bottom: '15%', right: '15%', background: `radial-gradient(circle,rgba(139,62,36,0.10) 0%,transparent 70%)`, animationDelay: '2s' }} />
+              style={{ width: 440, height: 440, bottom: '20%', right: '15%', background: `radial-gradient(circle,rgba(139,62,36,0.10) 0%,transparent 70%)`, animationDelay: '2s' }} />
           </div>
 
-          <div className="relative z-10 max-w-4xl mx-auto"
+          {/* Main CTA content — fills available space, centered vertically */}
+          <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6 pt-20 pb-10"
             style={{ transition: 'opacity 0.9s cubic-bezier(0.16,1,0.3,1), transform 0.9s cubic-bezier(0.16,1,0.3,1)', opacity: heroReady ? 1 : 0, transform: heroReady ? 'translateY(0)' : 'translateY(28px)' }}>
 
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border mb-8 cursor-default select-none"
-              style={{ background: `${T}0.08)`, borderColor: `${T}0.28)` }}>
-              <span className="w-2 h-2 rounded-full animate-pulse-ring" style={{ background: '#C96A48', flexShrink: 0 }} />
-              <span className="text-xs font-bold tracking-widest uppercase" style={{ color: '#C96A48' }}>Alpha Release — Early Access</span>
+            <div className="max-w-4xl mx-auto">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border mb-8 cursor-default select-none"
+                style={{ background: `${T}0.08)`, borderColor: `${T}0.28)` }}>
+                <span className="w-2 h-2 rounded-full animate-pulse-ring" style={{ background: '#C96A48', flexShrink: 0 }} />
+                <span className="text-xs font-bold tracking-widest uppercase" style={{ color: '#C96A48' }}>Alpha Release — Early Access</span>
+              </div>
+
+              <h1 className="font-extrabold mb-6 leading-tight"
+                style={{ fontSize: 'clamp(2.6rem,7vw,5rem)', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>
+                See Your Code's{' '}
+                <span className="gradient-text">Narrative</span>
+              </h1>
+
+              <p className="mb-10 max-w-2xl mx-auto leading-relaxed"
+                style={{ fontSize: 'clamp(1rem,2.2vw,1.2rem)', color: textMuted55 }}>
+                Transform complex C, C++, and Python execution paths into intuitive, high-fidelity visual graphs.
+                Debug with precision using{' '}
+                <span style={{ color: '#C96A48', fontWeight: 600 }}>AI-driven flow analysis</span>.
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <button onClick={launch} className="cta-primary flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm w-full sm:w-auto justify-center">
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>play_arrow</span>
+                  Start Visualizing — Free
+                </button>
+                <button onClick={handleViewDemo} className="cta-secondary flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm w-full sm:w-auto justify-center">
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>visibility</span>
+                  View Demo
+                </button>
+              </div>
             </div>
+          </div>
 
-            <h1 className="font-extrabold mb-6 leading-tight"
-              style={{ fontSize: 'clamp(2.6rem,7vw,5rem)', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>
-              See Your Code's{' '}
-              <span className="gradient-text">Narrative</span>
-            </h1>
-
-            <p className="mb-10 max-w-2xl mx-auto leading-relaxed"
-              style={{ fontSize: 'clamp(1rem,2.2vw,1.2rem)', color: textMuted55 }}>
-              Transform complex C, C++, and Python execution paths into intuitive, high-fidelity visual graphs.
-              Debug with precision using{' '}
-              <span style={{ color: '#C96A48', fontWeight: 600 }}>AI-driven flow analysis</span>.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-              <button onClick={launch} className="cta-primary flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm w-full sm:w-auto justify-center">
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>play_arrow</span>
-                Start Visualizing — Free
-              </button>
-              <button onClick={handleViewDemo} className="cta-secondary flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm w-full sm:w-auto justify-center">
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>visibility</span>
-                View Demo
-              </button>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
-              {STATS.map((s, i) => (
+          {/* Stats strip — pinned to the bottom of the hero, separated by a border */}
+          <div className="relative z-10 w-full" style={{ borderTop: `1px solid ${border10}` }}>
+            <div className="max-w-3xl mx-auto px-6 py-6 flex flex-wrap items-center justify-center gap-x-12 gap-y-4">
+              {[
+                { value: githubStars ?? '…', label: 'GitHub Stars' },
+                { value: '< 200ms', label: 'Avg. Analysis' },
+                { value: '50k+', label: 'Traces Run' },
+                { value: '99.9%', label: 'Uptime SLA' },
+              ].map((s, i) => (
                 <div key={i} className="flex flex-col items-center">
-                  <span className="text-2xl font-extrabold" style={{ color: '#C96A48', fontFamily: 'Space Grotesk, sans-serif' }}>{s.value}</span>
+                  <span className="text-xl font-extrabold" style={{ color: '#C96A48', fontFamily: 'Space Grotesk, sans-serif', lineHeight: 1.1 }}>{s.value}</span>
                   <span className="text-xs font-bold uppercase tracking-widest mt-1" style={{ color: textMuted38 }}>{s.label}</span>
                 </div>
               ))}
             </div>
-          </div>
 
-          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-40 select-none">
-            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: textMuted50 }}>Scroll</span>
-            <div className="w-5 h-8 rounded-full border flex items-start justify-center pt-1.5" style={{ borderColor: border25 }}>
-              <div className="w-1 h-2.5 rounded-full animate-scroll-bounce" style={{ background: '#C96A48' }} />
+            {/* Scroll indicator — sits below stats, inside the strip */}
+            <div className="flex flex-col items-center pb-5 gap-1.5 opacity-35 select-none">
+              <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: textMuted50 }}>Scroll</span>
+              <div className="w-5 h-7 rounded-full border flex items-start justify-center pt-1.5" style={{ borderColor: border25 }}>
+                <div className="w-1 h-2 rounded-full animate-scroll-bounce" style={{ background: '#C96A48' }} />
+              </div>
             </div>
           </div>
         </section>

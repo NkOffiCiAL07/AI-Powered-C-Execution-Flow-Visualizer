@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import Editor from "@monaco-editor/react";
 import "../styles/CodeEditor.css";
-import { useTheme, isDarkTheme } from "../theme";
+import { useTheme } from "../theme";
 
 const monacoThemeName = (t) => {
   switch (t) {
@@ -403,7 +403,6 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest,
   const decorationIdsRef = useRef([]);
   const containerRef = useRef(null);
   const { theme } = useTheme();
-  const isDark = isDarkTheme(theme);
 
   // Force Monaco to recalculate layout whenever the container is resized
   // (covers: initial render where flex heights aren't resolved, sidebar appearing/disappearing)
