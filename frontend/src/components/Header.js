@@ -61,14 +61,6 @@ export default function Header({ view, onSwitchView, user, onLogout, onSignIn, l
           <span className="brand-text">Traceon</span>
         </div>
 
-        {/* Dashboard back button — always shown in editor/debugger for members */}
-        {inApp && user && user.role !== "guest" && (
-          <button className="hdr-dashboard-btn" onClick={() => onSwitchView("dashboard")} title="Back to dashboard">
-            <span className="material-symbols-outlined">dashboard</span>
-            Dashboard
-          </button>
-        )}
-
         {currentProject && (
           <div className="header-breadcrumb">
             <span className="breadcrumb-sep">/</span>
@@ -92,13 +84,27 @@ export default function Header({ view, onSwitchView, user, onLogout, onSignIn, l
               </button>
             )}
           >
-            {(close) => NAV_PAGES.map(p => (
-              <li key={p.value} className="hdr-dropdown-item" role="menuitem"
-                onClick={() => { onSwitchView(p.value); close(); }}>
-                <span className="material-symbols-outlined">{p.icon}</span>
-                {p.label}
-              </li>
-            ))}
+            {(close) => (
+              <>
+                {user && user.role !== "guest" && (
+                  <>
+                    <li className="hdr-dropdown-item" role="menuitem"
+                      onClick={() => { onSwitchView("dashboard"); close(); }}>
+                      <span className="material-symbols-outlined">dashboard</span>
+                      Dashboard
+                    </li>
+                    <li className="hdr-dropdown-divider" role="separator" />
+                  </>
+                )}
+                {NAV_PAGES.map(p => (
+                  <li key={p.value} className="hdr-dropdown-item" role="menuitem"
+                    onClick={() => { onSwitchView(p.value); close(); }}>
+                    <span className="material-symbols-outlined">{p.icon}</span>
+                    {p.label}
+                  </li>
+                ))}
+              </>
+            )}
           </Dropdown>
         )}
       </div>

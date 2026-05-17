@@ -155,34 +155,6 @@
 /* ── Shared dropdown system ── */
 .hdr-dropdown { position: relative; }
 
-.hdr-dashboard-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--bg-card);
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.hdr-dashboard-btn .material-symbols-outlined {
-  font-size: 15px;
-  color: var(--primary);
-}
-
-.hdr-dashboard-btn:hover {
-  background: var(--bg-elevated);
-  border-color: var(--border-strong);
-  color: var(--text-primary);
-}
 
 .hdr-pages-trigger {
   display: flex;
@@ -264,6 +236,7 @@
 .hdr-dropdown-item:hover { background: var(--bg-hover); color: var(--text-primary); }
 .hdr-dropdown-item.active { color: var(--primary); background: var(--primary-glow); }
 .hdr-check { margin-left: auto; font-size: 14px !important; color: var(--primary) !important; }
+.hdr-dropdown-divider { height: 1px; background: var(--border); margin: 4px 8px; list-style: none; }
 
 /* ── Action Buttons ── */
 .analyze-btn {
