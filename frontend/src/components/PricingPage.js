@@ -103,7 +103,7 @@ export default function PricingPage({ onStart, onSignIn }) {
         </div>
 
         {/* Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))', gap: '20px', alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))', gap: '20px', alignItems: 'stretch' }}>
           {TIERS.map((tier) => (
             <div key={tier.id} style={{
               background: 'var(--bg-card)',
