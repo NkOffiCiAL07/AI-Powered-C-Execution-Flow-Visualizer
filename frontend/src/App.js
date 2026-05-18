@@ -500,15 +500,6 @@ function App() {
     }
   }, [currentProject, language, code]);
 
-  // Phase 9.1: Copy permanent share link for a project/file
-  const handleCopyProjectShareLink = useCallback(() => {
-    if (!currentProject?.project?.id || !currentProject?.activeFileId) return;
-    const url = new URL(window.location.origin);
-    url.searchParams.set("v", "view");
-    url.searchParams.set("pid", currentProject.project.id);
-    url.searchParams.set("fid", currentProject.activeFileId);
-    navigator.clipboard.writeText(url.toString());
-  }, [currentProject]);
 
   // Phase 7.2: Auto-save effect
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -567,23 +558,6 @@ function App() {
     }
   }, [code, language]);
 
-  const handleExportTrace = useCallback(() => {
-    if (!analysisResult) return;
-    const data = {
-      exported_at: new Date().toISOString(),
-      language,
-      code,
-      total_steps: analysisResult.total_recorded_steps,
-      snapshots: analysisResult.snapshots,
-    };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `traceon-${language}-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }, [analysisResult, language, code]);
 
   const handleGenerate = useCallback(async (prompt) => {
     if (!prompt.trim()) return;
