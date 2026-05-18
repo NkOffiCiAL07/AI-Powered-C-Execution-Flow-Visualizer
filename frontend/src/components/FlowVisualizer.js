@@ -232,9 +232,16 @@ function buildExplanation(snapshot, prevSnapshot, stepIndex) {
     return `The computer is reading line ${line}. No variable changed this step — it is just moving to the next instruction.`;
   }
 
+  const truncate = (val) => {
+    if (typeof val !== 'string') return String(val);
+    // Strip raw memory addresses like "0x7fff1234: " from display
+    const cleaned = val.replace(/0x[0-9a-fA-F]+:\s*/g, '');
+    return cleaned.length > 120 ? cleaned.slice(0, 120) + '…' : cleaned;
+  };
+
   const sentences = changed.map((name) => {
-    const newVal = vars[name];
-    const oldVal = prevVars[name];
+    const newVal = truncate(vars[name]);
+    const oldVal = prevVars[name] !== undefined ? truncate(prevVars[name]) : undefined;
     if (oldVal === undefined) {
       return `A brand new box called "${name}" was created and filled with the value ${newVal}.`;
     }

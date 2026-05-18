@@ -8,6 +8,24 @@ import pexpect
 
 
 ANSI_ESCAPE_RE = re.compile(r"\x1B\[[0-?]*[ -/]*[@-~]")
+_ADDR_PREFIX_RE = re.compile(r"^0x[0-9a-fA-F]+:\s*")
+_MAX_COLLECTION_ELEMENTS = 8
+
+
+def _format_collection(lines: list[str]) -> str:
+    """Format a multi-line LLDB collection value, stripping addresses and truncating."""
+    if not lines:
+        return "{}"
+    header = lines[0]  # e.g. "size=10001 {"
+    elements = [l for l in lines[1:] if l not in ("}", "{", "")]
+    total = len(elements)
+    shown = elements[:_MAX_COLLECTION_ELEMENTS]
+    parts = [header]
+    parts.extend(f"  {e}" for e in shown)
+    if total > _MAX_COLLECTION_ELEMENTS:
+        parts.append(f"  ... ({total - _MAX_COLLECTION_ELEMENTS} more elements)")
+    parts.append("}")
+    return "\n".join(parts)
 
 
 class LLDBController:
@@ -143,11 +161,13 @@ class LLDBController:
                         })
                     elif line_stripped == "}" and current_var:
                         current_val.append("}")
-                        variables[current_var] = "\n".join(current_val)
+                        variables[current_var] = _format_collection(current_val)
                         current_var = None
                         current_val = []
                     elif current_var:
-                        current_val.append(line_stripped)
+                        # Strip leading memory address (0x....: ) from element lines
+                        clean = re.sub(r"^0x[0-9a-fA-F]+:\s*", "", line_stripped)
+                        current_val.append(clean)
 
             parse_lldb_lines(output_locals, is_global=False)
             parse_lldb_lines(output_globals, is_global=True)
