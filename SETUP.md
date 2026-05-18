@@ -1,470 +1,274 @@
-# 🛠️ Setup & Installation Guide
+# Traceon — Local Setup Guide
 
-Complete step-by-step guide to set up and run Traceon (AI-Powered C++ Code Flow Visualizer) on your machine.
-
----
-
-## Table of Contents
-1. [Prerequisites](#prerequisites)
-2. [System Requirements](#system-requirements)
-3. [Installation Steps](#installation-steps)
-4. [Running the Project](#running-the-project)
-5. [Verification](#verification)
-6. [Troubleshooting](#troubleshooting)
+Complete step-by-step guide to run Traceon on your machine.
 
 ---
 
 ## Prerequisites
 
-Make sure you have the following installed on your system:
-
-### Required
-- **Python 3.8+**
-- **Node.js 14+** and **npm**
-- **C++ Compiler** (clang++ or g++)
-- **LLDB debugger**
-
-### Recommended
-- **Git** (for cloning the repository)
-- **macOS** or **Linux** (tested environments)
-
----
-
-## System Requirements
+| Tool | Minimum version | Required for |
+|---|---|---|
+| Python | 3.11+ | Backend |
+| Node.js | 18+ | Frontend |
+| npm | 9+ | Frontend |
+| clang / gcc | any | C/C++ compilation |
+| lldb | any | C/C++ step debugging |
+| Java JDK | 17+ | Java execution |
 
 ### macOS
-All tools come pre-installed:
+
 ```bash
-# Verify installations
-python3 --version
-node --version
-npm --version
+# Xcode tools include clang, gcc, and lldb
+xcode-select --install
+
+# Java
+brew install openjdk@17
+
+# Verify
+python3 --version   # 3.11+
+node --version      # 18+
 clang++ --version
 lldb --version
+java --version
 ```
 
-### Linux (Ubuntu/Debian)
+### Ubuntu / Debian
+
 ```bash
-# Update package manager
 sudo apt update
-
-# Install Python
 sudo apt install python3 python3-pip python3-venv
+sudo apt install build-essential clang lldb
+sudo apt install default-jdk
 
-# Install Node.js
+# Node.js 18+
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 sudo apt install nodejs
-
-# Install build tools
-sudo apt install build-essential lldb clang llvm
 ```
 
-### Linux (Fedora/RHEL)
+### Fedora / RHEL
+
 ```bash
-# Install Python
 sudo dnf install python3 python3-pip
-
-# Install Node.js
+sudo dnf install gcc-c++ clang lldb
+sudo dnf install java-17-openjdk
 sudo dnf install nodejs
-
-# Install build tools
-sudo dnf install gcc g++ clang lldb llvm-devel
 ```
 
-### Windows (WSL2 Recommended)
+### Windows (WSL2)
+
 ```bash
 # In WSL2 Ubuntu terminal
 sudo apt update
-sudo apt install python3 python3-pip python3-venv nodejs npm build-essential lldb clang
+sudo apt install python3 python3-pip python3-venv nodejs npm
+sudo apt install build-essential clang lldb default-jdk
 ```
 
 ---
 
-## Installation Steps
+## Installation
 
-### Step 1: Clone the Repository
+### 1. Clone
 
 ```bash
 git clone https://github.com/NkOffiCiAL07/AI-Powered-C-Execution-Flow-Visualizer.git
 cd AI-Powered-C-Execution-Flow-Visualizer
 ```
 
-### Step 2: Set Up Backend Environment
-
-#### Option A: Using Virtual Environment (Recommended)
+### 2. Backend — Python environment
 
 ```bash
-# Create virtual environment
 python3 -m venv venv
-
-# Activate it
-# On macOS/Linux:
-source venv/bin/activate
-
-# On Windows:
-venv\Scripts\activate
-```
-
-#### Option B: Using Conda
-
-```bash
-conda create -n traceon python=3.9
-conda activate traceon
-```
-
-### Step 3: Install Backend Dependencies
-
-```bash
-# Make sure you're in the virtual environment
+source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install --upgrade pip
-
-# Install requirements
 pip install -r requirements.txt
 ```
 
-**Expected packages:**
-- fastapi
-- uvicorn
-- pydantic
-- python-multipart
-- python-dotenv
-- cors
-- pymongo (optional, for MongoDB session history persistence)
+### 3. Backend — environment variables
 
-### Step 4: Set Up Frontend
+Create a `.env` file in the project root:
 
-Navigate to frontend directory:
+```env
+# Required — get free key at aistudio.google.com
+GEMINI_API_KEY=your_gemini_api_key
+
+# Required — any long random string
+JWT_SECRET=change_this_to_a_long_random_secret
+
+# Google OAuth — needed for Sign In with Google
+GOOGLE_CLIENT_ID=your_client_id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-your_secret
+
+# OAuth callback (change to your domain in production)
+OAUTH_REDIRECT_URI=http://localhost:8000/auth/google/callback
+FRONTEND_ORIGIN=http://localhost:3000
+
+# MongoDB — optional, omit to use in-memory session storage
+MONGO_CONNECTION_STRING=mongodb+srv://user:pass@cluster.mongodb.net/
+MONGO_DB_NAME=traceon
+MONGO_COLLECTION_NAME=execution_sessions
+```
+
+### 4. Frontend
 
 ```bash
 cd frontend
-
-# Install Node dependencies
 npm install
-
-# Verify React installation
-npm list react react-dom
-```
-
-<details>
-<summary><strong>If npm install fails:</strong></summary>
-
-```bash
-# Clear npm cache
-npm cache clean --force
-
-# Remove package-lock.json and node_modules
-rm -rf node_modules package-lock.json
-
-# Reinstall
-npm install
-```
-
-</details>
-
-### Step 5: Verify Installation
-
-#### Backend Check
-```bash
-# Return to project root
 cd ..
-
-# Activate virtual environment
-source venv/bin/activate  # macOS/Linux
-
-# Check Python packages
-pip list | grep fastapi
-
-# Test import
-python3 -c "import fastapi; print('FastAPI OK')"
-```
-
-#### Frontend Check
-```bash
-cd frontend
-
-# Check Node version
-node --version
-
-# Check React
-npm list react
-```
-
-#### Compiler Check
-```bash
-# Check C++ compiler
-clang++ --version
-# or
-g++ --version
-
-# Check LLDB
-lldb --version
 ```
 
 ---
 
-## Running the Project
+## Running locally
 
-### Option 1: Two-Terminal Setup (Recommended for Development)
+Open two terminals from the project root.
 
-**Terminal 1 - Backend:**
+**Terminal 1 — backend**
+
 ```bash
-# From project root
-source venv/bin/activate  # Activate virtual environment
-
-# Start backend server
+source venv/bin/activate
 python run_server.py
 ```
 
-**Expected output:**
+Expected output:
 ```
-INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     Started server process [PID]
+INFO:     Started server process
+INFO:     Uvicorn running on http://127.0.0.1:8000
 ```
 
-**Terminal 2 - Frontend:**
+**Terminal 2 — frontend**
+
 ```bash
-# From project root
 cd frontend
-
-# Start React dev server
 npm start
 ```
 
-**Expected output:**
+Expected output:
 ```
-webpack compiled successfully
-
 Compiled successfully!
-
 You can now view the app in your browser at:
   http://localhost:3000
 ```
 
-### Option 2: Manual Server Start
-
-If `run_server.py` doesn't work, start manually:
-
-```bash
-# From project root
-source venv/bin/activate
-
-# Set environment variable and run
-PYTHONPATH=src python -m uvicorn src.traceon.server.app:app --host 0.0.0.0 --port 8000 --reload
-```
-
-### Option 3: Docker (Optional)
-
-If you prefer containerization:
-
-```bash
-# Build image
-docker build -t traceon .
-
-# Run container
-docker run -p 8000:8000 -p 3000:3000 traceon
-```
+Open **http://localhost:3000** in your browser.
 
 ---
 
-## Verification
-
-### Step 1: Check Backend Health
+## Verify everything works
 
 ```bash
-# In a new terminal, with backend running
+# Backend health
 curl http://localhost:8000/health
+# → {"status":"ok"}
+
+# MongoDB connection (if configured)
+curl http://localhost:8000/health/db
+# → {"mongo_connected":true}
 ```
 
-**Expected response:**
-```json
-{"status":"ok"}
+In the browser:
+1. Select a language (C, C++, Python, Java)
+2. Write a short program or click an example
+3. Click **Analyze** — execution steps should appear on the right
+
+---
+
+## Docker (alternative to local setup)
+
+If you prefer not to install compilers locally:
+
+```bash
+# Build the image (includes GCC, LLDB, Java JDK)
+docker build -t traceon .
+
+# Run backend
+docker run -p 8000:8000 \
+  -e GEMINI_API_KEY=your_key \
+  -e JWT_SECRET=your_secret \
+  traceon
+
+# Run frontend separately (outside Docker)
+cd frontend && npm start
 ```
-
-### Step 2: Open the App
-
-1. Open your browser
-2. Navigate to **http://localhost:3000**
-3. You should see:
-   - Left panel: Code editor
-   - Right panel: Visualizer (empty initially)
-   - Header: "Analyze & Run" button
-
-### Step 3: Test with Example
-
-1. Click **"Simple Math"** button
-2. Click **"Analyze & Run"** button
-3. You should see:
-   - Code highlighted line by line
-   - Variables updating on the right
-   - Timeline at the bottom
 
 ---
 
 ## Troubleshooting
 
-### Backend Issues
+### `ImportError: cannot import name 'StrEnum'`
+Python 3.10 or older is being used. Upgrade to Python 3.11+.
 
-#### "Port 8000 already in use"
 ```bash
-# macOS/Linux - Find process using port
-lsof -i :8000
-
-# Kill process
-kill -9 <PID>
-
-# Or use different port
-PYTHONPATH=src python -m uvicorn src.traceon.server.app:app --port 8001
+python3 --version       # must be 3.11+
+which python3           # check which binary is being used
 ```
 
-#### "ModuleNotFoundError: No module named 'fastapi'"
+### `Port 8000 already in use`
 ```bash
-# Make sure virtual environment is activated
-source venv/bin/activate
+lsof -i :8000 | awk 'NR>1 {print $2}' | xargs kill -9
+```
 
-# Reinstall dependencies
+### `LLDB not found`
+```bash
+# macOS
+xcode-select --install
+
+# Ubuntu
+sudo apt install lldb
+```
+
+### `ModuleNotFoundError: No module named 'fastapi'`
+Virtual environment is not activated:
+```bash
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-#### "LLDB not found"
+### Frontend can't connect to backend
+1. Confirm the backend is running: `curl http://localhost:8000/health`
+2. Check `frontend/src/services/api.js` — `API_BASE_URL` should resolve to `http://localhost:8000`
+3. The `"proxy"` field in `frontend/package.json` handles this automatically in dev mode
+
+### `npm install` fails
 ```bash
-# macOS
-brew install lldb
-
-# Ubuntu/Debian
-sudo apt install lldb
-
-# Fedora
-sudo dnf install lldb
-```
-
-#### "Compilation failed" when running code
-- Check code syntax
-- Ensure all headers are valid C++
-- Try a simple example first
-
-### Frontend Issues
-
-#### "npm: command not found"
-```bash
-# Install Node.js from https://nodejs.org/
-# or use package manager:
-brew install node  # macOS
-sudo apt install nodejs npm  # Linux
-```
-
-#### "Port 3000 already in use"
-```bash
-# macOS/Linux
-lsof -i :3000
-kill -9 <PID>
-
-# Or let React choose a different port
 cd frontend
-PORT=3001 npm start
-```
-
-#### "Module not found" errors
-```bash
-# From frontend directory
 rm -rf node_modules package-lock.json
+npm cache clean --force
 npm install
-npm start
-```
-
-### Connection Issues
-
-#### Frontend can't connect to backend
-1. Make sure backend is running on `http://localhost:8000`
-2. Check CORS settings in `src/traceon/server/app.py`
-3. Check browser console for errors (F12 → Console)
-4. Verify API URL in `frontend/src/services/api.js`
-
-#### "Failed to fetch" errors
-```bash
-# Check if backend is running
-curl http://localhost:8000/health
-
-# Check API endpoint
-curl -X POST http://localhost:8000/analyze \
-  -H "Content-Type: application/json" \
-  -d '{"code": "int x = 5;"}'
 ```
 
 ---
 
-## Project Structure After Setup
+## Project structure
 
 ```
 .
-├── venv/                    # Python virtual environment
-├── frontend/
-│   ├── node_modules/        # Node dependencies
-│   ├── src/
-│   ├── public/
-│   ├── package.json
-│   └── ...
-├── src/
-│   └── traceon/
-│       └── ...
-├── examples/
-├── README.md
-├── SETUP.md                 # This file
+├── run_server.py                  # Entry point — reads HOST/PORT/RELOAD from env
 ├── requirements.txt
-├── run_server.py
-└── ...
+├── Dockerfile                     # python:3.12-slim + GCC + LLDB + Java
+├── .env                           # Local secrets (not committed)
+├── .env.example                   # Template
+│
+├── src/traceon/server/
+│   ├── app.py                     # FastAPI app + CORS + lifespan
+│   ├── api.py                     # All REST endpoints
+│   ├── session_manager.py         # Session store + auto-cleanup
+│   ├── ai_service.py              # Gemini generation & explanation
+│   ├── auth.py                    # Google OAuth + JWT
+│   ├── models.py                  # Pydantic models (requires Python 3.11+)
+│   ├── mongo_store.py             # MongoDB persistence
+│   ├── python_tracer.py           # Python execution tracer
+│   └── java_tracer.py             # Java execution tracer
+│
+├── frontend/
+│   ├── package.json               # "proxy": "http://localhost:8000"
+│   ├── vercel.json                # Vercel build config
+│   └── src/
+│       ├── App.js
+│       ├── theme.js
+│       ├── services/api.js        # REACT_APP_API_URL base URL
+│       ├── components/
+│       └── styles/
+│
+└── .github/workflows/
+    └── deploy-frontend.yml        # Auto-deploys frontend to Vercel on push
 ```
-
----
-
-## Development Workflow
-
-### Making Changes to Backend
-
-1. Backend auto-reloads with `--reload` flag
-2. Make changes to files in `src/traceon/`
-3. Refresh browser to see changes
-
-### Making Changes to Frontend
-
-1. Frontend auto-reloads on save
-2. Edit files in `frontend/src/`
-3. Changes appear automatically in browser
-
-### Adding New Examples
-
-1. Create C++ file in `examples/`
-2. Add to `EXAMPLE_CODES` in `frontend/src/App.js`
-3. Add button to UI in `App.js`
-
----
-
-## Performance Tips
-
-1. **Close unused programs** — Free up memory for compilation
-2. **Use small examples** — Start simple, increase complexity
-3. **Adjust max-steps** — Reduce from 150 for faster execution
-4. **Use Slow speed** — Default is 1500ms, good for learning
-
----
-
-## Next Steps
-
-1. ✅ Open http://localhost:3000
-2. ✅ Try loading examples
-3. ✅ Write your own C++ code
-4. ✅ Step through execution
-5. ✅ Explore variables at each step
-
----
-
-## Support
-
-For issues or questions:
-1. Check [Troubleshooting](#troubleshooting) section
-2. Review error messages in browser console (F12)
-3. Check terminal output for backend errors
-4. Open an issue on GitHub
-
----
-
-**You're all set! Happy coding! 🚀**

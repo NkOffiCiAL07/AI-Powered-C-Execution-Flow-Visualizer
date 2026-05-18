@@ -1,498 +1,202 @@
-# 🤝 Contributing Guide
+# Contributing to Traceon
 
-Thank you for your interest in contributing to the Traceon! This document provides guidelines for contributing to the project.
-
----
-
-## Table of Contents
-
-1. [Code of Conduct](#code-of-conduct)
-2. [Getting Started](#getting-started)
-3. [Development Setup](#development-setup)
-4. [Making Changes](#making-changes)
-5. [Testing](#testing)
-6. [Submitting Changes](#submitting-changes)
-7. [Coding Standards](#coding-standards)
+Thank you for your interest in contributing. This document covers how to get set up, how to make changes, and how to submit them.
 
 ---
 
-## Code of Conduct
+## Getting started
 
-- Be respectful and inclusive
-- Focus on constructive feedback
-- Help others learn and grow
-- Maintain a positive community
-
----
-
-## Getting Started
-
-### 1. Fork the Repository
+### 1. Fork and clone
 
 ```bash
-# Click "Fork" on GitHub
 git clone https://github.com/YOUR_USERNAME/AI-Powered-C-Execution-Flow-Visualizer.git
 cd AI-Powered-C-Execution-Flow-Visualizer
 ```
 
-### 2. Create a Branch
+### 2. Create a branch
 
 ```bash
-# Create feature branch
 git checkout -b feature/your-feature-name
-
-# Or bugfix branch
-git checkout -b bugfix/your-bug-name
+# or
+git checkout -b fix/your-bug-name
 ```
 
-### 3. Set Up Development Environment
+### 3. Set up the dev environment
 
-See [SETUP.md](./SETUP.md) for detailed instructions.
+See [SETUP.md](./SETUP.md) for full instructions. Quick version:
 
 ```bash
-# Activate virtual environment
+# Backend
+python3 -m venv venv
 source venv/bin/activate
-
-# Install development dependencies
 pip install -r requirements.txt
+cp .env.example .env   # fill in GEMINI_API_KEY and JWT_SECRET
 
-# Install frontend dependencies
-cd frontend
-npm install
-cd ..
+# Frontend
+cd frontend && npm install && cd ..
 ```
 
 ---
 
-## Development Setup
+## Running locally
 
-### Run Both Servers
-
-**Terminal 1 - Backend:**
+**Terminal 1 — backend:**
 ```bash
 source venv/bin/activate
 python run_server.py
 ```
 
-**Terminal 2 - Frontend:**
+**Terminal 2 — frontend:**
 ```bash
 cd frontend
 npm start
 ```
 
-### Development Tools
+---
 
-- **IDE:** VSCode recommended
-- **Python Formatter:** black (optional)
-- **Linter:** pylint/flake8 (optional)
-- **Git Hook:** pre-commit (optional)
+## Key files
+
+### Backend (`src/traceon/server/`)
+
+| File | What it does |
+|---|---|
+| `app.py` | FastAPI app, CORS, startup/shutdown |
+| `api.py` | All REST endpoints (`/analyze`, `/run`, `/generate`, `/explain`) |
+| `session_manager.py` | In-memory session store + auto-cleanup |
+| `ai_service.py` | Gemini code generation and explanation |
+| `auth.py` | Google OAuth + JWT |
+| `models.py` | Pydantic data models (requires Python 3.11+) |
+| `mongo_store.py` | MongoDB persistence layer |
+| `python_tracer.py` | Python step-by-step execution tracer |
+| `java_tracer.py` | Java bytecode execution tracer |
+
+### Frontend (`frontend/src/`)
+
+| File | What it does |
+|---|---|
+| `App.js` | Root component — view routing, auth state, tab management |
+| `theme.js` | Theme context (Light, Dark, Nord, Solarized, High Contrast) |
+| `services/api.js` | Authenticated fetch wrapper, `REACT_APP_API_URL` base |
+| `components/CppEditorPage.js` | Main editor + visualizer layout |
+| `components/FlowVisualizer.js` | Call graph panel + variable cards |
+| `components/CodeEditor.js` | Monaco editor wrapper |
+| `components/AiExplanation.js` | Gemini explanation panel |
+| `components/LandingPage.js` | Marketing landing page |
 
 ---
 
-## Making Changes
+## Making changes
 
-### Backend Changes
+### Adding a backend endpoint
 
-**Location:** `src/traceon/`
+1. Add the route in `src/traceon/server/api.py`
+2. Add any new request/response models in `src/traceon/server/models.py`
+3. Call it from the frontend via `frontend/src/services/api.js`
 
-#### Key Files
-- `server/app.py` — FastAPI application & `/analyze` endpoint
-- `executor.py` — Execution timeline collection
-- `lldb_controller.py` — LLDB debugger control
-- `models.py` — Data models
+### Adding a frontend component
 
-#### Example: Adding a New Feature
+1. Create `frontend/src/components/MyComponent.js`
+2. Create `frontend/src/styles/MyComponent.css`
+3. Import and use it in `App.js` or the relevant parent component
 
-1. **Create feature branch:**
-   ```bash
-   git checkout -b feature/new-feature
-   ```
+### Adding a language
 
-2. **Implement changes:**
-   ```python
-   # In src/traceon/server/app.py
-   @app.post("/new-endpoint")
-   def new_endpoint(request: NewRequest):
-       # Your code here
-       pass
-   ```
-
-3. **Test locally:**
-   ```bash
-   # Run backend and test with curl
-   curl -X POST http://localhost:8000/new-endpoint \
-     -H "Content-Type: application/json" \
-     -d '{"key": "value"}'
-   ```
-
-### Frontend Changes
-
-**Location:** `frontend/src/`
-
-#### Key Files
-- `App.js` — Main app component, routing
-- `components/` — React components
-- `services/api.js` — API calls
-- `styles/` — CSS files
-
-#### Example: Adding a New Component
-
-1. **Create component file:**
-   ```bash
-   touch frontend/src/components/NewComponent.js
-   ```
-
-2. **Implement component:**
-   ```jsx
-   import React from "react";
-   import "../styles/NewComponent.css";
-
-   export default function NewComponent({ prop1, prop2 }) {
-     return (
-       <div className="new-component">
-         {/* Your JSX here */}
-       </div>
-     );
-   }
-   ```
-
-3. **Add styling:**
-   ```bash
-   touch frontend/src/styles/NewComponent.css
-   ```
-
-4. **Import in App.js:**
-   ```jsx
-   import NewComponent from "./components/NewComponent";
-   ```
-
-5. **Use in component:**
-   ```jsx
-   <NewComponent prop1={value1} prop2={value2} />
-   ```
+1. Add a tracer in `src/traceon/server/` (follow `python_tracer.py` as a reference)
+2. Register it in `api.py`'s language dispatch
+3. Add the language option to the dropdown in `frontend/src/App.js`
+4. Update the language list in `LandingPage.js` copy
 
 ---
 
 ## Testing
 
-### Manual Testing
+There are no automated tests yet. Test manually:
 
-1. **Test with examples:**
-   - Load each pre-made example
-   - Verify playback works
-   - Check variable tracking
+1. Load each built-in example and step through it
+2. Write custom code in each language (C, C++, Python, Java)
+3. Test AI Generate and AI Explain
+4. Test Sign In / Sign Out flow
+5. Check browser console (F12) for errors
 
-2. **Test with custom code:**
-   - Simple snippets (no main)
-   - Complete programs
-   - Edge cases (empty, complex)
-
-3. **Test error handling:**
-   - Syntax errors
-   - Compilation errors
-   - Runtime errors
-
-### Example Test Cases
+**Example programs for each language:**
 
 ```cpp
-// Test 1: Simple arithmetic (no main)
-int x = 5;
-int y = 10;
-int z = x + y;
-
-// Test 2: Loop with update
-vector<int> nums = {1, 2, 3};
-int sum = 0;
-for (int n : nums) {
-    sum += n;
-}
-
-// Test 3: Conditional logic
-int age = 15;
-string status;
-if (age >= 18) {
-    status = "adult";
-} else {
-    status = "minor";
-}
+// C++ — fibonacci
+int fib(int n) { return n <= 1 ? n : fib(n-1) + fib(n-2); }
+int main() { int x = fib(5); }
 ```
 
-### Browser Testing
+```python
+# Python — list comprehension
+nums = [1, 2, 3, 4, 5]
+squares = [n * n for n in nums]
+```
 
-- Test in Chrome, Firefox, Safari
-- Check responsive design (resize window)
-- Verify mobile layout (DevTools)
-- Check console for errors (F12 → Console)
+```java
+// Java — loop
+public class Main {
+    public static void main(String[] args) {
+        int sum = 0;
+        for (int i = 1; i <= 5; i++) sum += i;
+    }
+}
+```
 
 ---
 
-## Submitting Changes
+## Submitting changes
 
-### 1. Commit Your Changes
-
-```bash
-# Stage changes
-git add .
-
-# Commit with descriptive message
-git commit -m "feat: add new feature description"
-# or
-git commit -m "fix: describe the bug fix"
-# or
-git commit -m "docs: update documentation"
-```
-
-### Commit Message Convention
+### Commit message format
 
 ```
-<type>(<scope>): <subject>
+<type>: <short description>
 
-<body>
-
-<footer>
+<optional body>
 ```
 
-**Types:**
-- `feat:` New feature
-- `fix:` Bug fix
-- `docs:` Documentation
-- `style:` Code style (no logic change)
-- `refactor:` Code restructuring
-- `perf:` Performance improvement
-- `test:` Tests
+**Types:** `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `ci`
 
 **Examples:**
 ```
-feat(compiler): auto-wrap code snippets
-
-fix(ui): correct variable card layout
-
-docs(readme): add setup instructions
-
-style(css): improve button styling
+feat: add Rust language support
+fix: prevent AI explanation from truncating at 2048 tokens
+docs: update SETUP.md with Java prerequisites
+style: remove emojis from pricing page
 ```
 
-### 2. Push to Your Fork
+### Creating a pull request
 
 ```bash
 git push origin feature/your-feature-name
 ```
 
-### 3. Create a Pull Request
-
-1. Go to GitHub
-2. Click "Compare & pull request"
-3. Fill in PR title and description
-4. Reference related issues (e.g., `Fixes #123`)
-5. Click "Create pull request"
-
-### 4. PR Description Template
-
-```markdown
-## Description
-Brief description of changes
-
-## Type of Change
-- [ ] New feature
-- [ ] Bug fix
-- [ ] Documentation update
-- [ ] Performance improvement
-
-## Testing
-Describe how you tested this:
-- [ ] Tested with example code
-- [ ] Tested with custom code
-- [ ] All examples still work
-
-## Checklist
-- [ ] Code follows style guidelines
-- [ ] Self-reviewed changes
-- [ ] Tested in browser
-- [ ] No new warnings/errors
-- [ ] Documentation updated
-
-## Related Issues
-Closes #123
-```
+Then open a PR on GitHub. Include:
+- What the change does
+- How to test it
+- Screenshots for UI changes
 
 ---
 
-## Coding Standards
+## Code style
 
 ### Python
+- PEP 8
+- Type hints on function signatures
+- No bare `except:` — always catch a specific exception
 
-- **Style:** PEP 8
-- **Line length:** 100 characters
-- **Imports:** Alphabetical order
-- **Docstrings:** For all functions
-
-```python
-def compile_and_trace(c_code: str, user_input: str = "") -> dict:
-    """
-    Compile C code and trace execution.
-    
-    Args:
-        c_code: C/C++ source code
-        user_input: Standard input for program
-        
-    Returns:
-        Dictionary with compilation result and trace
-        
-    Raises:
-        ValueError: If code is invalid
-    """
-    pass
-```
-
-### JavaScript/React
-
-- **Style:** Airbnb style guide
-- **Components:** Functional components with hooks
-- **Props:** PropTypes or TypeScript
-- **CSS:** BEM naming convention
-
-```jsx
-import React, { useState } from "react";
-import PropTypes from "prop-types";
-import "./MyComponent.css";
-
-function MyComponent({ title, onAction }) {
-  const [state, setState] = useState(null);
-
-  const handleClick = () => {
-    setState(true);
-    onAction?.();
-  };
-
-  return (
-    <div className="my-component">
-      <h1 className="my-component__title">{title}</h1>
-      <button
-        className="my-component__btn"
-        onClick={handleClick}
-      >
-        Click me
-      </button>
-    </div>
-  );
-}
-
-MyComponent.propTypes = {
-  title: PropTypes.string.isRequired,
-  onAction: PropTypes.func,
-};
-
-MyComponent.defaultProps = {
-  onAction: null,
-};
-
-export default MyComponent;
-```
+### JavaScript / React
+- Functional components with hooks (no class components)
+- No PropTypes required — the codebase uses plain JS
+- CSS custom properties (`var(--token)`) for all colors and spacing — no hardcoded hex values
 
 ### CSS
-
-- **BEM Convention:** `.block__element--modifier`
-- **Colors:** Use CSS variables from `:root`
-- **Responsive:** Mobile-first approach
-
-```css
-.my-component {
-  display: flex;
-  gap: 16px;
-}
-
-.my-component__title {
-  font-size: 18px;
-  color: var(--text-primary);
-}
-
-.my-component__btn {
-  padding: 10px 16px;
-  background: var(--accent-blue);
-  border: none;
-  border-radius: 6px;
-}
-
-.my-component__btn:hover {
-  background: var(--accent-blue-dark);
-}
-
-@media (max-width: 768px) {
-  .my-component {
-    flex-direction: column;
-  }
-}
-```
+- All colors via CSS variables defined in `frontend/src/index.css`
+- Per-component CSS files in `frontend/src/styles/`
 
 ---
 
-## Common Tasks
+## Getting help
 
-### Add a New Example
-
-1. **Create C++ file:**
-   ```bash
-   cat > examples/my_example.cpp << 'EOF'
-   // Your code here
-   EOF
-   ```
-
-2. **Add to App.js:**
-   ```jsx
-   const EXAMPLE_CODES = {
-     // ... existing examples
-     myExample: `// Your code here`,
-   };
-   ```
-
-3. **Add button to UI:**
-   ```jsx
-   <button
-     className={`example-btn ${selectedExample === "myExample" ? "active" : ""}`}
-     onClick={() => handleLoadExample("myExample")}
-   >
-     My Example
-   </button>
-   ```
-
-### Update API Endpoint
-
-1. **Modify `/analyze` endpoint in `src/flowviz/server/app.py`**
-2. **Update request/response models in `src/flowviz/server/models.py`**
-3. **Update frontend API call in `frontend/src/services/api.js`**
-4. **Update component to use new data in `frontend/src/components/`**
-
-### Performance Optimization
-
-- Profile with browser DevTools (F12 → Performance)
-- Check backend response time (Network tab)
-- Optimize render with React DevTools
-- Use memoization for expensive components
-
----
-
-## Getting Help
-
-- **Documentation:** Check README.md and SETUP.md
-- **Issues:** Look for similar GitHub issues
-- **Discussions:** Join project discussions
-- **Contact:** Reach out to maintainers
-
----
-
-## Recognition
-
-Contributors will be recognized in:
-- README.md contributors section
-- GitHub contributors page
-- Release notes
-
----
-
-## License
-
-By contributing, you agree that your contributions will be licensed under the same license as the project (MIT).
-
----
-
-**Welcome to the project! Happy coding! 🚀**
+- Check [README.md](./README.md) and [SETUP.md](./SETUP.md)
+- Open a GitHub issue for bugs or feature requests
+- Contact: nishantkumar19041@gmail.com
