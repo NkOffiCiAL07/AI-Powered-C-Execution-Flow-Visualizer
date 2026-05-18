@@ -3,7 +3,7 @@ import LoginModal from './LoginModal';
 import { useTheme, isDarkTheme } from '../theme';
 
 const STEPS = [
-  { icon: 'code',       n: '01', title: 'Write Your Code',         desc: 'Use the built-in editor with syntax highlighting for C, C++, and Python. Switch languages from the dropdown.' },
+  { icon: 'code',       n: '01', title: 'Write Your Code',         desc: 'Use the built-in editor with syntax highlighting for C, C++, Python, and Java. Switch languages from the dropdown.' },
   { icon: 'play_circle',n: '02', title: 'Run Traceon Analysis',    desc: 'Our engine compiles, instruments, and traces your code in under 200ms.' },
   { icon: 'hub',        n: '03', title: 'Explore the Flow Graph',  desc: 'Navigate execution interactively. Click any node for deep-dive AI explanations.' },
 ];
@@ -196,7 +196,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
 
               <p className="mb-10 max-w-2xl mx-auto leading-relaxed"
                 style={{ fontSize: 'clamp(1rem,2.2vw,1.2rem)', color: textMuted55 }}>
-                Transform complex C, C++, and Python execution paths into intuitive, high-fidelity visual graphs.
+                Transform complex C, C++, Python, and Java execution paths into intuitive, high-fidelity visual graphs.
                 Debug with precision using{' '}
                 <span style={{ color: '#C96A48', fontWeight: 600 }}>AI-driven flow analysis</span>.
               </p>
@@ -753,7 +753,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
                 <span className="text-lg font-bold" style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--text-primary)' }}>Traceon</span>
               </button>
               <p className="text-sm leading-relaxed mb-6" style={{ color: textMuted50, maxWidth: 280 }}>
-                The AI-powered C, C++, and Python execution flow visualizer for engineers who demand precision.
+                The AI-powered C, C++, Python, and Java execution flow visualizer for engineers who demand precision.
               </p>
               <div className="flex gap-2.5">
                 {[
