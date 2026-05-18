@@ -61,7 +61,7 @@ const DEMO_TIMESTAMPS = [
 
 const T = 'rgba(201,106,72,'; // terracotta helper
 
-const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
+const LandingPage = ({ onStart, onSwitchView, onLogin, user }) => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [heroReady, setHeroReady] = useState(false);
   const [githubStars, setGithubStars] = useState(null);
@@ -111,7 +111,13 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
   const border25 = dark ? 'rgba(232,226,217,0.25)' : 'rgba(100,70,40,0.25)';
   const border08 = dark ? 'rgba(232,226,217,0.08)' : 'rgba(100,70,40,0.08)';
 
-  const launch = () => setIsLoginOpen(true);
+  const launch = () => {
+    if (user) {
+      user.role === 'member' ? onSwitchView('dashboard') : onStart();
+    } else {
+      setIsLoginOpen(true);
+    }
+  };
 
   const getFooterLinkAction = (label) => {
     const actions = {
@@ -158,8 +164,21 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
           </nav>
 
           <div className="flex items-center gap-3">
-            <button className="nav-link hidden md:block" onClick={launch}>Sign In</button>
-            <button className="cta-primary px-5 py-2 rounded-lg text-sm font-bold" onClick={launch}>Launch App</button>
+            {user ? (
+              <>
+                <span className="nav-link hidden md:block" style={{ cursor: 'default', opacity: 0.8 }}>
+                  {user.name?.split(' ')[0] || 'Hi'}
+                </span>
+                <button className="cta-primary px-5 py-2 rounded-lg text-sm font-bold" onClick={launch}>
+                  {user.role === 'member' ? 'Dashboard' : 'Editor'}
+                </button>
+              </>
+            ) : (
+              <>
+                <button className="nav-link hidden md:block" onClick={launch}>Sign In</button>
+                <button className="cta-primary px-5 py-2 rounded-lg text-sm font-bold" onClick={launch}>Launch App</button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -204,7 +223,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin }) => {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <button onClick={launch} className="cta-primary flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm w-full sm:w-auto justify-center">
                   <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>play_arrow</span>
-                  Start Visualizing — Free
+                  {user ? (user.role === 'member' ? 'Open Dashboard' : 'Go to Editor') : 'Start Visualizing — Free'}
                 </button>
                 <button onClick={handleViewDemo} className="cta-secondary flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm w-full sm:w-auto justify-center">
                   <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>visibility</span>

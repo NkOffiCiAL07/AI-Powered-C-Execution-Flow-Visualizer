@@ -42,7 +42,7 @@ const Note = ({ children }) => (
   <div style={{
     background: 'var(--bg-secondary)', border: '1px solid var(--border)',
     borderLeft: '3px solid var(--primary)', borderRadius: '8px',
-    padding: '14px 18px', fontSize: '0.875rem', color: 'rgba(26,19,16,0.75)',
+    padding: '14px 18px', fontSize: '0.875rem', color: 'var(--text-secondary)',
     lineHeight: '1.6', margin: '16px 0'
   }}>{children}</div>
 );
@@ -55,8 +55,9 @@ const shortcuts = [
   { key: 'Esc', action: 'Reset visualizer' },
 ];
 
-const DocsPage = () => (
-  <div className="landing-root" style={{ background: 'var(--bg-primary)', minHeight: '100vh', padding: '72px 0 80px' }}>
+const DocsPage = () => {
+  return (
+  <div style={{ background: 'var(--bg-primary)', minHeight: '100vh', padding: '72px 0 80px' }}>
     <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 24px', display: 'flex', gap: '48px' }}>
 
       {/* Sidebar */}
@@ -74,11 +75,11 @@ const DocsPage = () => (
                       onClick={() => scrollTo(item.id)}
                       style={{
                         background: 'none', border: 'none', cursor: 'pointer', padding: '3px 0',
-                        fontSize: '0.875rem', color: 'rgba(26,19,16,0.6)', textAlign: 'left',
+                        fontSize: '0.875rem', color: 'var(--text-muted)', textAlign: 'left',
                         transition: 'color 0.15s', width: '100%'
                       }}
                       onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
-                      onMouseLeave={e => e.currentTarget.style.color = 'rgba(26,19,16,0.6)'}
+                      onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
                     >{item.label}</button>
                   </li>
                 ))}
@@ -93,57 +94,57 @@ const DocsPage = () => (
         <h1 style={{ fontSize: 'clamp(1.6rem,3.5vw,2.2rem)', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '8px', letterSpacing: '-0.02em' }}>
           Documentation
         </h1>
-        <p style={{ color: 'rgba(26,19,16,0.5)', fontSize: '0.95rem', marginBottom: '48px', lineHeight: '1.6' }}>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '48px', lineHeight: '1.6' }}>
           Everything you need to get started with Traceon.
         </p>
 
         <Section id="introduction" title="Introduction">
-          <p style={{ color: 'rgba(26,19,16,0.7)', lineHeight: '1.75', marginBottom: '14px' }}>
+          <p style={{ color: 'var(--text-secondary)', lineHeight: '1.75', marginBottom: '14px' }}>
             Traceon is a C/C++ execution flow visualizer that bridges the gap between raw source code and your mental model of how it runs. It uses LLDB and Gemini AI to trace, snapshot, and explain every step of your program's execution.
           </p>
           <Note>Traceon supports <strong>C</strong>, <strong>C++</strong> (compiled with Clang/LLDB), and <strong>Python</strong> (traced via <code style={{ fontFamily: 'monospace' }}>sys.settrace</code>). GCC support is on the roadmap.</Note>
         </Section>
 
         <Section id="installation" title="Installation">
-          <p style={{ color: 'rgba(26,19,16,0.7)', lineHeight: '1.75', marginBottom: '12px' }}>Clone the repository and set up the Python virtual environment:</p>
+          <p style={{ color: 'var(--text-secondary)', lineHeight: '1.75', marginBottom: '12px' }}>Clone the repository and set up the Python virtual environment:</p>
           <CodeBlock>{`git clone https://github.com/NkOffiCiAL07/AI-Powered-C-Execution-Flow-Visualizer.git
 cd AI-Powered-C-Execution-Flow-Visualizer
 python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt`}</CodeBlock>
-          <p style={{ color: 'rgba(26,19,16,0.7)', lineHeight: '1.75', marginTop: '12px' }}>Create a <code style={{ background: 'var(--bg-card)', padding: '1px 6px', borderRadius: '4px', fontFamily: 'monospace', fontSize: '0.85em' }}>.env</code> file in the project root:</p>
+          <p style={{ color: 'var(--text-secondary)', lineHeight: '1.75', marginTop: '12px' }}>Create a <code style={{ background: 'var(--bg-card)', padding: '1px 6px', borderRadius: '4px', fontFamily: 'monospace', fontSize: '0.85em' }}>.env</code> file in the project root:</p>
           <CodeBlock>{`GEMINI_API_KEY=your_key_from_aistudio.google.com`}</CodeBlock>
         </Section>
 
         <Section id="quick-start" title="Quick Start">
-          <p style={{ color: 'rgba(26,19,16,0.7)', lineHeight: '1.75', marginBottom: '12px' }}>Start both servers:</p>
+          <p style={{ color: 'var(--text-secondary)', lineHeight: '1.75', marginBottom: '12px' }}>Start both servers:</p>
           <CodeBlock>{`# Backend (port 8000)
 python run_server.py
 
 # Frontend (port 3000) — in a separate terminal
 cd frontend && npm install && npm start`}</CodeBlock>
-          <p style={{ color: 'rgba(26,19,16,0.7)', lineHeight: '1.75', marginTop: '12px' }}>Open <strong>http://localhost:3000</strong>, paste your code (C, C++, or Python), select the language from the dropdown, and click <strong>Analyze &amp; Run</strong>.</p>
+          <p style={{ color: 'var(--text-secondary)', lineHeight: '1.75', marginTop: '12px' }}>Open <strong>http://localhost:3000</strong>, paste your code (C, C++, or Python), select the language from the dropdown, and click <strong>Analyze &amp; Run</strong>.</p>
         </Section>
 
         <Section id="execution-flow" title="Execution Flow">
-          <p style={{ color: 'rgba(26,19,16,0.7)', lineHeight: '1.75', marginBottom: '14px' }}>
+          <p style={{ color: 'var(--text-secondary)', lineHeight: '1.75', marginBottom: '14px' }}>
             The Execution Flow tab shows a step-by-step trace of your program. Each step captures the current line, all live variables, the call stack, and any stdout output at that moment.
           </p>
-          <p style={{ color: 'rgba(26,19,16,0.7)', lineHeight: '1.75' }}>
+          <p style={{ color: 'var(--text-secondary)', lineHeight: '1.75' }}>
             Use the playback controls at the bottom of the panel — or keyboard shortcuts — to navigate through the trace at your own pace.
           </p>
         </Section>
 
         <Section id="variable-tracking" title="Variable Tracking">
-          <p style={{ color: 'rgba(26,19,16,0.7)', lineHeight: '1.75' }}>
+          <p style={{ color: 'var(--text-secondary)', lineHeight: '1.75' }}>
             The Variable Tracker panel shows every in-scope variable at the current execution step. Variables that changed since the last step are highlighted. Primitive types, arrays, and structs are all supported.
           </p>
         </Section>
 
         <Section id="ai-insights" title="AI Insights">
-          <p style={{ color: 'rgba(26,19,16,0.7)', lineHeight: '1.75', marginBottom: '14px' }}>
+          <p style={{ color: 'var(--text-secondary)', lineHeight: '1.75', marginBottom: '14px' }}>
             Click <strong>Explain Code</strong> in the header to get a Gemini-powered analysis of your code. The AI returns:
           </p>
-          <ul style={{ color: 'rgba(26,19,16,0.7)', lineHeight: '1.75', paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <ul style={{ color: 'var(--text-secondary)', lineHeight: '1.75', paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <li>A plain-English overview of what the code does</li>
             <li>Time complexity with justification</li>
             <li>Space complexity with justification</li>
@@ -153,12 +154,12 @@ cd frontend && npm install && npm start`}</CodeBlock>
         </Section>
 
         <Section id="python-debugging" title="Python Debugging">
-          <p style={{ color: 'rgba(26,19,16,0.7)', lineHeight: '1.75', marginBottom: '14px' }}>
+          <p style={{ color: 'var(--text-secondary)', lineHeight: '1.75', marginBottom: '14px' }}>
             Python debugging uses a pre-computed trace approach powered by{' '}
             <code style={{ background: 'var(--bg-card)', padding: '1px 6px', borderRadius: '4px', fontFamily: 'monospace', fontSize: '0.85em' }}>sys.settrace</code>.
             When you click Analyze, the entire program runs once and all execution snapshots are captured upfront — then served step-by-step on demand.
           </p>
-          <p style={{ color: 'rgba(26,19,16,0.7)', lineHeight: '1.75', marginBottom: '14px' }}>
+          <p style={{ color: 'var(--text-secondary)', lineHeight: '1.75', marginBottom: '14px' }}>
             Each Python snapshot captures: the current line, all local variables in scope, changed variables since the previous step, the call stack, and any <code style={{ background: 'var(--bg-card)', padding: '1px 6px', borderRadius: '4px', fontFamily: 'monospace', fontSize: '0.85em' }}>print()</code> output produced up to that point.
           </p>
           <Note>Python sessions have a 250-step limit and a 15-second execution timeout. For programs that use <code style={{ fontFamily: 'monospace' }}>input()</code>, provide values in the Program Input box before clicking Analyze.</Note>
@@ -176,14 +177,14 @@ cd frontend && npm install && npm start`}</CodeBlock>
                   borderRadius: '6px', padding: '3px 10px', fontFamily: 'monospace',
                   fontSize: '12px', color: 'var(--text-primary)', fontWeight: '600', minWidth: '40px', textAlign: 'center'
                 }}>{s.key}</kbd>
-                <span style={{ fontSize: '0.875rem', color: 'rgba(26,19,16,0.7)' }}>{s.action}</span>
+                <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{s.action}</span>
               </div>
             ))}
           </div>
         </Section>
 
         <Section id="api" title="API Reference">
-          <p style={{ color: 'rgba(26,19,16,0.7)', lineHeight: '1.75', marginBottom: '12px' }}>The FastAPI backend exposes the following endpoints at <code style={{ fontFamily: 'monospace', background: 'var(--bg-card)', padding: '1px 6px', borderRadius: '4px', fontSize: '0.85em' }}>http://localhost:8000</code>:</p>
+          <p style={{ color: 'var(--text-secondary)', lineHeight: '1.75', marginBottom: '12px' }}>The FastAPI backend exposes the following endpoints at <code style={{ fontFamily: 'monospace', background: 'var(--bg-card)', padding: '1px 6px', borderRadius: '4px', fontSize: '0.85em' }}>http://localhost:8000</code>:</p>
           {[
             { method: 'POST', path: '/analyze', desc: 'Compile & trace a C, C++, or Python program; returns session + snapshots' },
             { method: 'POST', path: '/analyze/{id}/step', desc: 'Step forward or backward in a debug session' },
@@ -203,7 +204,7 @@ cd frontend && npm install && npm start`}</CodeBlock>
                 letterSpacing: '0.06em', flexShrink: 0, marginTop: '2px'
               }}>{e.method}</span>
               <code style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: 'var(--text-primary)', flexShrink: 0, minWidth: '220px' }}>{e.path}</code>
-              <span style={{ fontSize: '0.875rem', color: 'rgba(26,19,16,0.6)' }}>{e.desc}</span>
+              <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{e.desc}</span>
             </div>
           ))}
         </Section>
@@ -217,13 +218,14 @@ cd frontend && npm install && npm start`}</CodeBlock>
           ].map((item, i, arr) => (
             <div key={item.q} style={{ paddingBottom: '18px', marginBottom: '18px', borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
               <p style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '6px', fontSize: '0.95rem' }}>{item.q}</p>
-              <p style={{ color: 'rgba(26,19,16,0.65)', lineHeight: '1.65', fontSize: '0.875rem' }}>{item.a}</p>
+              <p style={{ color: 'var(--text-secondary)', lineHeight: '1.65', fontSize: '0.875rem' }}>{item.a}</p>
             </div>
           ))}
         </Section>
       </article>
     </div>
   </div>
-);
+  );
+};
 
 export default DocsPage;

@@ -27,7 +27,7 @@ function relativeTime(iso) {
   return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwitchView }) => {
+const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwitchView, onBack }) => {
   const { theme, setTheme } = useTheme();
   const [activeNav, setActiveNav]       = useState('projects');
   const [projects, setProjects]         = useState([]);
@@ -42,6 +42,8 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
   const [searchQuery, setSearchQuery]   = useState('');
   const [langFilter, setLangFilter]     = useState('all');
   const [sortBy, setSortBy]             = useState('accessed');
+  const [defaultLang, setDefaultLang]   = useState(() => localStorage.getItem('traceon_default_lang') || 'cpp');
+  const [tabSize, setTabSize]           = useState(() => parseInt(localStorage.getItem('traceon_tab_size') || '4'));
 
   const loadProjects = useCallback(async () => {
     setLoading(true);
@@ -128,6 +130,16 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
     onOpenProject({ project, files: [file], activeFileId: file.id });
   };
 
+  const handleDefaultLangChange = (lang) => {
+    setDefaultLang(lang);
+    localStorage.setItem('traceon_default_lang', lang);
+  };
+
+  const handleTabSizeChange = (size) => {
+    setTabSize(size);
+    localStorage.setItem('traceon_tab_size', String(size));
+  };
+
   const filteredProjects = projects
     .filter(p => langFilter === 'all' || p.language === langFilter)
     .filter(p => !searchQuery.trim() || p.name.toLowerCase().includes(searchQuery.trim().toLowerCase()))
@@ -141,9 +153,14 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
     <div className="dashboard">
       {/* ── Sidebar ── */}
       <aside className="dash-sidebar">
-        <div className="dash-brand" onClick={() => onSwitchView('landing')} style={{ cursor: 'pointer' }}>
-          <span className="material-symbols-outlined dash-brand-icon">terminal</span>
-          <span className="dash-brand-name">Traceon</span>
+        <div className="dash-brand-row">
+          <button className="dash-back-btn" onClick={onBack} title="Go back">
+            <span className="material-symbols-outlined">arrow_back_ios</span>
+          </button>
+          <div className="dash-brand" onClick={() => onSwitchView('landing')} style={{ cursor: 'pointer', flex: 1 }}>
+            <span className="material-symbols-outlined dash-brand-icon">terminal</span>
+            <span className="dash-brand-name">Traceon</span>
+          </div>
         </div>
 
         <nav className="dash-nav">
@@ -464,24 +481,116 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
                 <p className="dash-subtitle">Account and workspace preferences</p>
               </div>
             </div>
-            <div className="settings-grid">
-              {[
-                { icon: 'person', title: 'Profile', desc: 'Avatar, display name, and email address', badge: true },
-                { icon: 'palette', title: 'Appearance', desc: 'Theme, font size, and editor layout', badge: true },
-                { icon: 'code', title: 'Editor', desc: 'Default language, tab size, and keybindings', badge: true },
-                { icon: 'lock', title: 'Security', desc: 'Sign out of all devices and delete account', badge: true },
-              ].map(s => (
-                <div key={s.title} className="settings-card">
-                  <div className="settings-card-icon">
-                    <span className="material-symbols-outlined">{s.icon}</span>
+            <div className="settings-sections">
+
+              {/* Profile */}
+              <div className="settings-section">
+                <div className="settings-section-hdr">
+                  <div className="settings-section-icon"><span className="material-symbols-outlined">person</span></div>
+                  <div>
+                    <div className="settings-section-title">Profile</div>
+                    <div className="settings-section-desc">Your account information</div>
                   </div>
-                  <div className="settings-card-body">
-                    <div className="settings-card-title">{s.title}</div>
-                    <div className="settings-card-desc">{s.desc}</div>
-                  </div>
-                  {s.badge && <span className="settings-soon-badge">Soon</span>}
                 </div>
-              ))}
+                <div className="settings-section-body">
+                  <div className="settings-profile-row">
+                    {user?.avatar
+                      ? <img src={user.avatar} alt="" className="settings-avatar" referrerPolicy="no-referrer" />
+                      : <div className="settings-avatar settings-avatar-ph">
+                          <span className="material-symbols-outlined">person</span>
+                        </div>
+                    }
+                    <div>
+                      <div className="settings-field-label">Display name</div>
+                      <div className="settings-field-value">{user?.name || '—'}</div>
+                      <div className="settings-field-label" style={{ marginTop: 10 }}>Email</div>
+                      <div className="settings-field-value">{user?.email || '—'}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Appearance */}
+              <div className="settings-section">
+                <div className="settings-section-hdr">
+                  <div className="settings-section-icon"><span className="material-symbols-outlined">palette</span></div>
+                  <div>
+                    <div className="settings-section-title">Appearance</div>
+                    <div className="settings-section-desc">Theme and visual preferences</div>
+                  </div>
+                </div>
+                <div className="settings-section-body">
+                  <div className="settings-field-label">Color theme</div>
+                  <div className="settings-theme-grid">
+                    {THEME_OPTIONS.map(opt => (
+                      <button
+                        key={opt.value}
+                        className={`settings-theme-btn ${theme === opt.value ? 'active' : ''}`}
+                        onClick={() => setTheme(opt.value)}
+                        title={opt.label}
+                      >
+                        <div className="settings-theme-swatch" style={{ background: opt.swatch }} />
+                        <span>{opt.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Editor */}
+              <div className="settings-section">
+                <div className="settings-section-hdr">
+                  <div className="settings-section-icon"><span className="material-symbols-outlined">code</span></div>
+                  <div>
+                    <div className="settings-section-title">Editor</div>
+                    <div className="settings-section-desc">Default language and editor behavior</div>
+                  </div>
+                </div>
+                <div className="settings-section-body">
+                  <div className="settings-field-label">Default language</div>
+                  <div className="settings-chips-row">
+                    {['cpp', 'c', 'python', 'java'].map(lang => (
+                      <button
+                        key={lang}
+                        className={`dash-chip ${defaultLang === lang ? 'active' : ''}`}
+                        onClick={() => handleDefaultLangChange(lang)}
+                      >
+                        {LANG_LABELS[lang]}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="settings-field-label" style={{ marginTop: 16 }}>Indentation</div>
+                  <div className="settings-chips-row">
+                    {[2, 4, 8].map(n => (
+                      <button
+                        key={n}
+                        className={`dash-chip ${tabSize === n ? 'active' : ''}`}
+                        onClick={() => handleTabSizeChange(n)}
+                      >
+                        {n} spaces
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Security */}
+              <div className="settings-section">
+                <div className="settings-section-hdr">
+                  <div className="settings-section-icon"><span className="material-symbols-outlined">lock</span></div>
+                  <div>
+                    <div className="settings-section-title">Security</div>
+                    <div className="settings-section-desc">Session and account actions</div>
+                  </div>
+                </div>
+                <div className="settings-section-body">
+                  <button className="settings-danger-btn" onClick={onLogout}>
+                    <span className="material-symbols-outlined">logout</span>
+                    Sign out of all devices
+                  </button>
+                </div>
+              </div>
+
             </div>
           </>
         )}

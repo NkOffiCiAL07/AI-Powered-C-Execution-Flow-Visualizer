@@ -843,7 +843,7 @@ function App() {
   const renderView = () => {
     switch (view) {
       case "landing":
-        return <LandingPage onStart={() => setView("editor")} onSwitchView={setView} onLogin={handleLogin} />;
+        return <LandingPage onStart={() => setView("editor")} onSwitchView={setView} onLogin={handleLogin} user={user} />;
       case "dashboard":
         return (
           <DashboardPage
@@ -852,6 +852,7 @@ function App() {
             onOpenProject={handleOpenProject}
             onOpenPlayground={() => { setCurrentProject(null); setView("editor"); }}
             onSwitchView={setView}
+            onBack={() => setView(currentProject ? 'editor' : 'landing')}
           />
         );
       case "docs":
