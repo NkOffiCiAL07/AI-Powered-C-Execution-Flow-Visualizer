@@ -15,6 +15,7 @@ import DebuggerRestricted from "./components/DebuggerRestricted";
 import MemorySpectrometer from "./components/MemorySpectrometer";
 import LangDropdown from "./components/LangDropdown";
 import KeyboardShortcutsModal from "./components/KeyboardShortcutsModal";
+import { FILE_NAMES } from "./components/NewProjectModal";
 import { 
   analyzeCode, runCode, stepAnalyzeSession, explainCode, generateCode, 
   updateFile, deleteFile, fetchProject, fetchFiles, createFile, fetchPublicProject, API_BASE_URL 
@@ -582,6 +583,14 @@ function App() {
   }, [language]);
 
   const handleLanguageChange = (newLang) => {
+    // If a project file is open and its name is the default for the current language,
+    // auto-rename it to the default for the new language (e.g. main.cpp → Main.java)
+    if (currentProject?.activeFileId) {
+      const activeFile = currentProject.files?.find(f => f.id === currentProject.activeFileId);
+      if (activeFile && FILE_NAMES[language] === activeFile.name && FILE_NAMES[newLang]) {
+        handleFileRename(activeFile.id, FILE_NAMES[newLang]);
+      }
+    }
     setLanguage(newLang);
     setCode(DEFAULT_CODES[newLang] || "");
     setCurrentLine(null);
