@@ -1,0 +1,649 @@
+================================================================================
+  TRACEON — FEATURES & HOW TO USE THEM
+  AI-Powered Code Execution Flow Visualizer
+================================================================================
+
+CONTENTS
+--------
+  1.  Getting Started
+  2.  Authentication & Access Levels
+  3.  Code Editor
+  4.  Run Code (Compile & Execute)
+  5.  AI Code Generation
+  6.  AI Code Explanation
+  7.  AI Code Optimization
+  8.  Step-Through Debugger
+  9.  Execution Call Graph
+  10. Variable Tracker
+  11. Call Stack Panel
+  12. Execution Timeline (Program Journey)
+  13. Diff Mode
+  14. Memory Spectrometer
+  15. AI Insights Tab
+  16. Output Tab
+  17. Projects & File Management
+  18. Dashboard
+  19. Theme Picker
+  20. Keyboard Shortcuts
+  21. Access Tiers (Free / Pro / Enterprise)
+
+
+================================================================================
+1. GETTING STARTED
+================================================================================
+
+Traceon runs as a web application. To use it locally:
+
+  Backend  →  python run_server.py          (starts FastAPI on port 8000)
+  Frontend →  cd frontend && npm start      (starts React on port 3000)
+
+Open http://localhost:3000 in your browser.
+
+The landing page gives you:
+  - "Start Visualizing — Free"  →  opens the editor as a guest
+  - "View Demo"                 →  tries the editor with a sample program
+  - "Sign In" / "Launch App"   →  Google OAuth login
+
+A backend server must be running for any code execution or AI features.
+If the server is not running, a red "Backend server is not running" banner
+appears at the top of the editor and debugger screens.
+
+
+================================================================================
+2. AUTHENTICATION & ACCESS LEVELS
+================================================================================
+
+GUEST (no sign-in required)
+  - Use the code editor immediately
+  - Compile and run code (stdout / stderr)
+  - No projects, no file saving, no AI features, no debugger
+
+MEMBER (Google sign-in)
+  - Everything in Guest, plus:
+  - AI code generation, explanation, and optimization
+  - Step-through debugger with execution flow graph
+  - Projects and multi-file management
+  - Memory Spectrometer
+  - Activity dashboard
+
+HOW TO SIGN IN
+  1. Click "Sign In" in the top navigation bar, or
+     click "Launch App" on the landing page.
+  2. The Login modal appears.
+  3. Click "Continue with Google" — you are redirected to Google OAuth.
+  4. After approval, you return to Traceon and land on the Dashboard.
+
+HOW TO CONTINUE AS GUEST
+  1. On the landing page click "Start Visualizing — Free", or
+  2. In the Login modal click "Continue as Guest".
+
+Sessions persist across page refreshes via localStorage (guest) or
+a signed JWT (member).
+
+
+================================================================================
+3. CODE EDITOR
+================================================================================
+
+Traceon embeds Monaco Editor (the engine behind VS Code) with:
+  - Syntax highlighting for C, C++, Python, and Java
+  - Line numbers, bracket matching, auto-indent
+  - Minimap (the thumbnail view on the right side of the editor)
+  - Compile-error underlining (red squiggles after a failed build)
+  - Drag-to-resize divider between the editor and the output/AI panel
+
+SWITCHING LANGUAGES
+  1. Click the language dropdown (shows "C++", "C", "Python", or "Java")
+     in the editor header.
+  2. Select a language — the editor loads the default template for that
+     language.
+  NOTE: Switching language replaces the current code with the template.
+        If you have unsaved work, save first (Ctrl+S).
+
+EDITOR VIEW vs DEBUGGER VIEW
+  - Editor view  →  compact editor with Output + AI Insights panels
+  - Debugger view →  full-screen split with Execution Flow, Memory
+                      Spectrometer, AI Insights, and Output tabs
+  The "Debug" button in the editor header switches to the Debugger view.
+
+
+================================================================================
+4. RUN CODE (COMPILE & EXECUTE)
+================================================================================
+
+Available to: Guest + Member
+
+HOW TO RUN
+  1. Write or paste code in the editor.
+  2. Click the orange play button (▶) in the top-right of the panel, or
+     press Ctrl + Enter.
+  3. If your code reads from stdin (cin >>, input(), Scanner), enter the
+     input values in the "Program Input" box before clicking Run.
+  4. Output appears in the "Output" tab:
+       stdout  →  what your program printed
+       stderr  →  error output / compiler warnings
+       Status pill shows SUCCESS or FAILED with exit code
+
+SUPPORTED RUNTIMES
+  C   → clang -std=c11
+  C++ → clang++ -std=c++17
+  Python → python3
+  Java   → javac + java (JDK 11+)
+
+PROGRAM INPUT (stdin)
+  Type input values in the "Program Input" textarea, one value per line.
+  These are piped to your program as stdin (equivalent to typing them
+  in a terminal).
+  Example for a program that reads two integers:
+      5
+      10
+
+
+================================================================================
+5. AI CODE GENERATION
+================================================================================
+
+Available to: Member only (lock icon shown for guests)
+
+HOW TO USE
+  1. Click the "AI" button (⚡ sparkle icon) in the editor header, or
+     press Ctrl + G.
+  2. A prompt modal slides in over the editor.
+  3. Describe what you want to build in plain English.
+     Example: "Write a binary search tree with insert and inorder traversal"
+  4. Press Enter or click the send (➤) button.
+  5. The AI generates complete, compilable code and pastes it into the editor.
+
+The generation uses Gemini 2.5 Flash with up to 8 192 output tokens.
+If the code is still truncated (open brace count exceeds close brace count),
+a second continuation call is made automatically to complete it.
+
+TIPS
+  - Be specific: "fibonacci using dynamic programming with memoization"
+    is better than "fibonacci".
+  - Mention the language if you want a specific style:
+    "write a linked list in C with malloc/free".
+  - You can describe a function only: "a function that reverses a string
+    in-place" — Traceon wraps it in main() automatically if needed.
+
+
+================================================================================
+6. AI CODE EXPLANATION
+================================================================================
+
+Available to: Member only
+
+HOW TO USE
+  1. Write or paste code in the editor.
+  2. Click the "AI Insights" button in the action bar (top-right of the
+     panel), or press Ctrl + Shift + E.
+  3. A spinner appears on the button while Gemini processes the code.
+  4. The "AI Insights" tab appears in the tab bar and is selected
+     automatically when the result is ready.
+
+WHAT YOU GET
+  - Summary     →  2–3 sentence plain-English explanation of what the code does
+  - Time Complexity   →  Big-O with a brief justification (e.g. "O(n log n) — merge sort")
+  - Space Complexity  →  Big-O with justification
+  - Key Points  →  3–5 technical observations (algorithm used, data structures,
+                   edge cases, memory management, performance notes)
+  - Complexity badge  →  color-coded pill: Low / Medium / High
+
+The AI Insights tab is hidden by default; it appears only after you trigger
+an explanation so it never clutters the tab bar unnecessarily.
+
+
+================================================================================
+7. AI CODE OPTIMIZATION
+================================================================================
+
+Available to: Member only, and only after running the debugger
+(requires performance metrics)
+
+HOW TO USE
+  1. Run the debugger first (see section 8) to collect performance metrics.
+  2. Click the "Optimize" button in the Debugger view header.
+  3. Gemini analyzes the code together with the collected hotspot data.
+  4. The AI Insights tab shows optimization suggestions.
+
+The Optimize button is grayed out until `performanceMetrics` are available
+(i.e., after at least one successful debug session).
+
+
+================================================================================
+8. STEP-THROUGH DEBUGGER
+================================================================================
+
+Available to: Member only, requires an open project
+
+The debugger compiles your code with debug symbols (clang++ -g -O0),
+launches LLDB, sets a breakpoint at main(), then lets you step through
+each line interactively.
+
+HOW TO START
+  1. Make sure you have a project open (create one from the Dashboard).
+  2. In the Editor view, click the "Debug" button (bug icon) in the
+     right-panel action bar.
+  3. The view switches to "Debugger" and the backend compiles + starts LLDB.
+  4. The first snapshot is shown — you are paused at the first line of main().
+
+CONTROLS
+  Back       ←   Go to the previous recorded step
+  Play/Pause ▶   Auto-advance through steps at the selected speed
+  Next       →   Advance one step (step over — stays in current function)
+  In         ↓   Step into a function call
+  Out        ↑   Step out of the current function (back to caller)
+  Speed         Drag the slider (200 ms – 2 000 ms per step)
+  Diff Mode     Compare variable state at two different steps (see section 13)
+
+LIMITS
+  - Maximum steps per session: 150
+  - Execution timeout: 15 seconds
+  - Sessions expire after 30 minutes of inactivity
+
+SUPPORTED LANGUAGES IN DEBUGGER
+  C / C++  → LLDB (full variable + call stack + memory tracking)
+  Python   → custom sys.settrace tracer (variables only, no memory)
+  Java     → JDB-based tracer (variables, limited call stack)
+
+
+================================================================================
+9. EXECUTION CALL GRAPH
+================================================================================
+
+Available to: Member only (shown inside the Debugger's Execution Flow tab)
+
+The call graph is built live as you step through your code. It shows
+every function encountered so far and how they call each other.
+
+HOW TO READ IT
+  - Each box (node) = a unique function
+  - Arrows (edges) = call relationships (caller → callee)
+  - Highlighted orange box = the function currently executing
+  - Dashed gray arrows = call edges not currently active
+  - Solid orange arrows = edges connected to the active function
+  - Self-looping arc = recursive call (function calls itself)
+  - Bottom progress dots = which node in the traced sequence is active
+
+NODE LAYOUT
+  - Depth 0 (top row) = entry-point functions (e.g., main)
+  - Depth 1 = functions called directly by main
+  - Depth N = functions N levels deep in the call hierarchy
+  - Left-to-right order = order of first appearance during execution
+
+INTERACTION
+  - The graph is horizontally scrollable for wide call trees
+  - Function names longer than 14 characters are truncated with "…"
+  - The graph grows step-by-step — new nodes and edges appear as
+    new functions are first called during your debug session
+
+
+================================================================================
+10. VARIABLE TRACKER
+================================================================================
+
+Available to: Member only (shown in Execution Flow tab)
+
+Displays all local variables in scope at the current execution step.
+
+HOW TO READ IT
+  - Each variable appears as a card with its name and current value
+  - Cards highlighted in orange = variable changed in this step
+  - "No variables in scope" = the program hasn't initialized any yet
+    (common at step 1)
+  - Hover over a name or value to see the full text (for long values)
+
+The tracker compares the current snapshot against the previous one to
+detect which variables changed.
+
+
+================================================================================
+11. CALL STACK PANEL
+================================================================================
+
+Available to: Member only (shown in Execution Flow tab, C/C++ only)
+
+Displays the active function call stack when more than one frame is present.
+
+Each row shows:
+  #N  functionName   filename.cpp:lineNumber
+
+  #0 = innermost frame (currently executing function)
+  #1 = its caller
+  #N = outermost frame (usually main or the OS entry point)
+
+The call stack panel is hidden when only one frame is active (no function
+calls in progress).
+
+
+================================================================================
+12. EXECUTION TIMELINE (PROGRAM JOURNEY)
+================================================================================
+
+Available to: Member only (shown at the bottom of Execution Flow tab)
+
+A horizontal strip of dots representing each recorded step.
+
+  Orange dot   = current step
+  Dark dot     = steps you have already passed (history)
+  Light dot    = steps not yet reached
+
+HOW TO USE
+  - Click any dot to jump directly to that step (only steps you have
+    already reached are clickable)
+  - In Diff Mode, clicking a dot sets it as the comparison baseline
+    instead of navigating to it (see section 13)
+
+The timeline label shows the source line number below each dot.
+
+
+================================================================================
+13. DIFF MODE
+================================================================================
+
+Available to: Member only
+
+Diff Mode lets you compare variable state at two different steps side by side.
+
+HOW TO USE
+  1. In the Execution Flow tab, click "Diff Mode" in the controls bar.
+     The button turns orange to indicate it is active.
+  2. The diff baseline is set to the previous step by default.
+  3. Click any step dot on the Execution Timeline to set it as the
+     comparison baseline.
+  4. The Variable Tracker highlights:
+       - Variables that exist in the current step but not the baseline
+       - Variables whose value differs between the two steps
+  5. Click "Diff Mode" again to exit.
+
+Useful for: pinpointing exactly when a variable changed to a wrong value,
+or comparing state before/after a loop iteration.
+
+
+================================================================================
+14. MEMORY SPECTROMETER
+================================================================================
+
+Available to: Member only, C/C++ only
+
+Shows heap/stack memory allocations at the current execution step.
+
+HOW TO ACCESS
+  1. Run the debugger and step through your code.
+  2. Click the "Memory Spectrometer" tab in the Debugger view.
+
+WHAT IT SHOWS
+  - Memory blocks allocated at the current step
+  - Address, size, and type of each allocation
+  - Visualized as colored bars proportional to allocation size
+
+NOTE: Memory tracking is powered by LLDB and is only available for
+C and C++ programs. Python and Java show limited or no memory data.
+If the current step has no heap allocations, "Memory block empty at
+this step" is displayed — this is normal for early steps before any
+dynamic allocation occurs.
+
+
+================================================================================
+15. AI INSIGHTS TAB
+================================================================================
+
+Available to: Member only
+
+The AI Insights tab is hidden by default. It appears in the tab bar
+only after you click the "AI Insights" button and the result loads.
+
+TRIGGERED BY
+  - "AI Insights" button in the Debugger header
+  - "AI Explain" button on an individual step (shows explanation for
+    that specific step's state, not the whole program)
+  - Ctrl + Shift + E in the Editor view
+
+CONTENTS
+  - Code Summary (what the program does)
+  - Time Complexity with justification
+  - Space Complexity with justification
+  - Key Points (3–5 technical observations)
+  - Complexity badge (Low / Medium / High, color-coded)
+
+The tab stays visible once loaded until a new Analyze session starts
+(which resets aiExplanation to null and hides the tab again).
+
+
+================================================================================
+16. OUTPUT TAB
+================================================================================
+
+Available to: Guest + Member (Run), Member (Debugger)
+
+In the EDITOR VIEW, the Output panel shows:
+  - stdout  →  text your program printed to standard output
+  - stderr  →  compiler warnings, runtime errors, stack traces
+  - Status  →  SUCCESS or FAILED with exit code
+
+In the DEBUGGER VIEW, the Output tab shows accumulated stdout/stderr
+captured during the debug session as you step through.
+
+The output panel is read-only. To copy output, select the text manually.
+
+
+================================================================================
+17. PROJECTS & FILE MANAGEMENT
+================================================================================
+
+Available to: Member only
+
+Projects are stored in MongoDB and persist across devices.
+
+CREATING A PROJECT
+  1. From the Dashboard, click "+ New Project".
+  2. Enter a project name and choose a default language.
+  3. Click "Create" — the project opens in the Editor view with a
+     default file already created.
+
+OPENING A PROJECT
+  1. From the Dashboard, click any project card.
+  2. The Editor view opens with the project's active file loaded.
+
+DELETING A PROJECT
+  1. On a project card in the Dashboard, click the trash (🗑) icon.
+  2. The project moves to the Trash section (soft delete).
+  3. To permanently delete: open Trash and click "Delete Forever".
+  4. To restore: click "Restore" next to the project in Trash.
+
+FILES WITHIN A PROJECT
+  A project can contain multiple files in different languages.
+
+  Creating a file:
+    - In the sidebar of the Editor view, click "+ New File"
+    - Type the filename (include extension: main.cpp, solution.py, etc.)
+    - Press Enter — the file is created and opened
+
+  Switching files:
+    - Click any file in the left sidebar
+
+  Renaming a file:
+    - Double-click the filename in the sidebar
+    - Type the new name and press Enter (or Escape to cancel)
+    - Language is auto-detected from the file extension:
+        .cpp / .cc / .cxx  → C++
+        .c                 → C
+        .py                → Python
+        .java              → Java
+
+  Deleting a file:
+    - Click the × button on the right side of the file row in the sidebar
+
+SAVING
+  - Ctrl + S saves the current file to the project in MongoDB
+  - Files are also auto-saved whenever you switch files or run analysis
+  - The Save button shows: Save → Saving… → Saved (2 s) → Save
+  - The Save button is only available when a project is open
+
+
+================================================================================
+18. DASHBOARD
+================================================================================
+
+Available to: Member only
+
+The Dashboard is your home screen after signing in. It shows all your
+projects and provides account settings.
+
+SECTIONS
+  Sidebar (left)
+    - Your name and avatar
+    - Theme picker (see section 19)
+    - Stats: project count, total files, languages used
+
+  Main area (right)
+    - Project grid with search, filter, and sort controls
+    - Trash section (soft-deleted projects)
+    - Settings panel
+
+SEARCHING & FILTERING PROJECTS
+  - Search bar: type any part of a project name to filter in real time
+  - Language chips: click "All", "C++", "C", "Python", or "Java" to
+    filter by language
+  - Sort: "Recent" (last modified), "Name" (A–Z), or "Oldest"
+
+PROJECT CARDS SHOW
+  - Project name
+  - Language badge
+  - File count
+  - Last modified time
+  - Activity heatmap (dots representing days with debug activity)
+
+ACTIVITY HEATMAP
+  Each project card shows a 5×7 grid of dots. Darker dots = more
+  debug sessions run on that day. Based on the project's last_accessed
+  timestamp stored in MongoDB.
+
+SETTINGS PANEL
+  Reached by scrolling to the bottom of the Dashboard main area.
+  Contains category cards for: Account, Editor, Notifications, Privacy.
+  (Full settings editing is on the roadmap.)
+
+
+================================================================================
+19. THEME PICKER
+================================================================================
+
+Available to: All users (via Dashboard sidebar for members;
+              via the landing page navigation for guests)
+
+Five themes are available:
+
+  Light    →  Warm cream/terracotta palette (default)
+  Dark     →  Deep brown/charcoal with terracotta accents
+  Ocean    →  Dark background with blue accents
+  Forest   →  Dark background with green accents
+  Midnight →  Dark background with purple accents
+
+HOW TO CHANGE THEME (Member)
+  1. Open the Dashboard.
+  2. In the left sidebar, find the "Theme" section.
+  3. Click any colored swatch to apply it immediately.
+  4. The current theme name is shown below the swatches.
+
+The theme is persisted in localStorage and applied on every page load.
+Monaco Editor (the code editor) also switches its color scheme to match.
+
+
+================================================================================
+20. KEYBOARD SHORTCUTS
+================================================================================
+
+Press ? anywhere in the app to open the Keyboard Shortcuts panel.
+
+EDITOR
+  Ctrl + Enter        Run code
+  Ctrl + Shift + D    Start debugger
+  Ctrl + Shift + E    Explain code with AI
+  Ctrl + S            Save file to project
+  Ctrl + G            Open AI code generation prompt
+
+DEBUGGER
+  →  (Right Arrow)    Step forward (step over)
+  ←  (Left Arrow)     Step backward
+  ↓  (Down Arrow)     Step into function call
+  ↑  (Up Arrow)       Step out of current function
+  Space               Play / pause auto-stepping
+  Escape              Exit debugger (back to Editor view)
+
+GLOBAL
+  ?                   Show / hide keyboard shortcuts panel
+
+NOTE: Shortcuts are disabled when the cursor is inside the code editor,
+a text input, or a textarea — they only fire from the outer page context.
+
+Mac users: Ctrl = ⌘ Command for most shortcuts.
+
+
+================================================================================
+21. ACCESS TIERS
+================================================================================
+
+FREE (Guest — no sign-in)
+  ✓  Code editor (C, C++, Python, Java)
+  ✓  Compile & run code
+  ✓  Basic stdout / stderr output panel
+  ✗  AI code generation
+  ✗  AI code explanation / optimization
+  ✗  Step-through debugger
+  ✗  Projects & file management
+  ✗  Memory Spectrometer
+  ✗  Execution call graph
+
+PRO ($2 / month — sign in with Google)
+  ✓  Everything in Free
+  ✓  Step-through debugger (C, C++, Python, Java)
+  ✓  Execution call graph
+  ✓  Variable tracker & call stack
+  ✓  Memory Spectrometer (C/C++)
+  ✓  AI code generation (Gemini 2.5 Flash, up to 8 192 tokens)
+  ✓  AI code explanation with complexity analysis
+  ✓  AI code optimization (requires debug session)
+  ✓  Step-level AI explanations
+  ✓  Projects & multi-file management
+  ✓  Activity dashboard with heatmap
+  ✓  Diff Mode
+
+ENTERPRISE (Custom pricing)
+  ✓  Everything in Pro
+  ✓  Team accounts & shared projects
+  ✓  On-premise deployment
+  ✓  Custom LLM integration
+  ✓  SLA & security audits
+  ✓  Dedicated account manager
+  Contact: nishantkumar19041@gmail.com
+
+
+================================================================================
+QUICK-START CHEATSHEET
+================================================================================
+
+  First time, no login:
+    Open app → write code → Ctrl+Enter → see output
+
+  First time, with login:
+    Sign in → Dashboard → New Project → write code → Ctrl+Enter → run
+    → click Debug → step with → key → watch call graph build
+
+  Use AI to write code:
+    Sign in → open editor → Ctrl+G → describe program → Enter → edit & run
+
+  Debug a program step by step:
+    Open project → write code → click Debug button →
+    press → to step forward → watch variables change →
+    press Space to auto-play → press Space again to pause
+
+  Compare variable state:
+    In Debugger → step to step N → click "Diff Mode" →
+    click any earlier step on the timeline → see what changed
+
+
+================================================================================
+  Traceon — github.com/NkOffiCiAL07/AI-Powered-C-Execution-Flow-Visualizer
+  Contact: nishantkumar19041@gmail.com
+================================================================================
