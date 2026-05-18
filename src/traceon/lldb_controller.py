@@ -28,6 +28,10 @@ class LLDBController:
         self._process.expect_exact("(lldb)")
         self._process.sendline("settings set auto-confirm true")
         self._process.expect_exact("(lldb)")
+        # Disable ASLR randomization — required in Docker/container environments
+        # where the personality() syscall is blocked (Railway, Render, etc.)
+        self._process.sendline("settings set target.disable-aslr false")
+        self._process.expect_exact("(lldb)")
 
     def close(self) -> None:
         if not self._process:
