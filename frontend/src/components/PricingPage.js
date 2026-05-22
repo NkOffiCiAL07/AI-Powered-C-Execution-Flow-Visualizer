@@ -179,22 +179,35 @@ export default function PricingPage({ onStart, onSignIn }) {
               </ul>
 
               {/* CTA button */}
-              <button
-                onClick={() => handleCta(tier)}
-                style={{
-                  width: '100%', padding: '12px 0', borderRadius: '10px',
+              {(() => {
+                const ctaHref =
+                  tier.id === 'enterprise' ? 'mailto:nishantkumar19041@gmail.com?subject=Traceon%20Enterprise' :
+                  (tier.id === 'pro' && !onSignIn) ? 'mailto:nishantkumar19041@gmail.com?subject=Traceon%20Pro%20Interest' :
+                  null;
+                const sharedStyle = {
+                  display: 'block', width: '100%', padding: '12px 0', borderRadius: '10px',
                   fontWeight: '700', fontSize: '0.9rem', cursor: 'pointer',
                   transition: 'opacity 0.15s, transform 0.1s',
                   background: tier.popular ? 'var(--primary)' : 'transparent',
                   color: tier.popular ? '#fff' : 'var(--text-primary)',
                   border: tier.popular ? 'none' : '1.5px solid var(--border-strong, rgba(100,70,40,0.25))',
-                  fontFamily: 'inherit',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.opacity = '0.82'; }}
-                onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
-              >
-                {tier.cta}
-              </button>
+                };
+                return ctaHref ? (
+                  <a href={ctaHref} target="_blank" rel="noopener noreferrer"
+                    style={{ ...sharedStyle, textDecoration: 'none', textAlign: 'center', boxSizing: 'border-box' }}
+                    onMouseEnter={e => { e.currentTarget.style.opacity = '0.82'; }}
+                    onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}>
+                    {tier.cta}
+                  </a>
+                ) : (
+                  <button onClick={() => handleCta(tier)}
+                    style={{ ...sharedStyle, fontFamily: 'inherit' }}
+                    onMouseEnter={e => { e.currentTarget.style.opacity = '0.82'; }}
+                    onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}>
+                    {tier.cta}
+                  </button>
+                );
+              })()}
 
             </div>
           ))}

@@ -17,8 +17,27 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
 
 logger = logging.getLogger(__name__)
+
+
+class _RequestLogMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next) -> Response:
+        start = time.perf_counter()
+        response = await call_next(request)
+        duration_ms = (time.perf_counter() - start) * 1000
+        client_ip = request.client.host if request.client else "-"
+        logger.info(
+            "%s %s → %d  %.1fms  [%s]",
+            request.method,
+            request.url.path,
+            response.status_code,
+            duration_ms,
+            client_ip,
+        )
+        return response
 
 SESSION_TTL_MINUTES = 30
 
@@ -69,6 +88,8 @@ from traceon.server.models import (
     AnalyzeCodeResponse,
     AnalyzeStepRequest,
     AnalyzeStepResponse,
+    CheckCodeRequest,
+    CheckCodeResponse,
     CommandType,
     CreateSessionRequest,
     DebugBackend,
@@ -220,6 +241,42 @@ using namespace std;
     return normalized
 
 
+def _get_wrap_offsets(code: str, lang: str) -> tuple[int, int]:
+    """Return (line_offset, col_offset) introduced by _prepare_*_code wrapping.
+
+    When user code is wrapped with boilerplate before syntax-checking, clang
+    reports line/column numbers on the *wrapped* file.  Subtracting these
+    offsets maps those positions back to the user's original source.
+    """
+    normalized = code.strip()
+    has_main = "main(" in normalized or "main ()" in normalized
+    has_includes = "#include" in normalized
+    if lang == "c":
+        if not has_main:
+            return 6, 4   # 4 C headers + blank + `int main() {`; user code indented 4
+        if not has_includes:
+            return 5, 0   # 4 C headers + blank; user code not indented
+    else:  # cpp
+        if not has_main:
+            return 7, 4   # 4 C++ headers + `using namespace std;` + blank + `int main() {`; indented 4
+        if not has_includes:
+            return 6, 0   # 4 C++ headers + `using namespace std;` + blank; not indented
+    return 0, 0
+
+
+def _adjust_error_lines(error: str, line_offset: int, col_offset: int = 0) -> str:
+    """Subtract wrapping offsets from clang error positions in-place."""
+    if line_offset == 0 and col_offset == 0:
+        return error
+
+    def _fix(m: re.Match) -> str:
+        adjusted_line = max(1, int(m.group(2)) - line_offset)
+        adjusted_col  = max(1, int(m.group(3)) - col_offset) if col_offset else int(m.group(3))
+        return m.group(1) + str(adjusted_line) + ":" + str(adjusted_col) + ":"
+
+    return re.sub(r"(main\.[a-z]+:)(\d+):(\d+):", _fix, error)
+
+
 def _to_execution_snapshot(state) -> ExecutionSnapshot | None:
     if state is None:
         return None
@@ -286,6 +343,8 @@ async def _lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     app = FastAPI(title="Traceon Debug Server", version="0.1.0", lifespan=_lifespan)
 
+    app.add_middleware(_RequestLogMiddleware)
+
     # CORS — read from ALLOWED_ORIGINS env var (comma-separated); fallback to localhost:3000
     _raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
     _allowed_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
@@ -316,10 +375,10 @@ def create_app() -> FastAPI:
         is_guest = not caller or caller.get("user", {}).get("role") == "guest"
 
         if is_guest:
-            # Guests are ONLY allowed to use /run (plain execution), not /analyze (debugger)
-            # because the debugger consumes significant MongoDB snapshot space.
+            client_ip = http_request.client.host if http_request.client else "-"
+            logger.warning("Guest attempted debugger access [%s]", client_ip)
             raise HTTPException(
-                status_code=403, 
+                status_code=403,
                 detail="Debugger access is restricted. Please sign in with Google to enable step-through debugging."
             )
 
@@ -341,8 +400,10 @@ def create_app() -> FastAPI:
             try:
                 snapshots = _run_python_tracer(request.code, request.stdin or "")
             except ValueError as e:
+                logger.warning("Python tracer failed: %s", e)
                 raise HTTPException(status_code=400, detail=str(e))
             except Exception as e:
+                logger.exception("Python tracer unexpected error")
                 raise HTTPException(status_code=500, detail=f"Python trace failed: {e}")
 
             if not snapshots:
@@ -354,6 +415,7 @@ def create_app() -> FastAPI:
                 snapshots=snapshots,
                 cursor=0,
             )
+            logger.info("Python session created: %s (%d steps)", session_id, len(snapshots))
             return AnalyzeCodeResponse(
                 session_id=session_id,
                 status=SessionStatus.RUNNING,
@@ -370,8 +432,10 @@ def create_app() -> FastAPI:
             try:
                 snapshots = _run_java_tracer(request.code, request.stdin or "")
             except ValueError as e:
+                logger.warning("Java tracer failed: %s", e)
                 raise HTTPException(status_code=400, detail=str(e))
             except Exception as e:
+                logger.exception("Java tracer unexpected error")
                 raise HTTPException(status_code=500, detail=f"Java trace failed: {e}")
 
             if not snapshots:
@@ -383,6 +447,7 @@ def create_app() -> FastAPI:
                 snapshots=snapshots,
                 cursor=0,
             )
+            logger.info("Java session created: %s (%d steps)", session_id, len(snapshots))
             return AnalyzeCodeResponse(
                 session_id=session_id,
                 status=SessionStatus.RUNNING,
@@ -421,12 +486,14 @@ def create_app() -> FastAPI:
             compile_result = session_manager.compile_session(summary.session_id)
             if not compile_result.success:
                 diagnostics = "\n".join(compile_result.diagnostics) or "Compilation failed"
+                logger.warning("%s compile error [session=%s]", lang.upper(), summary.session_id)
                 raise HTTPException(status_code=400, detail=diagnostics)
 
             started = session_manager.mark_started(summary.session_id)
             first_snapshot = _to_execution_snapshot(started.state)
             snapshots = [first_snapshot] if first_snapshot is not None else []
             total_steps = len(started.history or [])
+            logger.info("%s session started: %s", lang.upper(), started.session_id)
 
             # ── P9.2: Save snapshots to MongoDB for persistence ──
             if request.project_id and request.file_id and mongo_app_store.enabled:
@@ -538,6 +605,7 @@ def create_app() -> FastAPI:
         lang = (request.language or "cpp").lower()
         if not request.code or not request.code.strip():
             raise HTTPException(status_code=400, detail="No code provided")
+        logger.info("Run code request: lang=%s code_len=%d", lang, len(request.code))
 
         with tempfile.TemporaryDirectory() as tmpdir:
             # ── Python: no compilation ──
@@ -668,28 +736,101 @@ def create_app() -> FastAPI:
                     exit_code=-1,
                 )
 
+    @app.post("/check", response_model=CheckCodeResponse, tags=["run"])
+    def check_code(request: CheckCodeRequest):
+        """Fast syntax-only check — no execution, no output. Used for live editor error markers."""
+        import subprocess
+        import tempfile
+        from pathlib import Path
+
+        lang = (request.language or "cpp").lower()
+        if not request.code or not request.code.strip():
+            return CheckCodeResponse(ok=True)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            if lang == "python":
+                src_path = Path(tmpdir) / "main.py"
+                src_path.write_text(request.code)
+                result = subprocess.run(
+                    ["python3", "-m", "py_compile", str(src_path)],
+                    capture_output=True, text=True, timeout=5,
+                )
+                if result.returncode != 0:
+                    err = result.stderr.strip()
+                    # Rewrite path to main.py so line numbers stay correct
+                    err = err.replace(str(src_path), "main.py")
+                    return CheckCodeResponse(ok=False, errors=err)
+                return CheckCodeResponse(ok=True)
+
+            if lang == "java":
+                class_name = _detect_java_class_name(request.code)
+                src_path = Path(tmpdir) / f"{class_name}.java"
+                src_path.write_text(request.code)
+                try:
+                    result = subprocess.run(
+                        ["javac", str(src_path)],
+                        capture_output=True, text=True, cwd=tmpdir, timeout=10,
+                    )
+                except FileNotFoundError:
+                    return CheckCodeResponse(ok=True)
+                if result.returncode != 0:
+                    err = result.stderr.strip().replace(str(src_path), f"{class_name}.java")
+                    return CheckCodeResponse(ok=False, errors=err)
+                return CheckCodeResponse(ok=True)
+
+            # C / C++ — use -fsyntax-only (no linking, no output file)
+            if lang == "c":
+                wrapped = _prepare_c_code(request.code)
+                src_name, compiler, flags = "main.c", "clang", ["-std=c11", "-fsyntax-only"]
+            else:
+                wrapped = _prepare_cpp_code(request.code)
+                src_name, compiler, flags = "main.cpp", "clang++", ["-std=c++17", "-fsyntax-only"]
+
+            # Calculate how many lines (and columns) the wrapper prepended so we
+            # can map clang's reported positions back to the user's original source.
+            line_off, col_off = _get_wrap_offsets(request.code, lang)
+
+            src_path = Path(tmpdir) / src_name
+            src_path.write_text(wrapped)
+            result = subprocess.run(
+                [compiler, *flags, str(src_path)],
+                capture_output=True, text=True, timeout=10,
+            )
+            if result.returncode != 0:
+                err = (result.stderr or result.stdout).strip()
+                err = err.replace(str(src_path), src_name)
+                err = _adjust_error_lines(err, line_off, col_off)
+                return CheckCodeResponse(ok=False, errors=err)
+            return CheckCodeResponse(ok=True)
+
     @app.post("/generate", response_model=GenerateCodeResponse, tags=["analysis"])
     def generate_code(req: GenerateCodeRequest, http_request: Request):
         client_ip = http_request.client.host if http_request.client else "unknown"
         if _is_rate_limited(client_ip):
+            logger.warning("Rate limit hit on /generate [%s]", client_ip)
             raise HTTPException(status_code=429, detail="Rate limit exceeded (10 req/min). Please wait before trying again.")
         if not req.prompt or not req.prompt.strip():
             raise HTTPException(status_code=400, detail="No prompt provided")
+        logger.info("AI generate: lang=%s prompt_len=%d [%s]", req.language or "cpp", len(req.prompt), client_ip)
         try:
             return generate_code_ai(req.prompt.strip(), req.language or "cpp")
         except Exception as error:
+            logger.exception("AI generate failed [%s]", client_ip)
             raise HTTPException(status_code=500, detail=f"Code generation failed: {error}") from error
 
     @app.post("/explain", response_model=ExplainCodeResponse, tags=["analysis"])
     def explain_code(req: ExplainCodeRequest, http_request: Request):
         client_ip = http_request.client.host if http_request.client else "unknown"
         if _is_rate_limited(client_ip):
+            logger.warning("Rate limit hit on /explain [%s]", client_ip)
             raise HTTPException(status_code=429, detail="Rate limit exceeded (10 req/min). Please wait before trying again.")
         if not req.code or not req.code.strip():
             raise HTTPException(status_code=400, detail="No code provided")
+        logger.info("AI explain: lang=%s code_len=%d [%s]", req.language or "cpp", len(req.code), client_ip)
         try:
             return explain_code_ai(req.code, req.language or "cpp")
         except Exception as error:
+            logger.exception("AI explain failed [%s]", client_ip)
             raise HTTPException(status_code=500, detail=f"AI explanation failed: {error}") from error
 
     # ── Public View (P9.1) ──────────────────────────────────────────────────

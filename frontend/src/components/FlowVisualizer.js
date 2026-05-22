@@ -260,6 +260,7 @@ export default function FlowVisualizer({
   onNext,
   onBack,
   onExplainStep,
+  breakpoints,
 }) {
   const { theme } = useTheme();
   const dark = isDarkTheme(theme);
@@ -512,6 +513,28 @@ export default function FlowVisualizer({
             <span className="material-symbols-outlined">north</span>
             Out
           </button>
+          {breakpoints && breakpoints.size > 0 && (
+            <button
+              className="control-btn"
+              onClick={() => {
+                handlePause();
+                const bp = breakpoints;
+                let found = -1;
+                for (let i = safeCurrentStep + 1; i < visibleSnapshots.length; i++) {
+                  if (bp.has(visibleSnapshots[i]?.location?.line)) { found = i; break; }
+                }
+                if (found >= 0) {
+                  setCurrentStep(found);
+                  if (onLineChange) onLineChange(visibleSnapshots[found].location.line);
+                }
+              }}
+              disabled={stepLoading || atEnd}
+              title="Jump to next breakpoint"
+            >
+              <span className="material-symbols-outlined">skip_next</span>
+              Run to BP
+            </button>
+          )}
         </div>
         <div className="control-group">
           <span className="speed-label">Speed:</span>

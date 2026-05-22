@@ -349,6 +349,7 @@ const editorOptions = {
   fontSize: 14,
   formatOnPaste: true,
   formatOnType: true,
+  glyphMargin: true,
   guides: {
     bracketPairs: false,
     indentation: true,
@@ -356,9 +357,23 @@ const editorOptions = {
   lineHeight: 22,
   minimap: { enabled: true, renderCharacters: false, scale: 0.75 },
   padding: { top: 14, bottom: 14 },
-  quickSuggestions: { other: true, comments: false, strings: false },
+  quickSuggestions: { other: true, comments: false, strings: true },
   suggestOnTriggerCharacters: true,
   snippetSuggestions: "top",
+  wordBasedSuggestions: "allDocuments",
+  parameterHints: { enabled: true },
+  suggest: {
+    snippetsPreventQuickSuggestions: false,
+    insertMode: 'replace',
+    filterGraceful: true,
+    showMethods: true,
+    showFunctions: true,
+    showVariables: true,
+    showKeywords: true,
+    showWords: true,
+    showSnippets: true,
+  },
+  acceptSuggestionOnEnter: 'on',
   roundedSelection: false,
   scrollBeyondLastLine: false,
   scrollbar: {
@@ -395,14 +410,20 @@ function parseErrorMarkers(errorText, lang) {
   return markers;
 }
 
-export default function CodeEditor({ code, onChange, currentLine, onEditRequest, language = "cpp", compact = false, compileError = null, performance = null }) {
+export default function CodeEditor({ code, onChange, currentLine, onEditRequest, language = "cpp", compact = false, compileError = null, performance = null, breakpoints = null, onBreakpointsChange = null }) {
   const lineRefs = useRef({});
   const completionProviderRef = useRef(null);
   const monacoRef = useRef(null);
   const editorRef = useRef(null);
   const decorationIdsRef = useRef([]);
+  const bpDecorationsRef = useRef([]);
+  const breakpointsRef = useRef(breakpoints || new Set());
+  const onBreakpointsChangeRef = useRef(onBreakpointsChange);
   const containerRef = useRef(null);
   const { theme } = useTheme();
+
+  useEffect(() => { breakpointsRef.current = breakpoints || new Set(); }, [breakpoints]);
+  useEffect(() => { onBreakpointsChangeRef.current = onBreakpointsChange; }, [onBreakpointsChange]);
 
   // Force Monaco to recalculate layout whenever the container is resized
   // (covers: initial render where flex heights aren't resolved, sidebar appearing/disappearing)
@@ -462,6 +483,19 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest,
 
     decorationIdsRef.current = editorRef.current.deltaDecorations(decorationIdsRef.current, newDecorations);
   }, [performance]);
+
+  useEffect(() => {
+    if (!editorRef.current || !monacoRef.current) return;
+    const bp = breakpoints || new Set();
+    const decors = [...bp].map(line => ({
+      range: new monacoRef.current.Range(line, 1, line, 1),
+      options: {
+        glyphMarginClassName: 'breakpoint-glyph',
+        glyphMarginHoverMessage: { value: 'Breakpoint — click gutter to remove' },
+      },
+    }));
+    bpDecorationsRef.current = editorRef.current.deltaDecorations(bpDecorationsRef.current, decors);
+  }, [breakpoints]);
 
   const handleEditorMount = (editor, monaco) => {
     monacoRef.current = monaco;
@@ -592,8 +626,24 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest,
       },
     });
 
+    // Gutter click → toggle breakpoint
+    editor.onMouseDown((e) => {
+      const { type, position } = e.target;
+      if (
+        (type === monaco.editor.MouseTargetType.GUTTER_LINE_NUMBERS ||
+         type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) &&
+        position
+      ) {
+        const line = position.lineNumber;
+        const next = new Set(breakpointsRef.current);
+        if (next.has(line)) next.delete(line); else next.add(line);
+        onBreakpointsChangeRef.current?.(next);
+      }
+    });
+
     if (!completionProviderRef.current) {
-      const makeProvider = (snippets) => ({
+      const makeProvider = (snippets, triggerChars = []) => ({
+        triggerCharacters: triggerChars,
         provideCompletionItems(model, position) {
           const word = model.getWordUntilPosition(position);
           const range = {
@@ -617,10 +667,10 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest,
       });
 
       completionProviderRef.current = [
-        monaco.languages.registerCompletionItemProvider("cpp",    makeProvider(cppSnippets)),
-        monaco.languages.registerCompletionItemProvider("c",      makeProvider(cSnippets)),
-        monaco.languages.registerCompletionItemProvider("python", makeProvider(pythonSnippets)),
-        monaco.languages.registerCompletionItemProvider("java",   makeProvider(javaSnippets)),
+        monaco.languages.registerCompletionItemProvider("cpp",    makeProvider(cppSnippets, ['.', '>', ':', '#'])),
+        monaco.languages.registerCompletionItemProvider("c",      makeProvider(cSnippets,   ['.', '>', '#'])),
+        monaco.languages.registerCompletionItemProvider("python", makeProvider(pythonSnippets, ['.', '('])),
+        monaco.languages.registerCompletionItemProvider("java",   makeProvider(javaSnippets,   ['.', '('])),
       ];
     }
 

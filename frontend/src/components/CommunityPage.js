@@ -39,16 +39,19 @@ const CommunityPage = () => (
           <p style={{ color: 'rgba(26,19,16,0.6)', fontSize: '0.875rem', lineHeight: '1.65', flex: 1 }}>
             The core engine is 100% open source. Star the repo, open issues, or submit a pull request to help shape the project.
           </p>
-          <button
-            onClick={() => window.open('https://github.com/NkOffiCiAL07/AI-Powered-C-Execution-Flow-Visualizer', '_blank')}
+          <a
+            href="https://github.com/NkOffiCiAL07/AI-Powered-C-Execution-Flow-Visualizer"
+            target="_blank"
+            rel="noopener noreferrer"
             style={{
-              padding: '11px 28px', borderRadius: '10px', fontWeight: '700', fontSize: '0.875rem',
+              display: 'block', padding: '11px 28px', borderRadius: '10px', fontWeight: '700', fontSize: '0.875rem',
               cursor: 'pointer', background: 'var(--primary)', color: '#fff', border: 'none',
-              transition: 'opacity 0.15s', width: '100%'
+              transition: 'opacity 0.15s', width: '100%', textAlign: 'center',
+              textDecoration: 'none', boxSizing: 'border-box',
             }}
             onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
             onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-          >View Repository</button>
+          >View Repository</a>
         </div>
 
         {/* Discord */}

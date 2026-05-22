@@ -16,10 +16,11 @@ import MemorySpectrometer from "./components/MemorySpectrometer";
 import LangDropdown from "./components/LangDropdown";
 import KeyboardShortcutsModal from "./components/KeyboardShortcutsModal";
 import { FILE_NAMES } from "./components/NewProjectModal";
-import { 
-  analyzeCode, runCode, stepAnalyzeSession, explainCode, generateCode, 
-  updateFile, deleteFile, fetchProject, fetchFiles, createFile, fetchPublicProject, API_BASE_URL 
+import {
+  analyzeCode, runCode, stepAnalyzeSession, explainCode, generateCode,
+  updateFile, deleteFile, fetchProject, fetchFiles, createFile, fetchPublicProject, API_BASE_URL
 } from "./services/api";
+import { useAuth } from "./contexts/AuthContext";
 import "./App.css";
 import "./styles/CppEditorPage.css";
 
@@ -27,25 +28,6 @@ import "./styles/CppEditorPage.css";
 // effects and before the URL-sync effect can overwrite window.location.search.
 const _initialParams = new URLSearchParams(window.location.search);
 
-// Decode JWT payload and merge role / user_id into the stored user object.
-// Guests always get role:"guest"; authenticated users get role from the token
-// (defaults to "member" if the backend doesn't set it yet).
-function normalizeUser(userData, token) {
-  if (userData.provider === "guest" || userData.role === "guest") {
-    return { ...userData, role: "guest" };
-  }
-  if (token) {
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      return {
-        ...userData,
-        role: payload.role || "member",
-        user_id: payload.sub || payload.user_id || userData.id,
-      };
-    } catch {}
-  }
-  return { ...userData, role: "member" };
-}
 
 const DEFAULT_CODES = {
   cpp: `#include <iostream>
@@ -86,7 +68,17 @@ if __name__ == "__main__":
 };
 
 function App() {
-  const [user, setUser] = useState(null);
+  const {
+    user,
+    authLoading,
+    showLoginModal,
+    setShowLoginModal,
+    sessionExpiredBanner,
+    setSessionExpiredBanner,
+    login,
+    logout,
+  } = useAuth();
+
   const [language, setLanguage] = useState("cpp");
   const [code, setCode] = useState(DEFAULT_CODES.cpp);
   const [programInput, setProgramInput] = useState("");
@@ -110,10 +102,9 @@ function App() {
   const debugGenInputRef = useRef(null);
   const [serverDown, setServerDown] = useState(false);
   const [serverChecking, setServerChecking] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [sessionExpiredBanner, setSessionExpiredBanner] = useState(false);
   const [currentProject, setCurrentProject] = useState(null);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [breakpoints, setBreakpoints] = useState(new Set());
   const abortControllerRef = useRef(null);
   const aiAbortControllerRef = useRef(null);
   const stepAbortControllerRef = useRef(null);
@@ -166,30 +157,13 @@ function App() {
   }, [serverDown, checkServer]);
 
   useEffect(() => {
-    if (!user && (view === "editor" || view === "visualizer")) {
+    if (!user && (view === "editor" || view === "visualizer" || view === "dashboard")) {
       setView("landing");
     }
   }, [user, view]);
 
-  // Listen for 401 responses fired by apiFetch in api.js
+  // Restore hash-based code share — runs immediately, before auth resolves
   useEffect(() => {
-    const onExpired = () => {
-      setUser(null);
-      setView("landing");
-      setSessionExpiredBanner(true);
-    };
-    window.addEventListener("traceon:session-expired", onExpired);
-    return () => window.removeEventListener("traceon:session-expired", onExpired);
-  }, []);
-
-  useEffect(() => {
-    // Use module-level snapshot — immune to StrictMode double-mount and to
-    // replaceState calls made by the URL-sync effect between the two mounts.
-    const urlView = _initialParams.get("v");
-    const urlPid  = _initialParams.get("pid");
-    const urlFid  = _initialParams.get("fid");
-
-    // Restore hash-based code share (existing feature)
     try {
       const hash = new URLSearchParams(window.location.hash.slice(1));
       const lang = hash.get("lang");
@@ -199,42 +173,20 @@ function App() {
         if (encoded) setCode(decodeURIComponent(escape(atob(encoded))));
       }
     } catch {}
+  }, []);
 
-    // Restore user from localStorage
-    let restoredUser = null;
-    const savedUser  = localStorage.getItem("traceon_user");
-    const savedToken = localStorage.getItem("traceon_auth_token");
+  // Route to the correct view based on URL params — runs once auth resolves
+  useEffect(() => {
+    if (authLoading) return;
 
-    if (savedUser) {
-      try {
-        const parsed = JSON.parse(savedUser);
-        if (parsed.provider === "guest" || parsed.role === "guest") {
-          restoredUser = normalizeUser(parsed, null);
-          setUser(restoredUser);
-        } else if (savedToken) {
-          const payload = JSON.parse(atob(savedToken.split(".")[1]));
-          if (payload.exp && payload.exp * 1000 > Date.now()) {
-            restoredUser = normalizeUser(parsed, savedToken);
-            setUser(restoredUser);
-          } else {
-            localStorage.removeItem("traceon_user");
-            localStorage.removeItem("traceon_auth_token");
-          }
-        } else {
-          localStorage.removeItem("traceon_user");
-        }
-      } catch {
-        localStorage.removeItem("traceon_user");
-        localStorage.removeItem("traceon_auth_token");
-      }
-    }
+    const urlView = _initialParams.get("v");
+    const urlPid  = _initialParams.get("pid");
+    const urlFid  = _initialParams.get("fid");
 
-    // Restore view from URL params (only when a valid session exists)
     let projCtrl = null;
 
     if (urlView === "view" && urlPid) {
-      // P9.1: Public read-only view
-      setView("editor"); // Map view → editor but with restricted props
+      setView("editor");
       projCtrl = new AbortController();
       (async () => {
         try {
@@ -247,17 +199,14 @@ function App() {
           }
         } catch {}
       })();
-    } else if (restoredUser) {
-      const isMember = restoredUser.role === "member";
+    } else if (user) {
+      const isMember = user.role === "member";
 
       if (urlView === "dashboard" && isMember) {
         setView("dashboard");
-
       } else if (urlView === "docs" || urlView === "pricing" || urlView === "community") {
         setView(urlView);
-
       } else if (urlView === "editor" || urlView === "visualizer") {
-        // Visualizer can't be replayed from URL — restore as editor
         setView("editor");
         if (urlPid && isMember) {
           projCtrl = new AbortController();
@@ -275,15 +224,12 @@ function App() {
               }
             } catch (err) {
               if (err.name !== "AbortError") {
-                // Project was deleted or inaccessible — stay in plain editor
+                // Project inaccessible — stay in plain editor
               }
             }
           })();
         }
-
       } else {
-        // No URL view param -> keep the default "landing" view even if logged in.
-        // Users should click "Launch App" to enter their workspace.
         setView("landing");
       }
     }
@@ -295,7 +241,8 @@ function App() {
       if (runAbortControllerRef.current) runAbortControllerRef.current.abort();
       if (projCtrl) projCtrl.abort();
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading]);
 
   // Sync view + project → URL so refresh restores the same screen
   useEffect(() => {
@@ -313,23 +260,17 @@ function App() {
     window.history.replaceState(null, "", (search || window.location.pathname) + hash);
   }, [view, currentProject]);
 
-  const handleLogin = (userData, token) => {
-    const normalized = normalizeUser(userData, token);
-    setUser(normalized);
-    localStorage.setItem("traceon_user", JSON.stringify(normalized));
-    if (token) localStorage.setItem("traceon_auth_token", token);
-    setSessionExpiredBanner(false);
-    // Guests go straight to sandbox; members land on their dashboard
-    setView(normalized.role === "guest" ? "editor" : "dashboard");
-  };
+  const handleLogin = useCallback((userData, token) => {
+    login(userData, token);
+    const isGuest = userData.provider === "guest" || userData.role === "guest";
+    setView(isGuest ? "editor" : "dashboard");
+  }, [login]);
 
-  const handleLogout = () => {
-    setUser(null);
+  const handleLogout = useCallback(async () => {
+    await logout();
     setCurrentProject(null);
-    localStorage.removeItem("traceon_user");
-    localStorage.removeItem("traceon_auth_token");
     setView("landing");
-  };
+  }, [logout]);
 
   // Open a saved project in the editor
   const handleOpenProject = ({ project, files = [], activeFileId = null }) => {
@@ -924,6 +865,8 @@ function App() {
             onFileDelete={handleFileDelete}
             onFileRename={handleFileRename}
             onSignIn={() => setShowLoginModal(true)}
+            breakpoints={breakpoints}
+            onBreakpointsChange={setBreakpoints}
           />
         );
       case "visualizer":
@@ -1006,6 +949,8 @@ function App() {
                 language={language}
                 compact
                 compileError={error}
+                breakpoints={breakpoints}
+                onBreakpointsChange={setBreakpoints}
               />
               <div className="stdin-panel">
                 <div className="stdin-header">
@@ -1093,15 +1038,16 @@ function App() {
                 </div>
               )}
               {activeTab === "flow" ? (
-                <FlowVisualizer 
-                  result={analysisResult} 
-                  loading={loading} 
-                  stepLoading={stepLoading} 
-                  onLineChange={setCurrentLine} 
-                  code={code} 
-                  onNext={(stepType) => handleStep("next", stepType)} 
-                  onBack={() => handleStep("back")} 
+                <FlowVisualizer
+                  result={analysisResult}
+                  loading={loading}
+                  stepLoading={stepLoading}
+                  onLineChange={setCurrentLine}
+                  code={code}
+                  onNext={(stepType) => handleStep("next", stepType)}
+                  onBack={() => handleStep("back")}
                   onExplainStep={handleExplainStep}
+                  breakpoints={breakpoints}
                 />
               ) : activeTab === "memory" ? (
                 <MemorySpectrometer result={analysisResult} currentStep={analysisResult?.cursor ?? 0} />
@@ -1165,7 +1111,7 @@ function App() {
         </div>
       )}
       {renderView()}
-      <LoginModal isOpen={showLoginModal} onLogin={(userData, token) => { handleLogin(userData, token); setShowLoginModal(false); }} onClose={() => setShowLoginModal(false)} />
+      <LoginModal isOpen={showLoginModal} onLogin={handleLogin} onClose={() => setShowLoginModal(false)} />
       <KeyboardShortcutsModal isOpen={showShortcuts} onClose={() => setShowShortcuts(false)} />
     </div>
   );

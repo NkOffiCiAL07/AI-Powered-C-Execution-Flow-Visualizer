@@ -1,3 +1,5 @@
+import logger from "../utils/logger";
+
 export const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
 // ── Central authenticated fetch ──────────────────────────────────────────────
@@ -5,12 +7,16 @@ export const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8
 // App.js can clear state and redirect), and normalises error shapes.
 async function apiFetch(url, options = {}) {
   const token = localStorage.getItem("traceon_auth_token");
+  const method = options.method || "GET";
 
+  // Omit Content-Type on GET requests — it confuses some proxies and is incorrect per spec
   const headers = {
-    "Content-Type": "application/json",
+    ...(method !== "GET" ? { "Content-Type": "application/json" } : {}),
     ...(options.headers || {}),
   };
   if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  logger.debug(`${method} ${url}`);
 
   let response;
   try {
@@ -21,30 +27,37 @@ async function apiFetch(url, options = {}) {
       err.message === "Failed to fetch" ||
       err.message.includes("NetworkError")
     ) {
+      logger.warn("Network error — backend unreachable", { url });
       throw new Error(
         "Cannot connect to the server. Make sure the backend is running " +
           "(python run_server.py) on port 8000."
       );
     }
+    logger.error("Fetch error", { url, message: err.message });
     throw err;
   }
 
-  // 401 → token expired or revoked; clear session and notify the app
+  // 401 → only fire session-expired when the user had an active token;
+  // avoids spuriously clearing state on unauthenticated endpoint 401s
   if (response.status === 401) {
+    logger.warn("Session expired — clearing auth state");
     localStorage.removeItem("traceon_user");
     localStorage.removeItem("traceon_auth_token");
-    window.dispatchEvent(new CustomEvent("traceon:session-expired"));
+    if (token) {
+      window.dispatchEvent(new CustomEvent("traceon:session-expired"));
+    }
     throw new Error("Session expired. Please sign in again.");
   }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(
+    const message =
       errorData.detail ||
-        errorData.error ||
-        errorData.message ||
-        `Server error: ${response.status}`
-    );
+      errorData.error ||
+      errorData.message ||
+      `Server error: ${response.status}`;
+    logger.error(`API error ${response.status}`, { url, message });
+    throw new Error(message);
   }
 
   return response.json();
@@ -92,6 +105,14 @@ export async function generateCode(prompt, language, signal) {
 
 export async function explainCode(code, signal, language = "cpp") {
   return apiFetch(`${API_BASE_URL}/explain`, {
+    method: "POST",
+    body: JSON.stringify({ code, language }),
+    signal,
+  });
+}
+
+export async function checkCode(code, language = "cpp", signal) {
+  return apiFetch(`${API_BASE_URL}/check`, {
     method: "POST",
     body: JSON.stringify({ code, language }),
     signal,

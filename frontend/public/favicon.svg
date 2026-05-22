@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Rounded background -->
+  <rect width="32" height="32" rx="7" fill="#C96A48"/>
+  <!-- Terminal caret > -->
+  <polyline points="7,11 14,16 7,21"
+    stroke="white" stroke-width="2.8" fill="none"
+    stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Cursor underscore -->
+  <line x1="16" y1="21" x2="25" y2="21"
+    stroke="white" stroke-width="2.8" stroke-linecap="round"/>
+</svg>

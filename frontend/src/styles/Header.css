@@ -130,6 +130,9 @@
 .header-nav .nav-link {
   background: none;
   border: none;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
   color: var(--text-muted);
   font-size: 13px;
   font-weight: 500;

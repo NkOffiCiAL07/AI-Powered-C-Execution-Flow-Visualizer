@@ -252,3 +252,13 @@ class FileUpsertRequest(BaseModel):
     language: str
     code: str
     snapshots: list[dict] | None = None
+
+
+class CheckCodeRequest(BaseModel):
+    code: str
+    language: str = "cpp"
+
+
+class CheckCodeResponse(BaseModel):
+    ok: bool
+    errors: str = ""

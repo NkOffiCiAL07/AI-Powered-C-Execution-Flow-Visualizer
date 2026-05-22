@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import CodeEditor from "./CodeEditor";
 import AiExplanation from "./AiExplanation";
 import LangDropdown from "./LangDropdown";
+import { checkCode } from "../services/api";
 import "../styles/CppEditorPage.css";
 
 export default function CppEditorPage({
@@ -32,6 +33,8 @@ export default function CppEditorPage({
   onFileDelete,
   onFileRename,
   onSignIn,
+  breakpoints,
+  onBreakpointsChange,
 }) {
   const isGuest = !user || user.role === "guest";
   const [prompt, setPrompt] = useState("");
@@ -44,6 +47,33 @@ export default function CppEditorPage({
   const [renamingFileId, setRenamingFileId] = useState(null);
   const [renameValue, setRenameValue] = useState("");
   const renameInputRef = useRef(null);
+  const [liveCheckError, setLiveCheckError] = useState(null);
+  const checkTimerRef = useRef(null);
+  const checkControllerRef = useRef(null);
+
+  useEffect(() => {
+    if (!code || !code.trim()) { setLiveCheckError(null); return; }
+
+    clearTimeout(checkTimerRef.current);
+    // Cancel any in-flight request immediately so stale results never overwrite newer ones
+    checkControllerRef.current?.abort();
+
+    checkTimerRef.current = setTimeout(async () => {
+      const controller = new AbortController();
+      checkControllerRef.current = controller;
+      try {
+        const res = await checkCode(code, language, controller.signal);
+        setLiveCheckError(res.ok ? null : res.errors);
+      } catch (e) {
+        if (e.name !== "AbortError") setLiveCheckError(null);
+      }
+    }, 1500);
+
+    return () => {
+      clearTimeout(checkTimerRef.current);
+      checkControllerRef.current?.abort();
+    };
+  }, [code, language]);
 
   const handleSave = useCallback(async () => {
     if (!onSave || saveState === "saving") return;
@@ -307,7 +337,9 @@ export default function CppEditorPage({
             language={language}
             performance={performance}
             compact
-            compileError={result?.compile_error || null}
+            compileError={liveCheckError || result?.compile_error || null}
+            breakpoints={breakpoints}
+            onBreakpointsChange={onBreakpointsChange}
           />
         </div>
       </section>

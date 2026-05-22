@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import '../styles/LoginModal.css';
 
-const BACKEND = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const BACKEND = process.env.REACT_APP_API_URL || "http://localhost:8000";
+// Compare against the *origin* only — avoids mismatches when REACT_APP_API_URL includes a path
+const BACKEND_ORIGIN = (() => {
+  try { return new URL(BACKEND).origin; } catch { return BACKEND; }
+})();
 
 const LoginModal = ({ isOpen, onClose, onLogin }) => {
   const [loading, setLoading] = useState(false);
@@ -64,7 +68,7 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
     }, 600);
 
     const onMessage = (event) => {
-      if (event.origin !== BACKEND) return;
+      if (event.origin !== BACKEND_ORIGIN) return;
 
       clearInterval(pollRef.current);
       window.removeEventListener('message', onMessage);

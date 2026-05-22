@@ -165,6 +165,16 @@
   background-color: var(--bg-hover);
 }
 
+.breakpoint-glyph {
+  background: #ef4444;
+  border-radius: 50%;
+  width: 12px !important;
+  height: 12px !important;
+  margin-top: 4px;
+  margin-left: 2px;
+  cursor: pointer;
+}
+
 .heatmap-gutter {
   width: 4px !important;
   margin-left: 1px;

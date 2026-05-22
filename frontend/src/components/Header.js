@@ -112,10 +112,10 @@ export default function Header({ view, onSwitchView, user, onLogout, onSignIn, l
       {/* ── Center: nav links (non-app views only) ── */}
       {!inApp && (
         <nav className="header-nav" aria-label="Main navigation">
-          <button className={`nav-link ${view === "landing"   ? "active" : ""}`} onClick={() => onSwitchView("landing")}>Home</button>
-          <button className={`nav-link ${view === "docs"      ? "active" : ""}`} onClick={() => onSwitchView("docs")}>Docs</button>
-          <button className={`nav-link ${view === "pricing"   ? "active" : ""}`} onClick={() => onSwitchView("pricing")}>Pricing</button>
-          <button className={`nav-link ${view === "community" ? "active" : ""}`} onClick={() => onSwitchView("community")}>Community</button>
+          <a className={`nav-link ${view === "landing"   ? "active" : ""}`} href="?v=landing"   onClick={(e) => { e.preventDefault(); onSwitchView("landing"); }}>Home</a>
+          <a className={`nav-link ${view === "docs"      ? "active" : ""}`} href="?v=docs"      onClick={(e) => { e.preventDefault(); onSwitchView("docs"); }}>Docs</a>
+          <a className={`nav-link ${view === "pricing"   ? "active" : ""}`} href="?v=pricing"   onClick={(e) => { e.preventDefault(); onSwitchView("pricing"); }}>Pricing</a>
+          <a className={`nav-link ${view === "community" ? "active" : ""}`} href="?v=community" onClick={(e) => { e.preventDefault(); onSwitchView("community"); }}>Community</a>
         </nav>
       )}
 

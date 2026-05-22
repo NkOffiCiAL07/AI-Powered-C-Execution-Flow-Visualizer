@@ -122,16 +122,22 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, user }) => {
   const getFooterLinkAction = (label) => {
     const actions = {
       'Docs':          () => onSwitchView('docs'),
-      'Changelog':     () => window.open(`${GITHUB_URL}/commits/main`, '_blank'),
-      'Roadmap':       () => window.open(`${GITHUB_URL}/blob/main/plan.md`, '_blank'),
       'Tutorials':     () => onSwitchView('docs'),
       'Examples':      () => onSwitchView('editor'),
       'API Reference': () => onSwitchView('docs'),
       'Community':     () => onSwitchView('community'),
       'Pricing':       () => onSwitchView('pricing'),
-      'Contact':       () => window.open('mailto:nishantkumar19041@gmail.com', '_blank'),
     };
     return actions[label] || null;
+  };
+
+  const getFooterLinkHref = (label) => {
+    const hrefs = {
+      'Changelog': `${GITHUB_URL}/commits/main`,
+      'Roadmap':   `${GITHUB_URL}/blob/main/plan.md`,
+      'Contact':   'mailto:nishantkumar19041@gmail.com',
+    };
+    return hrefs[label] || null;
   };
 
   const handleViewDemo = () => {
@@ -731,14 +737,17 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, user }) => {
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <button
+                <a
+                  href="https://github.com/NkOffiCiAL07/AI-Powered-C-Execution-Flow-Visualizer"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="ghost-btn flex items-center gap-3 px-8 py-4 rounded-xl font-bold text-sm"
-                  onClick={() => window.open('https://github.com/NkOffiCiAL07/AI-Powered-C-Execution-Flow-Visualizer', '_blank')}>
+                  style={{ textDecoration: 'none' }}>
                   <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#C96A48' }}>star</span>
                   Star on GitHub
                   <div className="w-px h-4 mx-1" style={{ background: border20 }} />
                   <span style={{ color: '#C96A48', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px' }}>{githubStars ?? '★'}</span>
-                </button>
+                </a>
                 <button className="cta-primary flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm" onClick={launch}>
                   <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>rocket_launch</span>
                   Start for Free
@@ -776,15 +785,22 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, user }) => {
               </p>
               <div className="flex gap-2.5">
                 {[
-                  { icon: 'terminal',    label: 'GitHub',    onClick: () => window.open(GITHUB_URL, '_blank') },
+                  { icon: 'terminal',    label: 'GitHub',    href: GITHUB_URL },
                   { icon: 'description', label: 'Docs',      onClick: () => onSwitchView('docs') },
                   { icon: 'group',       label: 'Community', onClick: () => onSwitchView('community') },
-                  { icon: 'mail',        label: 'Email',     onClick: () => window.open('mailto:nishantkumar19041@gmail.com', '_blank') },
+                  { icon: 'mail',        label: 'Email',     href: 'mailto:nishantkumar19041@gmail.com' },
                 ].map(s => (
-                  <button key={s.label} type="button" aria-label={s.label} className="social-icon"
-                     onClick={s.onClick}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>{s.icon}</span>
-                  </button>
+                  s.href ? (
+                    <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
+                      aria-label={s.label} className="social-icon">
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>{s.icon}</span>
+                    </a>
+                  ) : (
+                    <button key={s.label} type="button" aria-label={s.label} className="social-icon"
+                      onClick={s.onClick}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>{s.icon}</span>
+                    </button>
+                  )
                 ))}
               </div>
             </div>
@@ -794,13 +810,16 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, user }) => {
                 <ul className="flex flex-col gap-3">
                   {col.links.map(link => {
                     const action = getFooterLinkAction(link);
+                    const href = getFooterLinkHref(link);
                     return (
                       <li key={link}>
-                        <a
-                          href="#0"
-                          className="footer-link"
-                          onClick={action ? (e) => { e.preventDefault(); action(); } : undefined}
-                        >{link}</a>
+                        {href ? (
+                          <a href={href} target="_blank" rel="noopener noreferrer" className="footer-link">{link}</a>
+                        ) : (
+                          <a href="#0" className="footer-link"
+                            onClick={action ? (e) => { e.preventDefault(); action(); } : undefined}
+                          >{link}</a>
+                        )}
                       </li>
                     );
                   })}
