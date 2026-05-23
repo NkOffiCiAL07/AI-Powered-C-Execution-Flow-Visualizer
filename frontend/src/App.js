@@ -1110,7 +1110,9 @@ function App() {
           </button>
         </div>
       )}
-      {renderView()}
+      <div key={view} className="view-enter" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+        {renderView()}
+      </div>
       <LoginModal isOpen={showLoginModal} onLogin={handleLogin} onClose={() => setShowLoginModal(false)} />
       <KeyboardShortcutsModal isOpen={showShortcuts} onClose={() => setShowShortcuts(false)} />
     </div>
