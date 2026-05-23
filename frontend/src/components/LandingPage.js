@@ -227,14 +227,25 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, user }) => {
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <button onClick={launch} className="cta-primary flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm w-full sm:w-auto justify-center">
-                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>play_arrow</span>
-                  {user ? (user.role === 'member' ? 'Open Dashboard' : 'Go to Editor') : 'Start Visualizing — Free'}
-                </button>
-                <button onClick={handleViewDemo} className="cta-secondary flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm w-full sm:w-auto justify-center">
-                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>visibility</span>
-                  View Demo
-                </button>
+                {user?.role === 'member' ? (
+                  /* Member: header already has Dashboard — hero gives direct editor access */
+                  <button onClick={() => onSwitchView('editor')} className="cta-primary flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm w-full sm:w-auto justify-center">
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>code</span>
+                    Open Editor
+                  </button>
+                ) : (
+                  /* Guest / logged-out: full CTA pair */
+                  <>
+                    <button onClick={launch} className="cta-primary flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm w-full sm:w-auto justify-center">
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>play_arrow</span>
+                      {user ? 'Go to Editor' : 'Start Visualizing — Free'}
+                    </button>
+                    <button onClick={handleViewDemo} className="cta-secondary flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm w-full sm:w-auto justify-center">
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>visibility</span>
+                      View Demo
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -748,9 +759,12 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, user }) => {
                   <div className="w-px h-4 mx-1" style={{ background: border20 }} />
                   <span style={{ color: '#C96A48', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px' }}>{githubStars ?? '★'}</span>
                 </a>
-                <button className="cta-primary flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm" onClick={launch}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>rocket_launch</span>
-                  Start for Free
+                <button className="cta-primary flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm"
+                  onClick={() => user?.role === 'member' ? onSwitchView('editor') : launch()}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                    {user?.role === 'member' ? 'code' : 'rocket_launch'}
+                  </span>
+                  {user?.role === 'member' ? 'Open Editor' : 'Start for Free'}
                 </button>
               </div>
 
