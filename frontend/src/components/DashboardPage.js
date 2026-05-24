@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import NewProjectModal from './NewProjectModal';
-import { fetchProjects, deleteProject, fetchFiles, fetchTrash, restoreProject, emptyTrash } from '../services/api';
+import NewsPage from './NewsPage';
+import { fetchProjects, deleteProject, fetchFiles } from '../services/api';
 import { useTheme } from '../theme';
 import '../styles/DashboardPage.css';
 
@@ -31,13 +32,10 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
   const { theme, setTheme } = useTheme();
   const [activeNav, setActiveNav]       = useState('projects');
   const [projects, setProjects]         = useState([]);
-  const [trash, setTrash]               = useState([]);
   const [loadingProjects, setLoading]   = useState(true);
-  const [loadingTrash, setLoadingTrash] = useState(false);
   const [fetchError, setFetchError]     = useState(null);
   const [showNewModal, setShowNewModal] = useState(false);
   const [deletingId, setDeletingId]     = useState(null);
-  const [restoringId, setRestoringId]   = useState(null);
   const [openingId, setOpeningId]       = useState(null);
   const [searchQuery, setSearchQuery]   = useState('');
   const [langFilter, setLangFilter]     = useState('all');
@@ -58,57 +56,21 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
     }
   }, []);
 
-  const loadTrash = useCallback(async () => {
-    setLoadingTrash(true);
-    try {
-      const data = await fetchTrash();
-      setTrash(data.projects || []);
-    } catch (err) {
-      if (err.name !== 'AbortError') console.error('Failed to load trash:', err);
-    } finally {
-      setLoadingTrash(false);
-    }
-  }, []);
-
-  useEffect(() => { 
+  useEffect(() => {
     if (activeNav === 'projects') loadProjects();
-    if (activeNav === 'trash') loadTrash();
-  }, [activeNav, loadProjects, loadTrash]);
+  }, [activeNav, loadProjects]);
 
   const handleDelete = async (e, projectId) => {
     e.stopPropagation();
-    if (!window.confirm('Move this project to trash?')) return;
+    if (!window.confirm('Permanently delete this project? This cannot be undone.')) return;
     setDeletingId(projectId);
     try {
       await deleteProject(projectId);
       setProjects(prev => prev.filter(p => p.id !== projectId));
     } catch (err) {
-      alert(err.message || 'Failed to move project to trash');
+      alert(err.message || 'Failed to delete project');
     } finally {
       setDeletingId(null);
-    }
-  };
-
-  const handleRestore = async (e, projectId) => {
-    e.stopPropagation();
-    setRestoringId(projectId);
-    try {
-      await restoreProject(projectId);
-      setTrash(prev => prev.filter(p => p.id !== projectId));
-    } catch (err) {
-      alert(err.message || 'Failed to restore project');
-    } finally {
-      setRestoringId(null);
-    }
-  };
-
-  const handleEmptyTrash = async () => {
-    if (!window.confirm('Permanently delete all projects in trash? This cannot be undone.')) return;
-    try {
-      await emptyTrash();
-      setTrash([]);
-    } catch (err) {
-      alert(err.message || 'Failed to empty trash');
     }
   };
 
@@ -186,11 +148,11 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
             My Projects
           </button>
           <button
-            className={`dash-nav-item ${activeNav === 'trash' ? 'active' : ''}`}
-            onClick={() => setActiveNav('trash')}
+            className={`dash-nav-item ${activeNav === 'news' ? 'active' : ''}`}
+            onClick={() => setActiveNav('news')}
           >
-            <span className="material-symbols-outlined">delete</span>
-            Trash
+            <span className="material-symbols-outlined">newspaper</span>
+            Weekly Digest
           </button>
           <button
             className={`dash-nav-item ${activeNav === 'settings' ? 'active' : ''}`}
@@ -348,7 +310,7 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
                               className="proj-delete-btn"
                               onClick={(e) => handleDelete(e, proj.id)}
                               disabled={deletingId === proj.id}
-                              title="Move to trash"
+                              title="Delete project"
                             >
                               <span className="material-symbols-outlined">
                                 {deletingId === proj.id ? 'hourglass_empty' : 'delete'}
@@ -411,66 +373,8 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
           </>
         )}
 
-        {activeNav === 'trash' && (
-          <>
-            <div className="dash-topbar">
-              <div>
-                <h1 className="dash-title">Trash</h1>
-                <p className="dash-subtitle">
-                  {trash.length > 0
-                    ? `${trash.length} project${trash.length !== 1 ? 's' : ''}`
-                    : 'Trash is empty'}
-                </p>
-              </div>
-              {trash.length > 0 && (
-                <button className="dash-new-btn" style={{ background: 'var(--bg-card)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }} onClick={handleEmptyTrash}>
-                  <span className="material-symbols-outlined">delete_forever</span>
-                  Empty Trash
-                </button>
-              )}
-            </div>
-
-            {loadingTrash ? (
-              <div className="dash-loading">
-                <div className="dash-spinner" />
-                <span>Loading trash…</span>
-              </div>
-            ) : trash.length === 0 ? (
-              <div className="dash-empty-state">
-                <span className="material-symbols-outlined dash-empty-icon">delete</span>
-                <h3>Trash is empty</h3>
-                <p>Deleted projects will appear here.</p>
-              </div>
-            ) : (
-              <div className="proj-grid">
-                {trash.map(proj => (
-                  <div key={proj.id} className="proj-card">
-                    <div className="proj-card-header">
-                      <span className={`lang-badge lang-${proj.language}`}>
-                        {LANG_LABELS[proj.language] || proj.language}
-                      </span>
-                      <button
-                        className="proj-delete-btn"
-                        onClick={(e) => handleRestore(e, proj.id)}
-                        disabled={restoringId === proj.id}
-                        title="Restore project"
-                        style={{ color: 'var(--primary)' }}
-                      >
-                        <span className="material-symbols-outlined">
-                          {restoringId === proj.id ? 'hourglass_empty' : 'restore'}
-                        </span>
-                      </button>
-                    </div>
-                    <div className="proj-card-name">{proj.name}</div>
-                    <div className="proj-card-meta">
-                      <span className="material-symbols-outlined proj-clock">delete</span>
-                      Deleted {relativeTime(proj.deleted_at || proj.last_accessed)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
+        {activeNav === 'news' && (
+          <NewsPage user={user} />
         )}
 
         {activeNav === 'settings' && (

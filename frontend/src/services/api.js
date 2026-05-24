@@ -125,24 +125,6 @@ export async function fetchProjects(signal) {
   return apiFetch(`${API_BASE_URL}/projects`, { signal });
 }
 
-export async function fetchTrash(signal) {
-  return apiFetch(`${API_BASE_URL}/projects/trash`, { signal });
-}
-
-export async function restoreProject(projectId, signal) {
-  return apiFetch(`${API_BASE_URL}/projects/${projectId}/restore`, {
-    method: "POST",
-    signal,
-  });
-}
-
-export async function emptyTrash(signal) {
-  return apiFetch(`${API_BASE_URL}/projects/trash`, {
-    method: "DELETE",
-    signal,
-  });
-}
-
 export async function fetchProject(projectId, signal) {
   return apiFetch(`${API_BASE_URL}/projects/${projectId}`, { signal });
 }
@@ -192,6 +174,28 @@ export async function updateFile(projectId, fileId, name, language, code, signal
 export async function deleteFile(projectId, fileId, signal) {
   return apiFetch(`${API_BASE_URL}/projects/${projectId}/files/${fileId}`, {
     method: "DELETE",
+    signal,
+  });
+}
+
+// ── News ──────────────────────────────────────────────────────────────────────
+
+export async function fetchNews(signal) {
+  return apiFetch(`${API_BASE_URL}/news`, { signal });
+}
+
+export async function refreshNews(signal) {
+  return apiFetch(`${API_BASE_URL}/news/refresh`, { method: "POST", signal });
+}
+
+export async function fetchComments(articleId, signal) {
+  return apiFetch(`${API_BASE_URL}/news/${articleId}/comments`, { signal });
+}
+
+export async function postComment(articleId, text, signal) {
+  return apiFetch(`${API_BASE_URL}/news/${articleId}/comments`, {
+    method: "POST",
+    body: JSON.stringify({ text }),
     signal,
   });
 }

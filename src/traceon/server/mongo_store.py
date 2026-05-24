@@ -232,42 +232,14 @@ class MongoAppStore:
         if not self.enabled:
             return False
         try:
-            res = self._db.projects.update_one(
-                {"_id": self._ObjId(project_id), "owner_id": owner_id},
-                {"$set": {"deleted_at": datetime.now(timezone.utc)}}
+            self._db.files.delete_many({"project_id": project_id})
+            res = self._db.projects.delete_one(
+                {"_id": self._ObjId(project_id), "owner_id": owner_id}
             )
-            return bool(res.modified_count)
+            return bool(res.deleted_count)
         except Exception:
             pass
         return False
-
-    def restore_project(self, owner_id: str, project_id: str) -> bool:
-        if not self.enabled:
-            return False
-        try:
-            res = self._db.projects.update_one(
-                {"_id": self._ObjId(project_id), "owner_id": owner_id},
-                {"$unset": {"deleted_at": ""}}
-            )
-            return bool(res.modified_count)
-        except Exception:
-            return False
-
-    def empty_trash(self, owner_id: str) -> int:
-        if not self.enabled:
-            return 0
-        try:
-            projects = list(self._db.projects.find({"owner_id": owner_id, "deleted_at": {"$exists": True}}, {"_id": 1}))
-            if not projects:
-                return 0
-            
-            project_ids = [str(p["_id"]) for p in projects]
-            self._db.files.delete_many({"project_id": {"$in": project_ids}})
-            
-            res = self._db.projects.delete_many({"owner_id": owner_id, "deleted_at": {"$exists": True}})
-            return res.deleted_count
-        except Exception:
-            return 0
 
 
     # ── Files ─────────────────────────────────────────────────────────────────
