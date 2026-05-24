@@ -32,43 +32,40 @@ import "./styles/CppEditorPage.css";
 const _initialParams = new URLSearchParams(window.location.search);
 
 
+// Minimal starter templates — no demo logic, just the boilerplate
 const DEFAULT_CODES = {
   cpp: `#include <iostream>
 using namespace std;
 
 int main() {
-    int x = 5;
-    int y = 3;
-    int z = x + y;
-    cout << "z = " << z << endl;
+    // Write your code here
+
     return 0;
 }`,
   c: `#include <stdio.h>
 
 int main() {
-    int x = 5;
-    int y = 3;
-    int z = x + y;
-    printf("z = %d\\n", z);
+    // Write your code here
+
     return 0;
 }`,
-  python: `def main():
-    x = 5
-    y = 3
-    z = x + y
-    print(f"z = {z}")
-
-if __name__ == "__main__":
-    main()`,
+  python: `# Write your code here
+`,
   java: `public class Main {
     public static void main(String[] args) {
-        int x = 5;
-        int y = 3;
-        int z = x + y;
-        System.out.println("z = " + z);
+        // Write your code here
     }
 }`,
 };
+
+// Returns a Java starter template with the class name derived from the filename.
+// "HelloWorld.java" → "public class HelloWorld { ... }"
+function getJavaTemplate(fileName) {
+  const base = (fileName || 'Main.java').replace(/\.java$/i, '').trim();
+  // Capitalise first char to ensure a valid identifier
+  const className = base ? base.charAt(0).toUpperCase() + base.slice(1) : 'Main';
+  return `public class ${className} {\n    public static void main(String[] args) {\n        // Write your code here\n    }\n}`;
+}
 
 function App() {
   const {
@@ -367,7 +364,9 @@ function App() {
     
     try {
       setLoading(true);
-      const { file } = await createFile(project.id, name, lang, DEFAULT_CODES[lang] || "");
+      // For Java, use a template whose class name matches the filename
+      const initialCode = lang === 'java' ? getJavaTemplate(name) : (DEFAULT_CODES[lang] || "");
+      const { file } = await createFile(project.id, name, lang, initialCode);
       setCurrentProject(prev => ({
         ...prev,
         files: [...prev.files, file],
@@ -544,14 +543,19 @@ function App() {
   const handleLanguageChange = (newLang) => {
     // If a project file is open and its name is the default for the current language,
     // auto-rename it to the default for the new language (e.g. main.cpp → Main.java)
+    let targetFileName = FILE_NAMES[newLang]; // default filename for the new language
     if (currentProject?.activeFileId) {
       const activeFile = currentProject.files?.find(f => f.id === currentProject.activeFileId);
       if (activeFile && FILE_NAMES[language] === activeFile.name && FILE_NAMES[newLang]) {
         handleFileRename(activeFile.id, FILE_NAMES[newLang]);
+      } else if (activeFile) {
+        // Keep track of the actual current filename for template generation
+        targetFileName = activeFile.name;
       }
     }
     setLanguage(newLang);
-    setCode(DEFAULT_CODES[newLang] || "");
+    // For Java, the starter class name must match the file's name
+    setCode(newLang === 'java' ? getJavaTemplate(targetFileName) : (DEFAULT_CODES[newLang] || ""));
     setCurrentLine(null);
     setAnalysisResult(null);
     setAiExplanation(null);
