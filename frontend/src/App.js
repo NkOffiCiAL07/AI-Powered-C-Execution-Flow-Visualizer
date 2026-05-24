@@ -18,7 +18,7 @@ import LangDropdown from "./components/LangDropdown";
 import KeyboardShortcutsModal from "./components/KeyboardShortcutsModal";
 import { FILE_NAMES } from "./components/NewProjectModal";
 import {
-  analyzeCode, runCode, stepAnalyzeSession, explainCode, generateCode,
+  analyzeCode, runCode, stepAnalyzeSession, explainCode, generateCode, optimizeCode,
   updateFile, deleteFile, fetchProject, fetchFiles, createFile, fetchPublicProject, API_BASE_URL,
   debugWithBreakpoints,
 } from "./services/api";
@@ -770,14 +770,6 @@ function App() {
       return;
     }
 
-    const hotPath = Object.entries(performanceMetrics.line_hits || {})
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([line, hits]) => `Line ${line} (hit ${hits} times)`)
-      .join(", ");
-
-    const prompt = `I have a ${language} program with performance bottlenecks. The hottest paths are: ${hotPath}. Total execution time: ${performanceMetrics.total_execution_time_ms.toFixed(2)}ms. Please suggest specific algorithmic optimizations for these hotspots.`;
-    
     if (aiAbortControllerRef.current) {
       aiAbortControllerRef.current.abort();
     }
@@ -787,13 +779,14 @@ function App() {
     setError(null);
     setActiveTab("ai");
     try {
-      const result = await generateCode(prompt, language, aiAbortControllerRef.current.signal);
-      setAiExplanation({
-        explanation: result.code || result.explanation || "No optimization suggestions provided.",
-        time_complexity: "N/A (Performance Audit)",
-        space_complexity: "N/A (Performance Audit)",
-        key_points: ["Performance Hotspot Analysis", ...hotPath.split(", ")]
-      });
+      // Uses the dedicated /optimize endpoint — returns human-readable advice, never raw code
+      const result = await optimizeCode(
+        code,
+        language,
+        performanceMetrics,
+        aiAbortControllerRef.current.signal
+      );
+      setAiExplanation(result); // ExplainCodeResponse: explanation + complexity + key_points
     } catch (err) {
       if (err.name === "AbortError") return;
       setError(err.message || "Optimization audit failed");

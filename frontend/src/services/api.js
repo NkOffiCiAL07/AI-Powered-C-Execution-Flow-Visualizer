@@ -111,6 +111,19 @@ export async function explainCode(code, signal, language = "cpp") {
   });
 }
 
+export async function optimizeCode(code, language = "cpp", metrics = {}, signal) {
+  return apiFetch(`${API_BASE_URL}/optimize`, {
+    method: "POST",
+    body: JSON.stringify({
+      code,
+      language,
+      line_hits: metrics.line_hits || {},
+      step_count: metrics.step_count || 0,
+    }),
+    signal,
+  });
+}
+
 export async function checkCode(code, language = "cpp", signal) {
   return apiFetch(`${API_BASE_URL}/check`, {
     method: "POST",

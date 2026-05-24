@@ -80,7 +80,7 @@ def _is_rate_limited(ip: str) -> bool:
 
 
 from traceon.server.api import router as sessions_router, session_manager
-from traceon.server.ai_service import explain_code_ai, generate_code_ai
+from traceon.server.ai_service import explain_code_ai, generate_code_ai, optimize_code_ai
 from traceon.server.auth import optional_user, require_member, router as auth_router
 from traceon.server.news import router as news_router, start_news_scheduler
 from traceon.server.mongo_store import mongo_app_store
@@ -100,6 +100,7 @@ from traceon.server.models import (
     FileUpsertRequest,
     GenerateCodeRequest,
     GenerateCodeResponse,
+    OptimizeCodeRequest,
     PerformanceMetricsDTO,
     ProjectCreateRequest,
     RunCodeRequest,
@@ -834,6 +835,22 @@ def create_app() -> FastAPI:
         except Exception as error:
             logger.exception("AI explain failed [%s]", client_ip)
             raise HTTPException(status_code=500, detail=f"AI explanation failed: {error}") from error
+
+    @app.post("/optimize", response_model=ExplainCodeResponse, tags=["analysis"])
+    def optimize_code(req: OptimizeCodeRequest, http_request: Request):
+        """Performance-focused analysis — returns human-readable optimization advice, never source code."""
+        client_ip = http_request.client.host if http_request.client else "unknown"
+        if _is_rate_limited(client_ip):
+            logger.warning("Rate limit hit on /optimize [%s]", client_ip)
+            raise HTTPException(status_code=429, detail="Rate limit exceeded (10 req/min). Please wait before trying again.")
+        if not req.code or not req.code.strip():
+            raise HTTPException(status_code=400, detail="No code provided")
+        logger.info("AI optimize: lang=%s code_len=%d [%s]", req.language or "cpp", len(req.code), client_ip)
+        try:
+            return optimize_code_ai(req.code, req.language or "cpp", req.line_hits, req.step_count)
+        except Exception as error:
+            logger.exception("AI optimize failed [%s]", client_ip)
+            raise HTTPException(status_code=500, detail=f"AI optimization failed: {error}") from error
 
     # ── Public View (P9.1) ──────────────────────────────────────────────────
 

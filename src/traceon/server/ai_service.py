@@ -136,6 +136,79 @@ def _is_code_truncated(code: str, lang_label: str) -> bool:
     return opens > closes
 
 
+def optimize_code_ai(code: str, language: str = "cpp",
+                     line_hits: dict = None, step_count: int = 0) -> ExplainCodeResponse:
+    """Analyse code for performance bottlenecks and return human-readable optimization advice."""
+    api_key = os.getenv("GEMINI_API_KEY")
+    if api_key:
+        try:
+            return _gemini_optimize(code, language, api_key, line_hits or {}, step_count)
+        except Exception as e:
+            logger.warning(f"Gemini optimize failed: {e}")
+            raise
+    raise RuntimeError("GEMINI_API_KEY is not configured. Add it to your .env file.")
+
+
+def _gemini_optimize(code: str, language: str, api_key: str,
+                     line_hits: dict, step_count: int) -> ExplainCodeResponse:
+    from google import genai
+    from google.genai import types
+
+    lang_labels = {"cpp": "C++", "c": "C", "python": "Python", "java": "Java"}
+    lang_label = lang_labels.get(language, "C++")
+
+    # Build hotspot context string
+    hotspots = ""
+    if line_hits:
+        top = sorted(line_hits.items(), key=lambda x: -x[1])[:5]
+        hotspots = "\n".join(f"  Line {ln}: executed {cnt} time(s)" for ln, cnt in top)
+    elif step_count:
+        hotspots = f"  Total execution steps recorded: {step_count}"
+    else:
+        hotspots = "  (No profiling data available — analysis based on static code review)"
+
+    prompt = f"""You are an expert {lang_label} performance engineer.
+Analyse the following {lang_label} code for performance issues and provide actionable optimization advice.
+
+Execution hotspots from the debugger:
+{hotspots}
+
+Return a JSON object with exactly these keys — no markdown, no code fences, raw JSON only:
+- "explanation": 2-3 sentences summarising the main performance characteristics and the single most impactful improvement the developer should make.
+- "time_complexity": the current Big-O time complexity with a short justification.
+- "space_complexity": the current Big-O space complexity with a short justification.
+- "key_points": a list of exactly 4-5 concrete, actionable optimization tips (plain English — NO code blocks, NO source code). Each tip should name the specific technique (e.g. "Replace linear search with an unordered_set for O(1) lookups") and explain the expected gain.
+
+Code to analyse:
+```{language}
+{code}
+```"""
+
+    client = genai.Client(api_key=api_key)
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json",
+            max_output_tokens=2048,
+            temperature=0.2,
+        ),
+    )
+
+    content = response.text.strip()
+    if content.startswith("```"):
+        content = re.sub(r"^```(?:json)?\n?", "", content)
+        content = re.sub(r"\n?```$", "", content)
+
+    data = json.loads(content)
+    return ExplainCodeResponse(
+        explanation=data.get("explanation", ""),
+        time_complexity=data.get("time_complexity", "Unknown"),
+        space_complexity=data.get("space_complexity", "Unknown"),
+        key_points=data.get("key_points", []),
+    )
+
+
 def explain_code_ai(code: str, language: str = "cpp") -> ExplainCodeResponse:
     """Analyze C, C++, or Python code and return explanation, complexities, and key points."""
     api_key = os.getenv("GEMINI_API_KEY")

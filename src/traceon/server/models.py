@@ -211,6 +211,13 @@ class ExplainCodeResponse(BaseModel):
     key_points: list[str] = Field(default_factory=list)
 
 
+class OptimizeCodeRequest(BaseModel):
+    code: str
+    language: str = "cpp"
+    line_hits: dict = Field(default_factory=dict)   # {line_number_str: hit_count}
+    step_count: int = 0
+
+
 # ── Project / File DTOs (P4) ─────────────────────────────────────────────────
 
 class UserDTO(BaseModel):
