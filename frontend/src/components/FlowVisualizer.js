@@ -232,19 +232,24 @@ export default function FlowVisualizer({
 
   const [currentStep, setCurrentStep] = useState(0);
   const [playing, setPlaying] = useState(false);
-  const [speed, setSpeed] = useState(1000);
+  const [pausedAtBp, setPausedAtBp] = useState(false); // true when auto-play stopped at a breakpoint
+  const [speed, setSpeed] = useState(800);
+  const [playStepType, setPlayStepType] = useState("step_in"); // "step_in" | "step_over"
   const [diffMode, setDiffMode] = useState(false);
   const [diffStep, setDiffStep] = useState(null);
   const playingRef = useRef(false);
-  const speedRef = useRef(1000);
+  const speedRef = useRef(800);
+  const playStepTypeRef = useRef("step_in");
   const onNextRef = useRef(onNext);
   const onLineChangeRef = useRef(onLineChange);
   const breakpointsRef = useRef(breakpoints);
   const visibleSnapshotsRef = useRef(null);
+  const resultRef = useRef(result);          // always points at the latest result prop
   const timerRef = useRef(null);
   onNextRef.current = onNext;
   onLineChangeRef.current = onLineChange;
   breakpointsRef.current = breakpoints;
+  resultRef.current = result;                // kept in sync every render (no useEffect needed)
 
   const snapshots = useMemo(() => result?.snapshots || [], [result]);
   const cursorFromServer = typeof result?.cursor === "number" ? result.cursor : 0;
@@ -282,31 +287,46 @@ export default function FlowVisualizer({
     }
   }, [safeCurrentStep, totalSteps, visibleSnapshots, onLineChange]);
 
-  // When stepLoading transitions from true → false while playing, schedule next
+  // When stepLoading transitions from true → false while playing, check for
+  // breakpoint hit then schedule (or cancel) the next auto-step.
   const prevStepLoadingRef = useRef(stepLoading);
   useEffect(() => {
     const wasLoading = prevStepLoadingRef.current;
     prevStepLoadingRef.current = stepLoading;
 
-    // Only act when a step just finished (true → false) and we're playing
-    if (wasLoading && !stepLoading && playingRef.current) {
-      // Check if program has ended or last step was rejected — stop playing
+    // Only act when a step just finished (true → false) and we're in play mode
+    if (!(wasLoading && !stepLoading && playingRef.current)) return;
+
+    // ── 1. Program ended or step rejected → stop ──────────────────────────────
+    if (statusRef.current === "exited" || statusRef.current === "error" || !lastAcceptedRef.current) {
+      playingRef.current = false;
+      setPlaying(false);
+      setPausedAtBp(false);
+      return;
+    }
+
+    // ── 2. Breakpoint hit → pause here so user can inspect ───────────────────
+    const latestResult = resultRef.current;
+    const cursor = latestResult?.cursor ?? 0;
+    const landedSnap = latestResult?.snapshots?.[cursor];
+    const landedLine = landedSnap?.location?.line;
+    if (landedLine && breakpointsRef.current?.size > 0 && breakpointsRef.current.has(landedLine)) {
+      playingRef.current = false;
+      setPlaying(false);
+      setPausedAtBp(true);   // show "Paused at breakpoint" badge
+      return;
+    }
+
+    // ── 3. All clear → schedule the next step after the speed delay ──────────
+    timerRef.current = setTimeout(() => {
+      if (!playingRef.current) return;
       if (statusRef.current === "exited" || statusRef.current === "error" || !lastAcceptedRef.current) {
         playingRef.current = false;
         setPlaying(false);
         return;
       }
-
-      timerRef.current = setTimeout(() => {
-        if (!playingRef.current) return;
-        if (statusRef.current === "exited" || statusRef.current === "error" || !lastAcceptedRef.current) {
-          playingRef.current = false;
-          setPlaying(false);
-          return;
-        }
-        if (onNextRef.current) onNextRef.current();
-      }, speedRef.current);
-    }
+      if (onNextRef.current) onNextRef.current(playStepTypeRef.current);
+    }, speedRef.current);
   }, [stepLoading]);
 
   // Stop when result is cleared (new analysis or code edit), NOT on step updates
@@ -316,6 +336,7 @@ export default function FlowVisualizer({
     if (prevSessionRef.current && prevSessionRef.current !== newSession) {
       playingRef.current = false;
       setPlaying(false);
+      setPausedAtBp(false);
     }
     prevSessionRef.current = newSession;
   }, [result?.session_id]);
@@ -335,8 +356,9 @@ export default function FlowVisualizer({
     };
   }, []);
 
-  // Keep speedRef in sync
+  // Keep speedRef and playStepTypeRef in sync
   useEffect(() => { speedRef.current = speed; }, [speed]);
+  useEffect(() => { playStepTypeRef.current = playStepType; }, [playStepType]);
 
   // External jump (from BreakpointsPanel) — version number is the intentional dep
   useEffect(() => {
@@ -354,15 +376,17 @@ export default function FlowVisualizer({
 
   const handlePlay = useCallback(() => {
     if (atEnd) return;
+    setPausedAtBp(false);
     playingRef.current = true;
     setPlaying(true);
-    // Kick off the first step immediately
-    if (onNextRef.current) onNextRef.current();
+    // Kick off the first step immediately using the selected play mode
+    if (onNextRef.current) onNextRef.current(playStepTypeRef.current);
   }, [atEnd]);
 
   const handlePause = useCallback(() => {
     playingRef.current = false;
     setPlaying(false);
+    setPausedAtBp(false);
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
@@ -467,61 +491,66 @@ export default function FlowVisualizer({
   return (
     <div className="flow-visualizer">
       <div className="flow-controls">
+        {/* ── Transport ── */}
         <div className="control-group">
           <button
             className="control-btn"
             onClick={() => { handlePause(); onBack && onBack(); }}
             disabled={stepLoading || safeCurrentStep === 0 || playing}
-            title="Go back one step (Left Arrow)"
+            title="Go back one step (←)"
           >
             <span className="material-symbols-outlined">chevron_left</span>
             Back
           </button>
+
           <button
             className={`control-btn ${playing ? 'pause-btn' : 'play-btn'}`}
             onClick={playing ? handlePause : handlePlay}
             disabled={stepLoading || atEnd}
-            title={playing ? "Pause playback (Space)" : "Play automatically (Space)"}
+            title={playing ? "Pause (Space)" : "Auto-play through all lines (Space)"}
           >
             <span className="material-symbols-outlined">{playing ? 'pause' : 'play_arrow'}</span>
             {playing ? 'Pause' : 'Play'}
           </button>
+
           <button
             className="control-btn primary"
             onClick={() => { handlePause(); onNext && onNext("step_over"); }}
             disabled={stepLoading || atEnd || playing}
-            title="Go to next line (Right Arrow)"
+            title="Step over — next line, skip function body (→)"
           >
-            Next
-            <span className="material-symbols-outlined">chevron_right</span>
+            <span className="material-symbols-outlined">redo</span>
+            Step
           </button>
+
           <button
             className="control-btn"
             onClick={() => { handlePause(); onNext && onNext("step_in"); }}
             disabled={stepLoading || atEnd || playing}
-            title="Step into function (Down Arrow)"
+            title="Step into function call (↓)"
           >
             <span className="material-symbols-outlined">south</span>
-            In
+            Into
           </button>
+
           <button
             className="control-btn"
             onClick={() => { handlePause(); onNext && onNext("step_out"); }}
             disabled={stepLoading || atEnd || playing}
-            title="Step out of function (Up Arrow)"
+            title="Step out of current function (↑)"
           >
             <span className="material-symbols-outlined">north</span>
             Out
           </button>
+
           {breakpoints && breakpoints.size > 0 && (
             <button
               className="control-btn"
               onClick={() => {
                 handlePause();
-                const bp = breakpoints;
                 let found = -1;
                 for (let i = safeCurrentStep + 1; i < visibleSnapshots.length; i++) {
-                  if (bp.has(visibleSnapshots[i]?.location?.line)) { found = i; break; }
+                  if (breakpoints.has(visibleSnapshots[i]?.location?.line)) { found = i; break; }
                 }
                 if (found >= 0) {
                   setCurrentStep(found);
@@ -529,44 +558,92 @@ export default function FlowVisualizer({
                 }
               }}
               disabled={stepLoading || atEnd}
-              title="Jump to next breakpoint"
+              title="Jump to next breakpoint (F5)"
             >
               <span className="material-symbols-outlined">skip_next</span>
-              Run to BP
+              To BP
             </button>
           )}
         </div>
+
+        {/* ── Play mode toggle ── */}
+        <div className="control-group play-mode-group">
+          <span className="speed-label">Play mode:</span>
+          <div className="play-mode-toggle">
+            <button
+              className={`play-mode-btn ${playStepType === 'step_in' ? 'active' : ''}`}
+              onClick={() => setPlayStepType('step_in')}
+              title="Play steps into every function call — sees every line executed"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 14 }}>south</span>
+              Step In
+            </button>
+            <button
+              className={`play-mode-btn ${playStepType === 'step_over' ? 'active' : ''}`}
+              onClick={() => setPlayStepType('step_over')}
+              title="Play steps over function calls — only top-level lines"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 14 }}>redo</span>
+              Step Over
+            </button>
+          </div>
+        </div>
+
+        {/* ── Speed ── */}
         <div className="control-group">
           <span className="speed-label">Speed:</span>
           <input
             type="range"
             className="speed-slider"
-            min="200"
+            min="150"
             max="2000"
-            step="100"
-            value={2200 - speed}
-            onChange={(e) => setSpeed(2200 - Number(e.target.value))}
+            step="50"
+            value={2150 - speed}
+            onChange={(e) => setSpeed(2150 - Number(e.target.value))}
           />
-          <span className="speed-label">{speed}ms</span>
+          <span className="speed-label">{speed < 400 ? 'Fast' : speed < 900 ? 'Normal' : 'Slow'}</span>
         </div>
+
+        {/* ── Diff mode ── */}
         <div className="control-group">
           <button
             className={`control-btn ${diffMode ? 'primary' : ''}`}
             onClick={() => { setDiffMode(!diffMode); if (!diffMode) setDiffStep(safeCurrentStep > 0 ? safeCurrentStep - 1 : 0); }}
-            title="Toggle execution diff mode. When active, click a step on the timeline to compare with the current step."
+            title="Compare two execution steps side-by-side"
           >
             <span className="material-symbols-outlined">compare_arrows</span>
-            Diff Mode
+            Diff
           </button>
         </div>
-        {stepLoading && <div className="control-group">Fetching next step...</div>}
+
+        {stepLoading && (
+          <div className="control-group step-fetching">
+            <span className="material-symbols-outlined spin" style={{ fontSize: 15 }}>sync</span>
+            stepping…
+          </div>
+        )}
       </div>
 
       <div className={`step-indicator${isAtBreakpoint ? ' step-at-breakpoint' : ''}`}>
         <div className="step-info">
           {isAtBreakpoint && (
-            <span className="bp-hit-indicator" title="Execution stopped at a breakpoint">
+            <span className="bp-hit-indicator" title="Execution reached a breakpoint">
               ⬤ Breakpoint — line {snap.location.line}
+            </span>
+          )}
+          {pausedAtBp && (
+            <span className="bp-paused-badge">
+              <span className="material-symbols-outlined" style={{ fontSize: 12 }}>pause_circle</span>
+              Paused at breakpoint — line {snap?.location?.line}
+              <button
+                className="bp-resume-btn"
+                onClick={handlePlay}
+                disabled={atEnd}
+                title="Resume auto-play past this breakpoint"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 12 }}>play_arrow</span>
+                Resume
+              </button>
             </span>
           )}
           <span className="step-number">Step {safeCurrentStep + 1} of {totalSteps}</span>

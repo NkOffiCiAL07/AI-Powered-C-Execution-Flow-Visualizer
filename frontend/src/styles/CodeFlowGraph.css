@@ -1,0 +1,440 @@
+/* ═══════════════════════════════════════════
+   Code Flow Graph — Execution trace CFG
+   ═══════════════════════════════════════════ */
+
+.cfg-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-secondary);
+}
+
+/* ── Toolbar ── */
+.cfg-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 14px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.cfg-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.cfg-bar-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.cfg-bar-sub {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ── Legend ── */
+.cfg-legend {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cfg-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: lowercase;
+  white-space: nowrap;
+}
+
+.cfg-legend-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ── Zoom controls ── */
+.cfg-zoom-grp {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.cfg-zoom-btn {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: background 0.15s, color 0.15s;
+  user-select: none;
+}
+.cfg-zoom-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+/* ── Body layout ── */
+.cfg-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Canvas ── */
+.cfg-canvas {
+  flex: 1;
+  overflow: auto;
+  cursor: grab;
+  position: relative;
+  background:
+    radial-gradient(circle, var(--border) 1px, transparent 1px) 0 0 / 24px 24px,
+    var(--bg-secondary);
+}
+.cfg-canvas:active { cursor: grabbing; }
+
+/* ── Empty state ── */
+.cfg-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 14px;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 24px;
+}
+
+.cfg-empty-icon {
+  font-size: 52px;
+  opacity: 0.2;
+}
+
+.cfg-empty p {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  max-width: 280px;
+}
+
+/* ── Detail panel ── */
+.cfg-detail {
+  width: 290px;
+  min-width: 290px;
+  background: var(--bg-card);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  animation: cfg-slide-in 0.22s var(--ease-out);
+  scrollbar-width: thin;
+}
+
+@keyframes cfg-slide-in {
+  from { opacity: 0; transform: translateX(18px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Header */
+.cfg-detail-hdr {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--border);
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.cfg-detail-hdr-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.cfg-detail-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  border: 1px solid;
+  width: fit-content;
+}
+
+.cfg-detail-loc {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.cfg-fn-code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--bg-elevated);
+  padding: 1px 4px;
+  border-radius: 3px;
+  color: var(--primary);
+}
+
+.cfg-close-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  transition: color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+.cfg-close-btn:hover { color: var(--text-primary); background: var(--bg-hover); }
+
+/* Code block */
+.cfg-detail-code {
+  padding: 10px 14px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.cfg-code-line-num {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cfg-code-pre {
+  margin: 0;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.cfg-code-pre code {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+/* Stats row */
+.cfg-stats-row {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.cfg-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 6px;
+  gap: 2px;
+  border-right: 1px solid var(--border);
+}
+.cfg-stat:last-child { border-right: none; }
+
+.cfg-stat-n {
+  font-size: 19px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  line-height: 1;
+}
+
+.cfg-stat-l {
+  font-size: 9px;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Sections */
+.cfg-section {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cfg-section-hdr {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cfg-section-count {
+  background: var(--bg-elevated);
+  color: var(--primary);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+}
+
+/* Variable table */
+.cfg-var-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.cfg-var-table tr { border-radius: 4px; }
+
+.cfg-var-table td {
+  padding: 3px 4px;
+  vertical-align: middle;
+}
+
+.cfg-var-name {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-secondary);
+  width: 38%;
+}
+
+.cfg-var-val { width: 46%; }
+.cfg-var-val code {
+  font-family: var(--font-mono);
+  color: var(--primary);
+  font-size: 10.5px;
+}
+
+.cfg-var-tag {
+  font-size: 8px;
+  font-weight: 700;
+  color: #10B981;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.cfg-var-row--changed td {
+  background: rgba(16, 185, 129, 0.06);
+}
+.cfg-var-row--changed .cfg-var-name { color: #10B981; }
+
+/* Call stack */
+.cfg-stack-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cfg-stack-frame {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  font-size: 10px;
+}
+
+.cfg-stack-frame--top {
+  border-color: var(--primary);
+  background: rgba(201, 106, 72, 0.06);
+}
+
+.cfg-stack-fn {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cfg-stack-loc {
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  font-size: 9px;
+  flex-shrink: 0;
+}
+
+/* Visit chips */
+.cfg-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-height: 130px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.cfg-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-strong);
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  user-select: none;
+}
+
+.cfg-chip:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-accent);
+}
+
+.cfg-chip--active {
+  background: rgba(201, 106, 72, 0.12);
+  border-color: rgba(201, 106, 72, 0.35);
+  color: var(--primary);
+}
+
+.cfg-chip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+  flex-shrink: 0;
+  animation: cfg-dot-pulse 1.3s ease-in-out infinite;
+}
+
+@keyframes cfg-dot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.45; transform: scale(0.75); }
+}

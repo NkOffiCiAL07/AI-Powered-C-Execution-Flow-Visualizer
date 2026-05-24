@@ -193,3 +193,59 @@
 .heatmap-line.heat-med { background-color: rgba(245, 158, 11, 0.08); }
 .heatmap-line.heat-high { background-color: rgba(239, 68, 68, 0.12); }
 
+/* ── Execution line banner (replaces plain viewer header) ── */
+.exec-line-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: rgba(217, 119, 87, 0.08);
+  border-bottom: 1px solid rgba(217, 119, 87, 0.25);
+  animation: exec-banner-in 0.2s var(--ease-out);
+}
+
+@keyframes exec-banner-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.exec-line-banner-icon {
+  font-size: 12px;
+  color: var(--primary);
+  animation: exec-banner-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes exec-banner-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+.exec-line-banner-text {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.exec-line-banner-text strong {
+  color: var(--primary);
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+
+/* ── Monaco execution-line decorations ── */
+.exec-current-line {
+  background: rgba(217, 119, 87, 0.12) !important;
+  border-left: 3px solid var(--primary) !important;
+}
+
+.exec-current-glyph {
+  content: "▶";
+  color: var(--primary) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: default !important;
+}
+

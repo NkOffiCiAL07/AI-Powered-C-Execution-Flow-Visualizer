@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import Editor from "@monaco-editor/react";
 import "../styles/CodeEditor.css";
 import { useTheme } from "../theme";
@@ -411,15 +411,16 @@ function parseErrorMarkers(errorText, lang) {
 }
 
 export default function CodeEditor({ code, onChange, currentLine, onEditRequest, language = "cpp", compact = false, compileError = null, performance = null, breakpoints = null, onBreakpointsChange = null }) {
-  const lineRefs = useRef({});
   const completionProviderRef = useRef(null);
   const monacoRef = useRef(null);
   const editorRef = useRef(null);
   const decorationIdsRef = useRef([]);
   const bpDecorationsRef = useRef([]);
+  const execLineDecorationRef = useRef([]);
   const breakpointsRef = useRef(breakpoints || new Set());
   const onBreakpointsChangeRef = useRef(onBreakpointsChange);
   const containerRef = useRef(null);
+  const [isReadOnly, setIsReadOnly] = useState(false);
   const { theme } = useTheme();
 
   useEffect(() => { breakpointsRef.current = breakpoints || new Set(); }, [breakpoints]);
@@ -498,6 +499,29 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest,
     }));
     bpDecorationsRef.current = editorRef.current.deltaDecorations(bpDecorationsRef.current, decors);
   }, [breakpoints]);
+
+  // Execution-line decoration — highlight current debugger line without replacing Monaco
+  useEffect(() => {
+    if (!editorRef.current || !monacoRef.current) return;
+    if (currentLine !== undefined && currentLine !== null) {
+      const decors = [{
+        range: new monacoRef.current.Range(currentLine, 1, currentLine, 1),
+        options: {
+          isWholeLine: true,
+          className: 'exec-current-line',
+          glyphMarginClassName: 'exec-current-glyph',
+          glyphMarginHoverMessage: { value: `▶ Executing line ${currentLine}` },
+        },
+      }];
+      execLineDecorationRef.current = editorRef.current.deltaDecorations(execLineDecorationRef.current, decors);
+      // Scroll to the executing line
+      editorRef.current.revealLineInCenter(currentLine);
+      setIsReadOnly(true);
+    } else {
+      execLineDecorationRef.current = editorRef.current.deltaDecorations(execLineDecorationRef.current, []);
+      setIsReadOnly(false);
+    }
+  }, [currentLine]);
 
   const handleEditorMount = (editor, monaco) => {
     monacoRef.current = monaco;
@@ -683,57 +707,28 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest,
     requestAnimationFrame(() => editor.layout());
   };
 
-  // Auto-scroll to the active line
-  useEffect(() => {
-    if (currentLine && lineRefs.current[currentLine]) {
-      lineRefs.current[currentLine].scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-    }
-  }, [currentLine]);
-
   const lines = code.split("\n");
+  const isDebugging = currentLine !== undefined && currentLine !== null;
 
-  if (currentLine !== undefined && currentLine !== null) {
-    return (
-      <div className="code-editor" ref={containerRef}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", backgroundColor: "var(--bg-card)", borderBottom: "1px solid var(--border)" }}>
-          <span style={{ fontSize: "13px", color: "var(--text-primary)" }}>Playing — currently on line {currentLine}</span>
+  return (
+    <div className="code-editor" ref={containerRef}>
+      {/* Execution status banner — shown only while debugger is stepping */}
+      {isDebugging && (
+        <div className="exec-line-banner">
+          <span className="exec-line-banner-icon">▶</span>
+          <span className="exec-line-banner-text">Playing — line <strong>{currentLine}</strong></span>
           <button className="edit-code-btn" onClick={onEditRequest}>
             Edit Code
           </button>
         </div>
-        <div className="code-viewer">
-          {lines.map((line, idx) => {
-            const lineNum = idx + 1;
-            const isActive = lineNum === currentLine;
-            return (
-              <div
-                key={idx}
-                ref={(el) => { lineRefs.current[lineNum] = el; }}
-                className={`code-line${isActive ? " active-line" : ""}`}
-              >
-                <span className="line-arrow">{isActive ? "➤" : ""}</span>
-                <span className="line-number">{lineNum}</span>
-                <span className="line-content">{line || " "}</span>
-              </div>
-            );
-          })}
+      )}
+      {!compact && !isDebugging && (
+        <div className="editor-hint">
+          {language === "python" ? "Python" : language === "c" ? "C" : language === "java" ? "Java" : "C++"} editor with syntax highlighting, indentation, and bracket matching
         </div>
-        <div className="editor-info">
-          Line: <span className="line-count">{currentLine}</span> of{" "}
-          <span className="char-count">{lines.length}</span>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="code-editor" ref={containerRef}>
-      {!compact && <div className="editor-hint">{language === "python" ? "Python" : language === "c" ? "C" : language === "java" ? "Java" : "C++"} editor with syntax highlighting, indentation, and bracket matching</div>}
+      )}
       <div className="editor-shell">
-        {!compact && (
+        {!compact && !isDebugging && (
           <div className="editor-toolbar">
             <span className="editor-language-pill">{language === "python" ? "Python" : language === "c" ? "C" : language === "java" ? "Java" : "C++"}</span>
             <span className="editor-toolbar-tip">Write code, then run the existing analyzer and visualizer</span>
@@ -745,15 +740,17 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest,
           defaultLanguage={language === "python" ? "python" : language === "c" ? "c" : language === "java" ? "java" : "cpp"}
           language={language === "python" ? "python" : language === "c" ? "c" : language === "java" ? "java" : "cpp"}
           value={code}
-          onChange={(value) => onChange(value ?? "")}
+          onChange={(value) => { if (!isReadOnly) onChange(value ?? ""); }}
           onMount={handleEditorMount}
-          options={editorOptions}
+          options={{ ...editorOptions, readOnly: isReadOnly }}
           theme={monacoThemeName(theme)}
         />
       </div>
       <div className="editor-info">
-        Lines: <span className="line-count">{lines.length}</span>
-        {" "}| Characters: <span className="char-count">{code.length}</span>
+        {isDebugging
+          ? <>Line: <span className="line-count">{currentLine}</span> of <span className="char-count">{lines.length}</span></>
+          : <>Lines: <span className="line-count">{lines.length}</span>{" "}| Characters: <span className="char-count">{code.length}</span></>
+        }
       </div>
     </div>
   );

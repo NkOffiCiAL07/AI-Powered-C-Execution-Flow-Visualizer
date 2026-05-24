@@ -23,6 +23,7 @@ import {
   debugWithBreakpoints,
 } from "./services/api";
 import NewsPage from "./components/NewsPage";
+import CodeFlowGraph from "./components/CodeFlowGraph";
 import { useAuth } from "./contexts/AuthContext";
 import "./App.css";
 import "./styles/CppEditorPage.css";
@@ -224,7 +225,8 @@ function App() {
       } else if (urlView === "docs" || urlView === "pricing" || urlView === "community" || urlView === "news") {
         setView(urlView);
       } else if (urlView === "editor" || urlView === "visualizer") {
-        setView("editor");
+        // Restore the exact view the user was on — "editor" or "visualizer" (debugger mode)
+        setView(urlView);
         if (urlPid && isMember) {
           projCtrl = new AbortController();
           (async () => {
@@ -237,11 +239,21 @@ function App() {
               const files   = filesData.files || [];
               const file    = urlFid ? (files.find(f => f.id === urlFid) || files[0]) : files[0];
               if (project && file) {
-                handleOpenProject({ project, files, activeFileId: file.id });
+                // When restoring the visualizer, open the project but stay in visualizer view
+                if (urlView === "visualizer") {
+                  setCurrentProject({ project, files, activeFileId: file.id });
+                  setLanguage(file.language || project.language || "cpp");
+                  setCode(file.code || "");
+                  setAnalysisResult(null);
+                  setCurrentLine(null);
+                  setError(null);
+                } else {
+                  handleOpenProject({ project, files, activeFileId: file.id });
+                }
               }
             } catch (err) {
               if (err.name !== "AbortError") {
-                // Project inaccessible — stay in plain editor
+                // Project inaccessible — stay in the restored view with no project
               }
             }
           })();
@@ -796,6 +808,14 @@ function App() {
     }
   }, [code, language, performanceMetrics]);
 
+  // Jump to a specific recorded snapshot (used by CodeFlowGraph node clicks)
+  const handleJumpToSnapshot = useCallback((stepIdx) => {
+    const snap = analysisResult?.snapshots?.[stepIdx];
+    if (!snap) return;
+    setCurrentLine(snap.location?.line ?? null);
+    setAnalysisResult(prev => prev ? { ...prev, cursor: stepIdx } : prev);
+  }, [analysisResult]);
+
   const handleStep = useCallback(async (direction, stepType) => {
     if (!analysisResult?.session_id) {
       return;
@@ -1167,6 +1187,7 @@ function App() {
                     <div className="tab-bar" role="tablist" aria-label="Debugger view tabs">
                       {[
                         { id: "flow",        label: "Execution Flow",  icon: "account_tree" },
+                        { id: "graph",       label: "Flow Graph",      icon: "schema",        hidden: !analysisResult },
                         { id: "breakpoints", label: "Breakpoints",     icon: "adjust",        hidden: breakpoints.size === 0 },
                         { id: "memory",      label: "Memory Map",      icon: "memory_alt" },
                         { id: "ai",          label: "AI Insights",     icon: "auto_awesome",  hidden: !aiExplanation && !aiLoading },
@@ -1218,6 +1239,14 @@ function App() {
                       onExplainStep={handleExplainStep}
                       breakpoints={breakpoints}
                       jumpTarget={bpJumpTarget}
+                    />
+                  ) : activeTab === "graph" ? (
+                    <CodeFlowGraph
+                      result={analysisResult}
+                      currentStep={analysisResult?.cursor ?? 0}
+                      code={code}
+                      language={language}
+                      onJumpToStep={handleJumpToSnapshot}
                     />
                   ) : activeTab === "breakpoints" ? (
                     <BreakpointsPanel
