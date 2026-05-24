@@ -1162,7 +1162,7 @@ function App() {
           </button>
         </div>
       )}
-      <div key={view} className="view-enter" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+      <div key={view} className="view-enter" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: ['editor', 'visualizer', 'dashboard'].includes(view) ? 'hidden' : 'auto' }}>
         {renderView()}
       </div>
       <LoginModal isOpen={showLoginModal} onLogin={handleLogin} onClose={() => setShowLoginModal(false)} />
