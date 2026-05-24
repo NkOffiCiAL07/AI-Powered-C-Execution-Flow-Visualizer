@@ -40,15 +40,18 @@ const Note = ({ children }) => (
 );
 
 const shortcuts = [
-  { key: '⌘ + ↵',    action: 'Compile & Run code' },
-  { key: '⌘ + ⇧ + E', action: 'Explain code with AI' },
-  { key: '⌘ + S',    action: 'Save current file' },
-  { key: 'Space',     action: 'Play / Pause execution (debugger)' },
-  { key: '→ / N',    action: 'Step to next line' },
-  { key: '← / B',    action: 'Step back to previous line' },
-  { key: 'F',         action: 'Step into function call' },
-  { key: 'Esc',       action: 'Reset visualizer' },
-  { key: '?',         action: 'Open keyboard shortcuts panel' },
+  { key: '⌘ + ↵',       action: 'Compile & Run code' },
+  { key: '⌘ + ⇧ + E',  action: 'Explain code with AI' },
+  { key: '⌘ + S',       action: 'Save current file' },
+  { key: 'Click gutter', action: 'Toggle breakpoint on a line' },
+  { key: 'F5',           action: 'Continue to next breakpoint' },
+  { key: 'Space',        action: 'Play / Pause execution (debugger)' },
+  { key: '→',            action: 'Step to next line' },
+  { key: '←',            action: 'Step back to previous line' },
+  { key: '↓',            action: 'Step into function call' },
+  { key: '↑',            action: 'Step out of function' },
+  { key: 'Esc',          action: 'Reset visualizer' },
+  { key: '?',            action: 'Open keyboard shortcuts panel' },
 ];
 
 const DocsPage = () => {

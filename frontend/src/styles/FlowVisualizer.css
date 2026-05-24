@@ -194,6 +194,22 @@
   background: var(--bg-card);
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.step-indicator.step-at-breakpoint {
+  border-color: rgba(239, 68, 68, 0.45);
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.bp-hit-indicator {
+  font-size: 10px;
+  font-weight: 700;
+  color: #ef4444;
+  letter-spacing: 0.03em;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .step-info {
@@ -219,7 +235,211 @@
   transition: width 0.3s var(--ease-out);
 }
 
-/* ── Step explanation ── */
+/* ── Graphical Execution State Panel ── */
+.exec-state-panel {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  min-height: 58px;
+  flex-wrap: wrap;
+}
+
+/* Left: location badges */
+.exec-state-loc {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  flex-shrink: 0;
+  justify-content: center;
+}
+
+.exec-line-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--primary);
+  color: #fff;
+  border-radius: var(--radius-sm);
+  padding: 3px 8px;
+  line-height: 1;
+  min-width: 42px;
+}
+
+.exec-line-label {
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  opacity: 0.8;
+  text-transform: uppercase;
+}
+
+.exec-line-num {
+  font-size: 18px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  line-height: 1.1;
+}
+
+.exec-fn-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 2px 7px;
+  white-space: nowrap;
+}
+
+.exec-bp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+  letter-spacing: 0.04em;
+}
+
+/* Center: variable change cards */
+.exec-changes {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
+  padding-left: 6px;
+  border-left: 1px solid var(--border);
+}
+
+.exec-no-change {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.exec-change-card {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--primary);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  animation: exec-card-pop 0.3s var(--ease-out);
+}
+
+@keyframes exec-card-pop {
+  0%   { transform: scale(0.88) translateY(4px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.exec-change-name {
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+
+.exec-change-new-badge {
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  background: rgba(52, 211, 153, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  border-radius: 3px;
+  padding: 1px 4px;
+}
+
+.exec-change-flow {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.exec-change-old {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  text-decoration: line-through;
+  opacity: 0.65;
+}
+
+.exec-change-arrow {
+  font-size: 11px;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.exec-change-val {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--primary);
+  background: rgba(217, 119, 87, 0.1);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.exec-change-more {
+  font-size: 10px;
+  color: var(--text-muted);
+  padding: 2px 6px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+/* Right: AI button */
+.exec-ai-btn {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: rgba(217, 119, 87, 0.1);
+  color: var(--primary);
+  border: 1px solid rgba(217, 119, 87, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 5px 8px;
+  font-size: 9px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  flex-shrink: 0;
+  align-self: stretch;
+  letter-spacing: 0.03em;
+}
+
+.exec-ai-btn:hover {
+  background: rgba(217, 119, 87, 0.2);
+  border-color: rgba(217, 119, 87, 0.45);
+  transform: translateY(-1px);
+}
+
+.exec-ai-btn:active { transform: scale(0.95); }
+
+/* ── Keep old explanation-box for backward compat (unused but safe) ── */
 .explanation-box {
   background: var(--bg-card);
   border-radius: var(--radius-md);
@@ -227,21 +447,11 @@
   border-left: 3px solid var(--primary);
   padding: 12px;
 }
-
 .explanation-label {
-  font-size: 9px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--primary);
-  margin-bottom: 4px;
+  font-size: 9px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.07em; color: var(--primary); margin-bottom: 4px;
 }
-
-.explanation-body {
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--text-secondary);
-}
+.explanation-body { font-size: 12px; line-height: 1.6; color: var(--text-secondary); }
 
 /* ── Variable section ── */
 .var-section-label {
@@ -268,35 +478,70 @@
   opacity: 0.7;
 }
 
+/* ── Call stack section ── */
+.call-stack-section {
+  display: flex;
+  flex-direction: column;
+}
+
 /* ── Call stack ── */
 .call-stack-list {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
 }
 
 .call-stack-frame {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 11px;
+  gap: 8px;
+  padding: 7px 12px;
   background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-bottom: 1px solid var(--border);
   font-family: var(--font-mono);
   font-size: 11px;
-  transition: border-color 0.18s ease;
+  transition: background 0.15s ease;
 }
 
+.call-stack-frame:last-child { border-bottom: none; }
+
 .call-stack-frame.active {
-  border-color: rgba(217, 119, 87, 0.4);
-  background: rgba(217, 119, 87, 0.06);
+  border-left: 3px solid var(--primary);
+  background: rgba(217, 119, 87, 0.05);
 }
 
 .frame-index {
   color: var(--text-muted);
   font-size: 10px;
-  min-width: 20px;
+  min-width: 18px;
+  flex-shrink: 0;
+}
+
+.frame-func {
+  font-weight: 700;
+  color: var(--text-primary);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.frame-loc {
+  font-size: 10px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.frame-active-tag {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  opacity: 0.8;
 }
 
 /* ── Restricted State UI ── */

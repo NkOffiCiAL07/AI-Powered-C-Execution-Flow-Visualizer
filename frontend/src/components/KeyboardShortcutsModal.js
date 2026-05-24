@@ -2,20 +2,24 @@ import React, { useEffect } from 'react';
 import '../styles/KeyboardShortcutsModal.css';
 
 const SHORTCUTS = [
-  { group: 'Editor',  keys: ['Ctrl', 'Enter'],       desc: 'Run code' },
-  { group: 'Editor',  keys: ['Ctrl', 'Shift', 'D'],  desc: 'Start debugger' },
-  { group: 'Editor',  keys: ['Ctrl', 'Shift', 'E'],  desc: 'Explain with AI' },
-  { group: 'Editor',  keys: ['Ctrl', 'S'],            desc: 'Save file' },
-  { group: 'Editor',  keys: ['Ctrl', 'G'],            desc: 'Generate code with AI' },
-  { group: 'Debugger',keys: ['→'],                    desc: 'Step forward' },
-  { group: 'Debugger',keys: ['←'],                    desc: 'Step backward' },
-  { group: 'Debugger',keys: ['Space'],                desc: 'Play / pause auto-step' },
-  { group: 'Debugger',keys: ['Escape'],               desc: 'Exit debugger' },
-  { group: 'Global',  keys: ['?'],                    desc: 'Show this shortcuts panel' },
-  { group: 'Global',  keys: ['T'],                    desc: 'Toggle theme' },
+  { group: 'Editor',      keys: ['Ctrl', 'Enter'],       desc: 'Run code' },
+  { group: 'Editor',      keys: ['Ctrl', 'Shift', 'D'],  desc: 'Start debugger' },
+  { group: 'Editor',      keys: ['Ctrl', 'Shift', 'E'],  desc: 'Explain with AI' },
+  { group: 'Editor',      keys: ['Ctrl', 'S'],            desc: 'Save file' },
+  { group: 'Editor',      keys: ['Ctrl', 'G'],            desc: 'Generate code with AI' },
+  { group: 'Breakpoints', keys: ['Click gutter'],         desc: 'Add / remove breakpoint on a line' },
+  { group: 'Breakpoints', keys: ['F5'],                   desc: 'Continue to next breakpoint' },
+  { group: 'Debugger',    keys: ['→'],                    desc: 'Step forward' },
+  { group: 'Debugger',    keys: ['←'],                    desc: 'Step backward' },
+  { group: 'Debugger',    keys: ['↓'],                    desc: 'Step into function' },
+  { group: 'Debugger',    keys: ['↑'],                    desc: 'Step out of function' },
+  { group: 'Debugger',    keys: ['Space'],                desc: 'Play / pause auto-step' },
+  { group: 'Debugger',    keys: ['Escape'],               desc: 'Exit debugger' },
+  { group: 'Global',      keys: ['?'],                    desc: 'Show this shortcuts panel' },
+  { group: 'Global',      keys: ['T'],                    desc: 'Toggle theme' },
 ];
 
-const GROUPS = ['Editor', 'Debugger', 'Global'];
+const GROUPS = ['Editor', 'Breakpoints', 'Debugger', 'Global'];
 
 export default function KeyboardShortcutsModal({ isOpen, onClose }) {
   useEffect(() => {

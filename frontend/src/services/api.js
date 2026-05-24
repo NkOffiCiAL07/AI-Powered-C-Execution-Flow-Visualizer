@@ -178,6 +178,16 @@ export async function deleteFile(projectId, fileId, signal) {
   });
 }
 
+// ── GDB Breakpoint Debugger ───────────────────────────────────────────────────
+
+export async function debugWithBreakpoints(code, language, breakpoints, stdin, signal) {
+  return apiFetch(`${API_BASE_URL}/debug/breakpoints`, {
+    method: "POST",
+    body: JSON.stringify({ code, language, breakpoints: [...breakpoints], stdin: stdin || "" }),
+    signal,
+  });
+}
+
 // ── News ──────────────────────────────────────────────────────────────────────
 
 export async function fetchNews(signal) {

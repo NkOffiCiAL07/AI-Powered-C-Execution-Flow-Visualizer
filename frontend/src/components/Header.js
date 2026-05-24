@@ -116,6 +116,7 @@ export default function Header({ view, onSwitchView, user, onLogout, onSignIn, l
           <a className={`nav-link ${view === "docs"      ? "active" : ""}`} href="?v=docs"      onClick={(e) => { e.preventDefault(); onSwitchView("docs"); }}>Docs</a>
           <a className={`nav-link ${view === "pricing"   ? "active" : ""}`} href="?v=pricing"   onClick={(e) => { e.preventDefault(); onSwitchView("pricing"); }}>Pricing</a>
           <a className={`nav-link ${view === "community" ? "active" : ""}`} href="?v=community" onClick={(e) => { e.preventDefault(); onSwitchView("community"); }}>Community</a>
+          <a className={`nav-link ${view === "news"      ? "active" : ""}`} href="?v=news"      onClick={(e) => { e.preventDefault(); onSwitchView("news"); }}>News</a>
         </nav>
       )}
 

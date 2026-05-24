@@ -490,6 +490,8 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest,
     const decors = [...bp].map(line => ({
       range: new monacoRef.current.Range(line, 1, line, 1),
       options: {
+        isWholeLine: true,
+        className: 'breakpoint-line',
         glyphMarginClassName: 'breakpoint-glyph',
         glyphMarginHoverMessage: { value: 'Breakpoint — click gutter to remove' },
       },

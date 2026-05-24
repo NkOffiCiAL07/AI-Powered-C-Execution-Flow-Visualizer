@@ -927,6 +927,166 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=404, detail="File not found")
         return {"deleted": True}
 
+    # ── GDB Breakpoint Debugger ────────────────────────────────────────────
+
+    from pydantic import BaseModel as _BM
+
+    class _BreakpointHit(_BM):
+        breakpoint_line: int
+        hit_number: int
+        locals: dict
+        args: dict
+        call_stack: list
+
+    class _BPDebugRequest(_BM):
+        code: str
+        language: str = "c"
+        breakpoints: list[int]
+        stdin: str = ""
+
+    class _BPDebugResponse(_BM):
+        hits: list[_BreakpointHit]
+        stdout: str
+        stderr: str
+        exit_code: int
+        compile_error: str | None = None
+
+    GDB_PY_TEMPLATE = '''\
+import gdb, json
+
+hits = []
+hit_counts = {{}}
+
+class _TBP(gdb.Breakpoint):
+    def __init__(self, ln):
+        super().__init__(str(ln), gdb.BP_BREAKPOINT)
+        self.ln = ln
+        self.silent = True
+
+    def stop(self):
+        hit_counts[self.ln] = hit_counts.get(self.ln, 0) + 1
+        frame = gdb.selected_frame()
+        locs, args = {{}}, {{}}
+        try:
+            block = frame.block()
+            while block and not block.is_global:
+                for sym in block:
+                    try:
+                        val = str(sym.value(frame))
+                    except Exception:
+                        val = "?"
+                    if sym.is_argument:
+                        args[sym.name] = val
+                    elif sym.is_variable:
+                        locs[sym.name] = val
+                block = block.superblock
+        except Exception:
+            pass
+        stack = []
+        f = frame
+        while f:
+            try:
+                stack.append(f.name() or "?")
+            except Exception:
+                stack.append("?")
+            f = f.older()
+        hits.append({{"breakpoint_line": self.ln, "hit_number": hit_counts[self.ln],
+                       "locals": locs, "args": args, "call_stack": stack}})
+        return False
+
+gdb.execute("set pagination off", to_string=True)
+gdb.execute("set confirm off",    to_string=True)
+
+for _ln in {bp_list}:
+    _TBP(_ln)
+
+gdb.execute("run", to_string=False)
+with open("{out_file}", "w") as _f:
+    json.dump(hits, _f)
+gdb.execute("quit")
+'''
+
+    @app.post("/debug/breakpoints", tags=["analysis"])
+    def debug_with_breakpoints(req: _BPDebugRequest, http_request: Request):
+        """Run code under real GDB, capture variable snapshots at each breakpoint hit."""
+        import shutil
+
+        if req.language not in ("c", "cpp"):
+            raise HTTPException(400, "GDB breakpoints only supported for C/C++")
+        if not req.breakpoints:
+            return _BPDebugResponse(hits=[], stdout="", stderr="", exit_code=0)
+
+        gdb_path = shutil.which("gdb")
+        if not gdb_path:
+            raise HTTPException(503, "GDB not found on this server")
+
+        work_dir = Path(tempfile.mkdtemp(prefix="traceon_bp_"))
+        try:
+            ext = "c" if req.language == "c" else "cpp"
+            src = work_dir / f"main.{ext}"
+            src.write_text(req.code)
+
+            stdin_file = work_dir / "stdin.txt"
+            stdin_file.write_text(req.stdin)
+
+            exe = work_dir / "program"
+            out_json = work_dir / "hits.json"
+
+            # Compile with debug info
+            compiler = "gcc" if req.language == "c" else "g++"
+            cc = subprocess.run(
+                [compiler, "-g", "-O0", "-o", str(exe), str(src)],
+                capture_output=True, text=True, timeout=30,
+            )
+            if cc.returncode != 0:
+                return _BPDebugResponse(
+                    hits=[], stdout="", stderr=cc.stderr, exit_code=1,
+                    compile_error=cc.stderr,
+                )
+
+            # Build GDB Python script
+            bp_list_str = ", ".join(str(b) for b in sorted(set(req.breakpoints)))
+            gdb_py = work_dir / "bp_script.py"
+            gdb_py.write_text(
+                GDB_PY_TEMPLATE.format(bp_list=bp_list_str, out_file=str(out_json))
+            )
+
+            # GDB init file: redirect stdin + source our script
+            gdb_cmds = work_dir / "gdb_init.txt"
+            gdb_cmds.write_text(
+                f"set args < {stdin_file}\nsource {gdb_py}\n"
+            )
+
+            gdb_result = subprocess.run(
+                [gdb_path, "-batch", "-x", str(gdb_cmds), str(exe)],
+                capture_output=True, text=True, timeout=30,
+                cwd=str(work_dir),
+            )
+
+            hits_data: list = []
+            if out_json.exists():
+                try:
+                    hits_data = json.loads(out_json.read_text())
+                except Exception:
+                    pass
+
+            hits = [_BreakpointHit(**h) for h in hits_data]
+
+            return _BPDebugResponse(
+                hits=hits,
+                stdout=gdb_result.stdout,
+                stderr=gdb_result.stderr,
+                exit_code=gdb_result.returncode,
+            )
+
+        except subprocess.TimeoutExpired:
+            raise HTTPException(408, "GDB debug session timed out (30 s limit)")
+        except Exception as exc:
+            logger.exception("GDB debug failed")
+            raise HTTPException(500, str(exc))
+        finally:
+            shutil.rmtree(work_dir, ignore_errors=True)
+
     app.include_router(sessions_router)
     app.include_router(auth_router)
     app.include_router(news_router)

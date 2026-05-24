@@ -13,13 +13,16 @@ import LoginModal from "./components/LoginModal";
 import DashboardPage from "./components/DashboardPage";
 import DebuggerRestricted from "./components/DebuggerRestricted";
 import MemorySpectrometer from "./components/MemorySpectrometer";
+import BreakpointsPanel from "./components/BreakpointsPanel";
 import LangDropdown from "./components/LangDropdown";
 import KeyboardShortcutsModal from "./components/KeyboardShortcutsModal";
 import { FILE_NAMES } from "./components/NewProjectModal";
 import {
   analyzeCode, runCode, stepAnalyzeSession, explainCode, generateCode,
-  updateFile, deleteFile, fetchProject, fetchFiles, createFile, fetchPublicProject, API_BASE_URL
+  updateFile, deleteFile, fetchProject, fetchFiles, createFile, fetchPublicProject, API_BASE_URL,
+  debugWithBreakpoints,
 } from "./services/api";
+import NewsPage from "./components/NewsPage";
 import { useAuth } from "./contexts/AuthContext";
 import "./App.css";
 import "./styles/CppEditorPage.css";
@@ -104,7 +107,15 @@ function App() {
   const [serverChecking, setServerChecking] = useState(false);
   const [currentProject, setCurrentProject] = useState(null);
   const [showShortcuts, setShowShortcuts] = useState(false);
-  const [breakpoints, setBreakpoints] = useState(new Set());
+  // Persist breakpoints across page refreshes
+  const [breakpoints, setBreakpoints] = useState(() => {
+    try {
+      const raw = localStorage.getItem("traceon_breakpoints");
+      return raw ? new Set(JSON.parse(raw)) : new Set();
+    } catch { return new Set(); }
+  });
+  const [bpJumpTarget, setBpJumpTarget] = useState(null); // { step, version }
+  const [bpDebugResult, setBpDebugResult] = useState(null); // GDB hits result
   const abortControllerRef = useRef(null);
   const aiAbortControllerRef = useRef(null);
   const stepAbortControllerRef = useRef(null);
@@ -156,6 +167,13 @@ function App() {
     return () => clearInterval(id);
   }, [serverDown, checkServer]);
 
+  // Persist breakpoints to localStorage whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem("traceon_breakpoints", JSON.stringify([...breakpoints]));
+    } catch {}
+  }, [breakpoints]);
+
   useEffect(() => {
     if (!user && (view === "editor" || view === "visualizer" || view === "dashboard")) {
       setView("landing");
@@ -204,7 +222,7 @@ function App() {
 
       if (urlView === "dashboard" && isMember) {
         setView("dashboard");
-      } else if (urlView === "docs" || urlView === "pricing" || urlView === "community") {
+      } else if (urlView === "docs" || urlView === "pricing" || urlView === "community" || urlView === "news") {
         setView(urlView);
       } else if (urlView === "editor" || urlView === "visualizer") {
         setView("editor");
@@ -247,7 +265,7 @@ function App() {
   // Sync view + project → URL so refresh restores the same screen
   useEffect(() => {
     const params = new URLSearchParams();
-    const SYNCABLE = ["dashboard", "editor", "visualizer", "docs", "pricing", "community"];
+    const SYNCABLE = ["dashboard", "editor", "visualizer", "docs", "pricing", "community", "news"];
     if (SYNCABLE.includes(view)) {
       params.set("v", view);
       if ((view === "editor" || view === "visualizer") && currentProject?.project) {
@@ -586,9 +604,27 @@ function App() {
       if (result.performance) {
         setPerformanceMetrics(result.performance);
       } else {
-        setPerformanceMetrics(null);
+        // Derive performance metrics from snapshot data so Optimize button always works
+        const snaps = result.snapshots || [];
+        if (snaps.length > 0) {
+          const lineHits = {};
+          snaps.forEach((s) => {
+            const line = s?.location?.line;
+            if (line) lineHits[line] = (lineHits[line] || 0) + 1;
+          });
+          setPerformanceMetrics({
+            line_hits: lineHits,
+            total_execution_time_ms: snaps.length * 5, // ~5ms per step estimate
+            step_count: snaps.length,
+          });
+        } else {
+          setPerformanceMetrics(null);
+        }
       }
-      setActiveTab("flow");
+      // Auto-switch to Breakpoints tab if any hit landed on a breakpoint line
+      const hasBreakpointHits = breakpoints.size > 0 &&
+        (result.snapshots || []).some(s => breakpoints.has(s?.location?.line));
+      setActiveTab(hasBreakpointHits ? "breakpoints" : "flow");
     } catch (err) {
       if (err.name === "AbortError") return;
       if (err.message?.includes("Cannot connect")) setServerDown(true);
@@ -597,7 +633,36 @@ function App() {
       setLoading(false);
       abortControllerRef.current = null;
     }
-  }, [code, programInput, language, currentProject]);
+  }, [code, programInput, language, currentProject, breakpoints]);
+
+  // GDB real breakpoint debug (C/C++ only)
+  const handleGdbDebug = useCallback(async () => {
+    if (!code.trim() || breakpoints.size === 0) return;
+    if (abortControllerRef.current) abortControllerRef.current.abort();
+    abortControllerRef.current = new AbortController();
+    setLoading(true);
+    setError(null);
+    setBpDebugResult(null);
+    try {
+      const result = await debugWithBreakpoints(
+        code, language, breakpoints, programInput, abortControllerRef.current.signal
+      );
+      setServerDown(false);
+      if (result.compile_error) {
+        setError(result.compile_error);
+      } else {
+        setBpDebugResult(result);
+        setActiveTab("breakpoints");
+      }
+    } catch (err) {
+      if (err.name === "AbortError") return;
+      if (err.message?.includes("Cannot connect")) setServerDown(true);
+      setError(err.message || "GDB debug failed");
+    } finally {
+      setLoading(false);
+      abortControllerRef.current = null;
+    }
+  }, [code, language, breakpoints, programInput]);
 
   const handleRun = useCallback(async () => {
     if (!code.trim()) {
@@ -811,6 +876,8 @@ function App() {
         return <PricingPage onStart={() => setView("editor")} onSignIn={() => setShowLoginModal(true)} />;
       case "community":
         return <CommunityPage onStart={() => setView("editor")} />;
+      case "news":
+        return <NewsPage onSwitchView={setView} />;
       case "editor":
         return (
           <CppEditorPage
@@ -1020,6 +1087,18 @@ function App() {
                         </span>
                         {loading ? "Analyzing…" : "Analyze & Debug"}
                       </button>
+
+                      {/* Breakpoint count badge */}
+                      {breakpoints.size > 0 && (
+                        <button
+                          className="action-btn action-btn--bp-badge"
+                          onClick={() => setActiveTab("breakpoints")}
+                          title={`${breakpoints.size} breakpoint${breakpoints.size !== 1 ? 's' : ''} set — view hits`}
+                        >
+                          <span className="bp-badge-dot" />
+                          {breakpoints.size} BP
+                        </button>
+                      )}
                     </div>
 
                     <div className="action-bar-group action-bar-secondary">
@@ -1053,10 +1132,11 @@ function App() {
                   <div className="section-header debugger-tab-header">
                     <div className="tab-bar" role="tablist" aria-label="Debugger view tabs">
                       {[
-                        { id: "flow",   label: "Execution Flow",  icon: "account_tree" },
-                        { id: "memory", label: "Memory Map",      icon: "memory_alt" },
-                        { id: "ai",     label: "AI Insights",     icon: "auto_awesome", hidden: !aiExplanation && !aiLoading },
-                        { id: "output", label: "Output",          icon: "terminal" },
+                        { id: "flow",        label: "Execution Flow",  icon: "account_tree" },
+                        { id: "breakpoints", label: "Breakpoints",     icon: "adjust",        hidden: breakpoints.size === 0 },
+                        { id: "memory",      label: "Memory Map",      icon: "memory_alt" },
+                        { id: "ai",          label: "AI Insights",     icon: "auto_awesome",  hidden: !aiExplanation && !aiLoading },
+                        { id: "output",      label: "Output",          icon: "terminal" },
                       ].filter(t => !t.hidden).map(({ id, label, icon }) => (
                         <button
                           key={id}
@@ -1067,6 +1147,9 @@ function App() {
                           <span className="material-symbols-outlined tab-icon">{icon}</span>
                           {label}
                           {id === "ai" && aiLoading && <span className="editor-tab-spinner" style={{ marginLeft: 4 }} />}
+                          {id === "breakpoints" && breakpoints.size > 0 && (
+                            <span className="bp-tab-dot" />
+                          )}
                         </button>
                       ))}
                     </div>
@@ -1100,6 +1183,24 @@ function App() {
                       onBack={() => handleStep("back")}
                       onExplainStep={handleExplainStep}
                       breakpoints={breakpoints}
+                      jumpTarget={bpJumpTarget}
+                    />
+                  ) : activeTab === "breakpoints" ? (
+                    <BreakpointsPanel
+                      snapshots={analysisResult?.snapshots || []}
+                      breakpoints={breakpoints}
+                      currentStep={analysisResult?.cursor ?? 0}
+                      gdbHits={bpDebugResult?.hits || null}
+                      onJumpToStep={(stepIdx) => {
+                        setBpJumpTarget({ step: stepIdx, version: Date.now() });
+                        setActiveTab("flow");
+                      }}
+                      onGdbDebug={
+                        (language === "c" || language === "cpp") && breakpoints.size > 0
+                          ? handleGdbDebug
+                          : null
+                      }
+                      gdbLoading={loading && bpDebugResult === null && activeTab === "breakpoints"}
                     />
                   ) : activeTab === "memory" ? (
                     <MemorySpectrometer result={analysisResult} currentStep={analysisResult?.cursor ?? 0} />

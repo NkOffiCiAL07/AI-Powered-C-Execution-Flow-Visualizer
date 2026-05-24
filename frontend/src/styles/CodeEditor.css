@@ -173,6 +173,11 @@
   margin-top: 4px;
   margin-left: 2px;
   cursor: pointer;
+  box-shadow: 0 0 5px rgba(239,68,68,0.5);
+}
+
+.breakpoint-line {
+  background: rgba(239, 68, 68, 0.055) !important;
 }
 
 .heatmap-gutter {

@@ -214,42 +214,6 @@ function CallGraphPanel({ snapshots, currentStep, dark }) {
   );
 }
 
-function buildExplanation(snapshot, prevSnapshot, stepIndex) {
-  const line = snapshot.location.line;
-  const changed = snapshot.changed_variables || [];
-  const vars = snapshot.variables || {};
-  const prevVars = prevSnapshot?.variables || {};
-
-  if (line <= 0) {
-    return `The program has finished executing!`;
-  }
-
-  if (stepIndex === 0) {
-    return `The program starts! We are on line ${line}. Nothing has happened yet — we are just getting ready to run.`;
-  }
-
-  if (changed.length === 0) {
-    return `The computer is reading line ${line}. No variable changed this step — it is just moving to the next instruction.`;
-  }
-
-  const truncate = (val) => {
-    if (typeof val !== 'string') return String(val);
-    // Strip raw memory addresses like "0x7fff1234: " from display
-    const cleaned = val.replace(/0x[0-9a-fA-F]+:\s*/g, '');
-    return cleaned.length > 120 ? cleaned.slice(0, 120) + '…' : cleaned;
-  };
-
-  const sentences = changed.map((name) => {
-    const newVal = truncate(vars[name]);
-    const oldVal = prevVars[name] !== undefined ? truncate(prevVars[name]) : undefined;
-    if (oldVal === undefined) {
-      return `A brand new box called "${name}" was created and filled with the value ${newVal}.`;
-    }
-    return `The box "${name}" changed from ${oldVal} to ${newVal}.`;
-  });
-
-  return `Line ${line}: ${sentences.join(" ")}`;
-}
 
 
 export default function FlowVisualizer({
@@ -261,6 +225,7 @@ export default function FlowVisualizer({
   onBack,
   onExplainStep,
   breakpoints,
+  jumpTarget,   // { step: number, version: number } — set externally to jump to a step
 }) {
   const { theme } = useTheme();
   const dark = isDarkTheme(theme);
@@ -273,12 +238,18 @@ export default function FlowVisualizer({
   const playingRef = useRef(false);
   const speedRef = useRef(1000);
   const onNextRef = useRef(onNext);
+  const onLineChangeRef = useRef(onLineChange);
+  const breakpointsRef = useRef(breakpoints);
+  const visibleSnapshotsRef = useRef(null);
   const timerRef = useRef(null);
   onNextRef.current = onNext;
+  onLineChangeRef.current = onLineChange;
+  breakpointsRef.current = breakpoints;
 
   const snapshots = useMemo(() => result?.snapshots || [], [result]);
   const cursorFromServer = typeof result?.cursor === "number" ? result.cursor : 0;
   const visibleSnapshots = useMemo(() => snapshots, [snapshots]);
+  visibleSnapshotsRef.current = visibleSnapshots; // keep ref in sync for keyboard handler
   const totalSteps = visibleSnapshots.length;
   const safeCurrentStep = Math.min(currentStep, Math.max(0, totalSteps - 1));
   const statusStr = result?.status || "";
@@ -367,6 +338,20 @@ export default function FlowVisualizer({
   // Keep speedRef in sync
   useEffect(() => { speedRef.current = speed; }, [speed]);
 
+  // External jump (from BreakpointsPanel) — version number is the intentional dep
+  useEffect(() => {
+    if (jumpTarget == null) return;
+    const { step } = jumpTarget;
+    if (step >= 0 && step < visibleSnapshots.length) {
+      handlePause();
+      setCurrentStep(step);
+      if (onLineChange && visibleSnapshots[step]?.location?.line) {
+        onLineChange(visibleSnapshots[step].location.line);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jumpTarget?.version]);
+
   const handlePlay = useCallback(() => {
     if (atEnd) return;
     playingRef.current = true;
@@ -424,6 +409,21 @@ export default function FlowVisualizer({
             handlePlay();
           }
           break;
+        case 'F5': // Continue to next breakpoint
+          e.preventDefault();
+          if (breakpointsRef.current && breakpointsRef.current.size > 0 && !stepLoading && !atEnd) {
+            handlePause();
+            const snaps = visibleSnapshotsRef.current;
+            let bpFound = -1;
+            for (let i = safeCurrentStep + 1; i < snaps.length; i++) {
+              if (breakpointsRef.current.has(snaps[i]?.location?.line)) { bpFound = i; break; }
+            }
+            if (bpFound >= 0) {
+              setCurrentStep(bpFound);
+              if (onLineChangeRef.current) onLineChangeRef.current(snaps[bpFound].location.line);
+            }
+          }
+          break;
         default:
           break;
       }
@@ -455,14 +455,14 @@ export default function FlowVisualizer({
   }
 
   const snap = visibleSnapshots[safeCurrentStep];
-  
+
   // If in diff mode and a diff step is selected, compare against that step. Otherwise, compare against previous step.
-  const prevSnap = diffMode && diffStep !== null 
-    ? visibleSnapshots[diffStep] 
+  const prevSnap = diffMode && diffStep !== null
+    ? visibleSnapshots[diffStep]
     : (safeCurrentStep > 0 ? visibleSnapshots[safeCurrentStep - 1] : null);
-    
-  const explanation = buildExplanation(snap, prevSnap, safeCurrentStep);
+
   const progressPct = Math.round(((safeCurrentStep + 1) / totalSteps) * 100);
+  const isAtBreakpoint = breakpoints && snap?.location?.line && breakpoints.has(snap.location.line);
 
   return (
     <div className="flow-visualizer">
@@ -562,8 +562,13 @@ export default function FlowVisualizer({
         {stepLoading && <div className="control-group">Fetching next step...</div>}
       </div>
 
-      <div className="step-indicator">
+      <div className={`step-indicator${isAtBreakpoint ? ' step-at-breakpoint' : ''}`}>
         <div className="step-info">
+          {isAtBreakpoint && (
+            <span className="bp-hit-indicator" title="Execution stopped at a breakpoint">
+              ⬤ Breakpoint — line {snap.location.line}
+            </span>
+          )}
           <span className="step-number">Step {safeCurrentStep + 1} of {totalSteps}</span>
           <span className="step-pct">{progressPct}% done</span>
         </div>
@@ -572,20 +577,69 @@ export default function FlowVisualizer({
         </div>
       </div>
 
-      <div className="explanation-box" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div className="explanation-text" style={{ flex: 1 }}>
-          <div className="explanation-label">What is happening?</div>
-          <div className="explanation-body">{explanation}</div>
+      {/* ── Graphical Execution State Panel ── */}
+      <div className="exec-state-panel">
+        {/* Left: current line + function badge */}
+        <div className="exec-state-loc">
+          <div className="exec-line-badge">
+            <span className="exec-line-label">LINE</span>
+            <span className="exec-line-num">{snap.location.line > 0 ? snap.location.line : '—'}</span>
+          </div>
+          <div className="exec-fn-badge">
+            <span className="material-symbols-outlined" style={{ fontSize: 13 }}>function</span>
+            {snap.location.function || 'global'}
+          </div>
+          {isAtBreakpoint && (
+            <div className="exec-bp-badge">
+              <span className="material-symbols-outlined" style={{ fontSize: 11 }}>adjust</span>
+              Breakpoint
+            </div>
+          )}
         </div>
+
+        {/* Center: variable change cards */}
+        <div className="exec-changes">
+          {(snap.changed_variables || []).length === 0 ? (
+            <div className="exec-no-change">
+              <span className="material-symbols-outlined" style={{ fontSize: 14, opacity: 0.4 }}>arrow_right_alt</span>
+              <span>{safeCurrentStep === 0 ? 'Program started' : 'No variable changes this step'}</span>
+            </div>
+          ) : (
+            (snap.changed_variables || []).slice(0, 4).map((name) => {
+              const newVal = snap.variables?.[name];
+              const oldVal = prevSnap?.variables?.[name];
+              const isNew = oldVal === undefined;
+              const truncate = (v) => { const s = String(v ?? ''); return s.length > 16 ? s.slice(0, 14) + '…' : s; };
+              return (
+                <div key={name} className="exec-change-card">
+                  <span className="exec-change-name">{name}</span>
+                  {isNew ? (
+                    <span className="exec-change-new-badge">NEW</span>
+                  ) : (
+                    <div className="exec-change-flow">
+                      <span className="exec-change-old" title={String(oldVal)}>{truncate(oldVal)}</span>
+                      <span className="exec-change-arrow">→</span>
+                    </div>
+                  )}
+                  <span className="exec-change-val" title={String(newVal)}>{truncate(newVal)}</span>
+                </div>
+              );
+            })
+          )}
+          {(snap.changed_variables || []).length > 4 && (
+            <div className="exec-change-more">+{snap.changed_variables.length - 4} more</div>
+          )}
+        </div>
+
+        {/* Right: AI explain button */}
         {onExplainStep && (
-          <button 
-            className="control-btn primary" 
+          <button
+            className="exec-ai-btn"
             onClick={() => onExplainStep(snap)}
-            title="Ask AI to explain this specific step in detail"
-            style={{ marginLeft: '12px', flexShrink: 0, padding: '4px 8px', fontSize: '10px' }}
+            title="Ask AI to explain this step in detail"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '14px', marginRight: '4px', verticalAlign: 'middle' }}>auto_awesome</span>
-            AI Explain
+            <span className="material-symbols-outlined" style={{ fontSize: 14 }}>auto_awesome</span>
+            AI
           </button>
         )}
       </div>
@@ -593,7 +647,7 @@ export default function FlowVisualizer({
       <CallGraphPanel snapshots={visibleSnapshots} currentStep={safeCurrentStep} dark={dark} />
 
       <div className="var-section-label">
-        Variable Boxes — active in <span className="active-function-pill">{snap.location.function}</span>
+        Variables — <span className="active-function-pill">{snap.location.function}</span>
         {Object.keys(snap.variables || {}).length === 0 && (
           <span className="no-vars"> (no variables yet)</span>
         )}
@@ -608,13 +662,14 @@ export default function FlowVisualizer({
 
       {snap.call_stack && snap.call_stack.length > 1 && (
         <div className="call-stack-section">
-          <div className="var-section-label">Call Stack — active functions</div>
+          <div className="var-section-label">Call Stack</div>
           <div className="call-stack-list">
             {snap.call_stack.map((frame, i) => (
               <div key={i} className={`call-stack-frame ${i === 0 ? "active" : ""}`}>
-                <span className="frame-index">#{frame.index}</span>
+                <span className="frame-index">#{frame.index ?? i}</span>
                 <span className="frame-func">{frame.function}</span>
-                <span className="frame-loc">{frame.file.split('/').pop()}:{frame.line}</span>
+                <span className="frame-loc">{frame.file?.split('/').pop()}:{frame.line}</span>
+                {i === 0 && <span className="frame-active-tag">▶ executing</span>}
               </div>
             ))}
           </div>

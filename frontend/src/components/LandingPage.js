@@ -105,12 +105,15 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, user }) => {
 
   const getFooterLinkAction = (label) => {
     const actions = {
-      'Docs':          () => onSwitchView('docs'),
-      'Tutorials':     () => onSwitchView('docs'),
-      'Examples':      () => onSwitchView('editor'),
-      'API Reference': () => onSwitchView('docs'),
-      'Community':     () => onSwitchView('community'),
-      'Pricing':       () => onSwitchView('pricing'),
+      'Docs':           () => onSwitchView('docs'),
+      'Tutorials':      () => onSwitchView('docs'),
+      'Examples':       () => onSwitchView('editor'),
+      'API Reference':  () => onSwitchView('docs'),
+      'Community':      () => onSwitchView('community'),
+      'Pricing':        () => onSwitchView('pricing'),
+      'Release Notes':  () => onSwitchView('news'),
+      'Features':       () => onSwitchView('docs'),
+      'About':          () => onSwitchView('community'),
     };
     return actions[label] || null;
   };

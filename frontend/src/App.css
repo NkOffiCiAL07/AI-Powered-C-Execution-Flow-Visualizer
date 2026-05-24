@@ -242,6 +242,46 @@
 
 .action-lock-icon { font-size: 11px !important; opacity: 0.6; margin-left: -2px; }
 
+/* ── Breakpoint badge button ── */
+.action-btn--bp-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 7px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1.5px solid rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.07);
+  color: #ef4444;
+  font-family: inherit;
+  transition: background 0.15s, opacity 0.15s;
+  white-space: nowrap;
+}
+.action-btn--bp-badge:hover {
+  background: rgba(239, 68, 68, 0.13);
+}
+.bp-badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ef4444;
+  flex-shrink: 0;
+  box-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+}
+
+/* ── Breakpoint tab dot ── */
+.bp-tab-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ef4444;
+  flex-shrink: 0;
+  box-shadow: 0 0 4px rgba(239, 68, 68, 0.4);
+}
+
 .action-bar-group { display: flex; align-items: center; gap: 6px; }
 .action-bar-sep {
   width: 1px;
