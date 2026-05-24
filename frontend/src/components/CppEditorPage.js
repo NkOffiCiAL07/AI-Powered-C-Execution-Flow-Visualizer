@@ -35,6 +35,9 @@ export default function CppEditorPage({
   onSignIn,
   breakpoints,
   onBreakpointsChange,
+  showGenBanner,
+  onDismissGenBanner,
+  onUnderstandWithAI,
 }) {
   const isGuest = !user || user.role === "guest";
   const [prompt, setPrompt] = useState("");
@@ -357,6 +360,23 @@ export default function CppEditorPage({
 
         {/* ── Right panel ── */}
         <section className="editor-page-right" style={{ flex: 1 }}>
+
+          {/* ═══ Generate → Understand banner ═══ */}
+          {showGenBanner && (
+            <div className="gen-understand-banner">
+              <span className="gen-banner-check">
+                <span className="material-symbols-outlined" style={{ fontSize: 14 }}>check_circle</span>
+                Code generated
+              </span>
+              <button className="gen-banner-cta" onClick={onUnderstandWithAI}>
+                <span className="material-symbols-outlined" style={{ fontSize: 14 }}>auto_awesome</span>
+                Understand with AI
+              </button>
+              <button className="gen-banner-dismiss" onClick={onDismissGenBanner} aria-label="Dismiss">
+                <span className="material-symbols-outlined" style={{ fontSize: 13 }}>close</span>
+              </button>
+            </div>
+          )}
 
           {/* ═══ PRIMARY ACTION BAR ═══ */}
           <div className="editor-action-bar">

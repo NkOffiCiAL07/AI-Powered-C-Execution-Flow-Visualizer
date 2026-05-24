@@ -30,6 +30,15 @@ def generate_code_ai(prompt: str, language: str = "cpp") -> GenerateCodeResponse
     raise RuntimeError("GEMINI_API_KEY is not configured. Add it to your .env file.")
 
 
+# Comment rules applied to every language — keeps generated code clean
+_NO_COMMENT_RULES = (
+    "- Do NOT add inline comments, block comments, or section headers (e.g. '// Step 1', '// Initialize', '// Print result').\n"
+    "- Do NOT add a file-level docstring or header comment.\n"
+    "- Use clear, descriptive variable and function names — they are the only documentation needed.\n"
+    "- Only add a comment if a line of code would be genuinely impossible to understand without one."
+)
+
+
 def _gemini_generate(prompt: str, lang_label: str, api_key: str) -> GenerateCodeResponse:
     from google import genai
     from google.genai import types
@@ -38,31 +47,34 @@ def _gemini_generate(prompt: str, lang_label: str, api_key: str) -> GenerateCode
 
     if lang_label == "Python":
         rules = (
-            "- Return ONLY the raw source code. No markdown, no code fences, no explanation.\n"
+            "- Return ONLY the raw source code. No markdown, no code fences, no explanation text.\n"
             "- The code must run with python3 with no errors.\n"
             "- Always include a complete, runnable script (use if __name__ == '__main__' when appropriate).\n"
-            "- Keep it concise but complete."
+            "- Keep it concise but complete.\n"
+            + _NO_COMMENT_RULES
         )
     elif lang_label == "Java":
         rules = (
-            "- Return ONLY the raw source code. No markdown, no code fences, no explanation.\n"
+            "- Return ONLY the raw source code. No markdown, no code fences, no explanation text.\n"
             "- Always define a public class named Main with a public static void main(String[] args) method.\n"
             "- The code must compile with javac 11 or later with no errors.\n"
             "- Import only standard Java library classes (java.util.*, java.io.*, etc.).\n"
-            "- Keep it concise but complete."
+            "- Keep it concise but complete.\n"
+            + _NO_COMMENT_RULES
         )
     else:
         compiler = "clang++ -std=c++17" if lang_label == "C++" else "clang -std=c11"
         rules = (
-            "- Return ONLY the raw source code. No markdown, no code fences, no explanation.\n"
+            "- Return ONLY the raw source code. No markdown, no code fences, no explanation text.\n"
             "- Always include the necessary #include headers.\n"
             "- Always include a complete main() function that demonstrates or tests the code.\n"
             f"- The code must compile with {compiler} with no errors or warnings.\n"
-            "- Keep it concise but complete."
+            "- Keep it concise but complete.\n"
+            + _NO_COMMENT_RULES
         )
 
     system_prompt = f"""You are an expert {lang_label} programmer.
-The user will describe a program or function they want. Write clean, correct, well-commented {lang_label} code that satisfies the request.
+The user will describe a program or function they want. Write clean, correct, readable {lang_label} code that satisfies the request.
 Rules:
 {rules}"""
 

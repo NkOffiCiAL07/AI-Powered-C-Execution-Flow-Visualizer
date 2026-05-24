@@ -104,6 +104,8 @@ function App() {
   const [serverChecking, setServerChecking] = useState(false);
   const [currentProject, setCurrentProject] = useState(null);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showGenBanner, setShowGenBanner] = useState(false); // "Understand with AI" toast after generation
+  const genBannerTimerRef = useRef(null);
   // Persist breakpoints across page refreshes
   const [breakpoints, setBreakpoints] = useState(() => {
     try {
@@ -531,6 +533,10 @@ function App() {
       setRunResult(null);
       setRunError(null);
       setError(null);
+      // Show the "Understand with AI" banner for 12 s
+      setShowGenBanner(true);
+      clearTimeout(genBannerTimerRef.current);
+      genBannerTimerRef.current = setTimeout(() => setShowGenBanner(false), 12000);
     } catch (err) {
       if (err.name === "AbortError") return;
       setError(err.message || "Code generation failed");
@@ -938,6 +944,13 @@ function App() {
             onSignIn={() => setShowLoginModal(true)}
             breakpoints={breakpoints}
             onBreakpointsChange={setBreakpoints}
+            showGenBanner={showGenBanner}
+            onDismissGenBanner={() => { setShowGenBanner(false); clearTimeout(genBannerTimerRef.current); }}
+            onUnderstandWithAI={() => {
+              setShowGenBanner(false);
+              clearTimeout(genBannerTimerRef.current);
+              handleExplain();
+            }}
           />
         );
       case "visualizer":
@@ -1131,6 +1144,30 @@ function App() {
                       </button>
                     </div>
                   </div>
+
+                  {/* ═══ Generate → Understand banner (debugger view) ═══ */}
+                  {showGenBanner && (
+                    <div className="gen-understand-banner">
+                      <span className="gen-banner-check">
+                        <span className="material-symbols-outlined" style={{ fontSize: 14 }}>check_circle</span>
+                        Code generated
+                      </span>
+                      <button
+                        className="gen-banner-cta"
+                        onClick={() => {
+                          setShowGenBanner(false);
+                          clearTimeout(genBannerTimerRef.current);
+                          handleExplain();
+                        }}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: 14 }}>auto_awesome</span>
+                        Understand with AI
+                      </button>
+                      <button className="gen-banner-dismiss" onClick={() => { setShowGenBanner(false); clearTimeout(genBannerTimerRef.current); }} aria-label="Dismiss">
+                        <span className="material-symbols-outlined" style={{ fontSize: 13 }}>close</span>
+                      </button>
+                    </div>
+                  )}
 
                   {/* ═══ TAB NAVIGATION ═══ */}
                   <div className="section-header debugger-tab-header">
