@@ -872,10 +872,14 @@ function App() {
       case "visualizer":
         const isGuest = !user || user.role === "guest";
         const noProject = !currentProject;
+        const debugLangLabel = language === "c" ? "C" : language === "python" ? "Python" : language === "java" ? "Java" : "C++";
 
         return (
           <main className="app-main" ref={debugContainerRef}>
+
+            {/* ══════════ LEFT — Code editor panel ══════════ */}
             <section className="editor-section" style={{ width: `${debugLeftPct}%`, flex: "none", position: "relative" }}>
+
               {/* ── AI Generate overlay (debugger mode) ── */}
               {showDebugGenPrompt && (
                 <div className="ai-prompt-overlay" onClick={() => setShowDebugGenPrompt(false)}>
@@ -895,7 +899,7 @@ function App() {
                         }
                         if (e.key === "Escape") setShowDebugGenPrompt(false);
                       }}
-                      placeholder={`Describe what you want to build in ${language === "c" ? "C" : language === "python" ? "Python" : language === "java" ? "Java" : "C++"}…`}
+                      placeholder={`Describe what you want to build in ${debugLangLabel}…`}
                       disabled={generateLoading}
                       spellCheck="false"
                       autoFocus
@@ -918,10 +922,12 @@ function App() {
                   </div>
                 </div>
               )}
-              <div className="section-header">
+
+              {/* Left panel header */}
+              <div className="section-header debugger-code-header">
                 <div className="section-header-title">
                   <span className="material-symbols-outlined section-header-icon">code</span>
-                  <h2>Your Code</h2>
+                  <h2>{debugLangLabel} · Source</h2>
                 </div>
                 <div className="examples-selector-container">
                   <button
@@ -936,11 +942,12 @@ function App() {
                     <span className={`material-symbols-outlined${generateLoading ? " spin" : ""}`}>
                       {generateLoading ? "sync" : "auto_awesome"}
                     </span>
-                    AI + Code
+                    Generate
                   </button>
                   <LangDropdown language={language} onChange={handleLanguageChange} />
                 </div>
               </div>
+
               <CodeEditor
                 code={code}
                 onChange={(newCode) => { setCode(newCode); setCurrentLine(null); setAnalysisResult(null); setError(null); }}
@@ -952,10 +959,15 @@ function App() {
                 breakpoints={breakpoints}
                 onBreakpointsChange={setBreakpoints}
               />
+
+              {/* Stdin */}
               <div className="stdin-panel">
                 <div className="stdin-header">
-                  <h3>Program Input</h3>
-                  <span>Optional stdin for `cin`, `input()`, `Scanner`, etc.</span>
+                  <div className="stdin-header-left">
+                    <span className="material-symbols-outlined stdin-icon">input</span>
+                    <h3>Program Input</h3>
+                  </div>
+                  <span className="stdin-badge">stdin</span>
                 </div>
                 <textarea
                   className="stdin-textarea"
@@ -971,18 +983,21 @@ function App() {
                 />
               </div>
             </section>
+
             <div className="resize-divider" onMouseDown={onDebugDividerMouseDown}>
               <div className="resize-handle-dots" />
             </div>
+
+            {/* ══════════ RIGHT — Visualizer panel ══════════ */}
             <section className="visualizer-section" style={{ flex: 1, minWidth: 0 }}>
               {isGuest ? (
-                <DebuggerRestricted 
+                <DebuggerRestricted
                   reason="Authentication is required to access high-fidelity execution visualization and interactive memory mapping."
                   actionLabel="Sign in with Google"
                   onAction={() => setShowLoginModal(true)}
                 />
               ) : noProject ? (
-                <DebuggerRestricted 
+                <DebuggerRestricted
                   reason="To use the advanced debugger, you must first create or open a project from your dashboard."
                   actionLabel="Open Dashboard"
                   onAction={() => setView("dashboard")}
@@ -991,75 +1006,112 @@ function App() {
                 />
               ) : (
                 <>
-                  <div className="section-header">
-                <div className="tab-bar" role="tablist" aria-label="View tabs">
-                  {[
-                    { id: "flow",   label: "Execution Flow",      icon: "account_tree" },
-                    { id: "memory", label: "Memory Spectrometer", icon: "memory_alt" },
-                    { id: "ai",     label: "AI Insights",         icon: "auto_awesome", hidden: !aiExplanation && !aiLoading },
-                    { id: "output", label: "Output",              icon: "terminal" },
-                  ].filter(t => !t.hidden).map(({ id, label, icon }) => (
-                    <button
-                      key={id}
-                      className={`tab ${activeTab === id ? "active" : ""}`}
-                      onClick={() => setActiveTab(id)}
-                      role="tab"
-                    >
-                      <span className="material-symbols-outlined tab-icon">{icon}</span>
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                <div className="section-header-actions">
-                  <button className="explain-btn explain-btn--ai" onClick={handleExplain} disabled={aiLoading || loading}>
-                    <span className="material-symbols-outlined">auto_awesome</span>
-                    {aiLoading ? "Thinking…" : "AI Insights"}
-                    {aiLoading && <span className="editor-tab-spinner" />}
-                  </button>
-                  <button className="explain-btn explain-btn--optimize" onClick={handleOptimizePerformance} disabled={aiLoading || loading || !performanceMetrics}>
-                    <span className="material-symbols-outlined">speed</span>
-                    Optimize
-                  </button>
+                  {/* ═══ PRIMARY ACTION BAR ═══ */}
+                  <div className="debugger-action-bar">
+                    <div className="action-bar-group action-bar-primary">
+                      <button
+                        className="action-btn action-btn--run"
+                        onClick={() => handleAnalyze()}
+                        disabled={loading || aiLoading}
+                        title="Analyze code & start step-through debugger"
+                      >
+                        <span className={`material-symbols-outlined${loading ? " spin" : ""}`}>
+                          {loading ? "sync" : "play_arrow"}
+                        </span>
+                        {loading ? "Analyzing…" : "Analyze & Debug"}
+                      </button>
+                    </div>
 
-                  <button
-                    className="run-icon-btn"
-                    onClick={() => handleAnalyze()}
-                    disabled={loading || aiLoading}
-                    title="Analyze & Debug"
-                  >
-                    <span className={`material-symbols-outlined${loading ? " spin" : ""}`}>{loading ? "sync" : "play_arrow"}</span>
-                  </button>
-                </div>
-              </div>
-              {error && (
-                <div className="error-banner">
-                  <span><strong>Error:</strong> {error}</span>
-                  <button className="error-dismiss" onClick={() => setError(null)}>✕</button>
-                </div>
-              )}
-              {activeTab === "flow" ? (
-                <FlowVisualizer
-                  result={analysisResult}
-                  loading={loading}
-                  stepLoading={stepLoading}
-                  onLineChange={setCurrentLine}
-                  code={code}
-                  onNext={(stepType) => handleStep("next", stepType)}
-                  onBack={() => handleStep("back")}
-                  onExplainStep={handleExplainStep}
-                  breakpoints={breakpoints}
-                />
-              ) : activeTab === "memory" ? (
-                <MemorySpectrometer result={analysisResult} currentStep={analysisResult?.cursor ?? 0} />
-              ) : activeTab === "ai" ? (                <AiExplanation data={aiExplanation} loading={aiLoading} />
-              ) : (
-                <OutputPanel result={analysisResult} loading={loading} />
-                )}
+                    <div className="action-bar-group action-bar-secondary">
+                      <button
+                        className="action-btn action-btn--ai"
+                        onClick={handleExplain}
+                        disabled={aiLoading || loading}
+                        title="Explain code with AI"
+                      >
+                        <span className={`material-symbols-outlined${aiLoading ? " spin" : ""}`}>
+                          {aiLoading ? "sync" : "auto_awesome"}
+                        </span>
+                        {aiLoading ? "Thinking…" : "AI Insights"}
+                        {aiLoading && <span className="editor-tab-spinner" />}
+                      </button>
+
+                      <button
+                        className="action-btn action-btn--optimize"
+                        onClick={handleOptimizePerformance}
+                        disabled={aiLoading || loading || !performanceMetrics}
+                        title={!performanceMetrics ? "Run the debugger first to collect performance data" : "AI performance optimization"}
+                      >
+                        <span className="material-symbols-outlined">speed</span>
+                        Optimize
+                        {!performanceMetrics && <span className="material-symbols-outlined action-lock-icon">lock</span>}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* ═══ TAB NAVIGATION ═══ */}
+                  <div className="section-header debugger-tab-header">
+                    <div className="tab-bar" role="tablist" aria-label="Debugger view tabs">
+                      {[
+                        { id: "flow",   label: "Execution Flow",  icon: "account_tree" },
+                        { id: "memory", label: "Memory Map",      icon: "memory_alt" },
+                        { id: "ai",     label: "AI Insights",     icon: "auto_awesome", hidden: !aiExplanation && !aiLoading },
+                        { id: "output", label: "Output",          icon: "terminal" },
+                      ].filter(t => !t.hidden).map(({ id, label, icon }) => (
+                        <button
+                          key={id}
+                          className={`tab ${activeTab === id ? "active" : ""}`}
+                          onClick={() => setActiveTab(id)}
+                          role="tab"
+                        >
+                          <span className="material-symbols-outlined tab-icon">{icon}</span>
+                          {label}
+                          {id === "ai" && aiLoading && <span className="editor-tab-spinner" style={{ marginLeft: 4 }} />}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Step counter badge */}
+                    {analysisResult && (
+                      <div className="debugger-step-badge">
+                        <span className="material-symbols-outlined">stacks</span>
+                        Step {(analysisResult.cursor ?? 0) + 1} / {analysisResult.total_recorded_steps ?? "?"}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ═══ Error banner ═══ */}
+                  {error && (
+                    <div className="error-banner">
+                      <span><strong>Error:</strong> {error}</span>
+                      <button className="error-dismiss" onClick={() => setError(null)}>✕</button>
+                    </div>
+                  )}
+
+                  {/* ═══ Tab content ═══ */}
+                  {activeTab === "flow" ? (
+                    <FlowVisualizer
+                      result={analysisResult}
+                      loading={loading}
+                      stepLoading={stepLoading}
+                      onLineChange={setCurrentLine}
+                      code={code}
+                      onNext={(stepType) => handleStep("next", stepType)}
+                      onBack={() => handleStep("back")}
+                      onExplainStep={handleExplainStep}
+                      breakpoints={breakpoints}
+                    />
+                  ) : activeTab === "memory" ? (
+                    <MemorySpectrometer result={analysisResult} currentStep={analysisResult?.cursor ?? 0} />
+                  ) : activeTab === "ai" ? (
+                    <AiExplanation data={aiExplanation} loading={aiLoading} />
+                  ) : (
+                    <OutputPanel result={analysisResult} loading={loading} />
+                  )}
                 </>
               )}
-
-                </section>
-                </main>
+            </section>
+          </main>
                 );
 
       default:
