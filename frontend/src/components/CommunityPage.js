@@ -13,17 +13,18 @@ const CommunityPage = () => (
           letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--primary)'
         }}>Community</span>
         <h1 style={{ fontSize: 'clamp(1.8rem,4vw,2.6rem)', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '12px', letterSpacing: '-0.02em' }}>
-          Join the Collective
+          Connect &amp; Get Support
         </h1>
-        <p style={{ color: 'rgba(26,19,16,0.55)', fontSize: '1rem', maxWidth: '440px', margin: '0 auto', lineHeight: '1.65' }}>
-          Traceon is built by engineers, for engineers. Contribute, learn, and grow with the community.
+        <p style={{ color: 'var(--text-muted)', fontSize: '1rem', maxWidth: '440px', margin: '0 auto', lineHeight: '1.65' }}>
+          Have a question, found a bug, or want to share what you built with Traceon?
+          We'd love to hear from you.
         </p>
       </div>
 
       {/* Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: '20px', marginBottom: '36px' }}>
 
-        {/* GitHub */}
+        {/* Contact / Feedback */}
         <div style={{
           background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '16px',
           padding: '36px 28px', display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -33,16 +34,15 @@ const CommunityPage = () => (
             width: '56px', height: '56px', borderRadius: '14px', background: 'var(--bg-secondary)',
             border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '28px', color: 'var(--primary)' }}>terminal</span>
+            <span className="material-symbols-outlined" style={{ fontSize: '28px', color: 'var(--primary)' }}>mail</span>
           </div>
-          <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-primary)' }}>GitHub</h3>
-          <p style={{ color: 'rgba(26,19,16,0.6)', fontSize: '0.875rem', lineHeight: '1.65', flex: 1 }}>
-            The core engine is 100% open source. Star the repo, open issues, or submit a pull request to help shape the project.
+          <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-primary)' }}>Feedback &amp; Bugs</h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', lineHeight: '1.65', flex: 1 }}>
+            Found a bug or have a feature request? Drop us an email with a short description and
+            a code snippet if relevant — we read everything.
           </p>
           <a
-            href="https://github.com/NkOffiCiAL07/AI-Powered-C-Execution-Flow-Visualizer"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="mailto:nishantkumar19041@gmail.com"
             style={{
               display: 'block', padding: '11px 28px', borderRadius: '10px', fontWeight: '700', fontSize: '0.875rem',
               cursor: 'pointer', background: 'var(--primary)', color: '#fff', border: 'none',
@@ -51,7 +51,7 @@ const CommunityPage = () => (
             }}
             onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
             onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-          >View Repository</a>
+          >Send Feedback</a>
         </div>
 
         {/* Discord */}
@@ -67,15 +67,17 @@ const CommunityPage = () => (
             <span className="material-symbols-outlined" style={{ fontSize: '28px', color: 'var(--primary)' }}>forum</span>
           </div>
           <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-primary)' }}>Discord</h3>
-          <p style={{ color: 'rgba(26,19,16,0.6)', fontSize: '0.875rem', lineHeight: '1.65', flex: 1 }}>
-            Real-time support and architecture discussions with the core team. Ask questions, share projects, get feedback.
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', lineHeight: '1.65', flex: 1 }}>
+            Real-time support and discussions with the core team. Ask questions, share projects,
+            and get feedback from other engineers using Traceon.
           </p>
           <button
-            onClick={() => alert('Discord server coming soon — follow the GitHub repo for updates.')}
+            onClick={() => alert('Discord server coming soon — check back shortly.')}
             style={{
               padding: '11px 28px', borderRadius: '10px', fontWeight: '700', fontSize: '0.875rem',
               cursor: 'pointer', background: 'transparent', color: 'var(--text-primary)',
-              border: '1.5px solid rgba(100,70,40,0.25)', transition: 'opacity 0.15s', width: '100%'
+              border: '1.5px solid rgba(100,70,40,0.25)', transition: 'opacity 0.15s', width: '100%',
+              fontFamily: 'inherit',
             }}
             onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}
             onMouseLeave={e => e.currentTarget.style.opacity = '1'}
@@ -86,24 +88,27 @@ const CommunityPage = () => (
       {/* Upcoming Events */}
       <div style={{
         background: 'var(--bg-card)', border: '1px solid var(--border)',
-        borderRadius: '16px', padding: '32px'
+        borderRadius: '16px', padding: '32px', marginBottom: '24px',
       }}>
         <h3 style={{ fontSize: '1.05rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '20px' }}>Upcoming Events</h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '20px 0', color: 'rgba(26,19,16,0.45)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '20px 0', color: 'var(--text-muted)' }}>
           <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>event_busy</span>
           <span style={{ fontSize: '0.875rem' }}>No upcoming events scheduled. Check back soon.</span>
         </div>
       </div>
 
-      {/* Open Source note */}
+      {/* Contact note */}
       <div style={{
-        marginTop: '28px', padding: '20px 24px', background: 'var(--bg-secondary)',
+        padding: '20px 24px', background: 'var(--bg-secondary)',
         border: '1px solid var(--border)', borderLeft: '3px solid var(--primary)',
         borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '14px'
       }}>
-        <span className="material-symbols-outlined" style={{ fontSize: '22px', color: 'var(--primary)', flexShrink: 0 }}>favorite</span>
-        <p style={{ fontSize: '0.875rem', color: 'rgba(26,19,16,0.7)', lineHeight: '1.6', margin: 0 }}>
-          Traceon is free and open source. If it helps your workflow, consider giving the repository a star or contributing a fix.
+        <span className="material-symbols-outlined" style={{ fontSize: '22px', color: 'var(--primary)', flexShrink: 0 }}>support_agent</span>
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: '1.6', margin: 0 }}>
+          For account issues, billing questions, or partnership inquiries, email us at{' '}
+          <a href="mailto:nishantkumar19041@gmail.com" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>
+            nishantkumar19041@gmail.com
+          </a>. We typically respond within 24 hours.
         </p>
       </div>
 
