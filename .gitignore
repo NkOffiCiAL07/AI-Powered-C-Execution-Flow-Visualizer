@@ -2,6 +2,20 @@
 logs/
 *.log
 
+# Claude Code session memory
+memory/
+
+# Competitive programming scratch files
+.cph/
+G_Stop_Spot.cpp
+
+# Runtime cache files
+news_cache.json
+
+# Local test artifacts
+test_global
+test_global.c
+
 # Python
 __pycache__/
 *.py[cod]
