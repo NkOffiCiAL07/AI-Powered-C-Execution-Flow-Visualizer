@@ -38,12 +38,10 @@ const GRAPH_EDGES = [
 ];
 
 const FOOTER_COLS = [
-  { title: 'Product',   links: ['Features', 'Docs', 'Changelog', 'Roadmap'] },
-  { title: 'Resources', links: ['Blog', 'Tutorials', 'Examples', 'API Reference'] },
-  { title: 'Company',   links: ['About', 'Community', 'Pricing', 'Contact'] },
+  { title: 'Product',   links: ['Features', 'Docs', 'Pricing', 'Release Notes'] },
+  { title: 'Resources', links: ['Tutorials', 'Examples', 'API Reference'] },
+  { title: 'Company',   links: ['About', 'Community', 'Contact'] },
 ];
-
-const GITHUB_URL = 'https://github.com/NkOffiCiAL07/AI-Powered-C-Execution-Flow-Visualizer';
 
 // ─── Set this to your YouTube embed URL or Loom embed URL to activate the demo video.
 // YouTube format:  "https://www.youtube.com/embed/YOUR_VIDEO_ID"
@@ -64,7 +62,6 @@ const T = 'rgba(201,106,72,'; // terracotta helper
 const LandingPage = ({ onStart, onSwitchView, onLogin, user }) => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [heroReady, setHeroReady] = useState(false);
-  const [githubStars, setGithubStars] = useState(null);
   const [activeNodeIdx, setActiveNodeIdx] = useState(0);
 
   useEffect(() => {
@@ -75,18 +72,6 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, user }) => {
   useEffect(() => {
     const id = setInterval(() => setActiveNodeIdx(n => (n + 1) % GRAPH_NODES.length), 1800);
     return () => clearInterval(id);
-  }, []);
-
-  useEffect(() => {
-    fetch('https://api.github.com/repos/NkOffiCiAL07/AI-Powered-C-Execution-Flow-Visualizer')
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (data?.stargazers_count != null) {
-          const n = data.stargazers_count;
-          setGithubStars(n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
-        }
-      })
-      .catch(() => {});
   }, []);
 
   const { theme } = useTheme();
@@ -107,7 +92,6 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, user }) => {
   const border10 = dark ? 'rgba(232,226,217,0.10)' : 'rgba(100,70,40,0.1)';
   const border12 = dark ? 'rgba(232,226,217,0.12)' : 'rgba(100,70,40,0.12)';
   const border14 = dark ? 'rgba(232,226,217,0.14)' : 'rgba(100,70,40,0.14)';
-  const border20 = dark ? 'rgba(232,226,217,0.20)' : 'rgba(100,70,40,0.2)';
   const border25 = dark ? 'rgba(232,226,217,0.25)' : 'rgba(100,70,40,0.25)';
   const border08 = dark ? 'rgba(232,226,217,0.08)' : 'rgba(100,70,40,0.08)';
 
@@ -133,9 +117,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, user }) => {
 
   const getFooterLinkHref = (label) => {
     const hrefs = {
-      'Changelog': `${GITHUB_URL}/commits/main`,
-      'Roadmap':   `${GITHUB_URL}/blob/main/plan.md`,
-      'Contact':   'mailto:nishantkumar19041@gmail.com',
+      'Contact': 'mailto:nishantkumar19041@gmail.com',
     };
     return hrefs[label] || null;
   };
@@ -254,10 +236,10 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, user }) => {
           <div className="relative z-10 w-full" style={{ borderTop: `1px solid ${border10}` }}>
             <div className="max-w-3xl mx-auto px-6 py-6 flex flex-wrap items-center justify-center gap-x-12 gap-y-4">
               {[
-                { value: githubStars ?? '…', label: 'GitHub Stars' },
                 { value: '< 200ms', label: 'Avg. Analysis' },
-                { value: '50k+', label: 'Traces Run' },
-                { value: '99.9%', label: 'Uptime SLA' },
+                { value: '50k+',    label: 'Traces Run' },
+                { value: '4',       label: 'Languages' },
+                { value: '99.9%',   label: 'Uptime SLA' },
               ].map((s, i) => (
                 <div key={i} className="flex flex-col items-center">
                   <span className="text-xl font-extrabold" style={{ color: '#C96A48', fontFamily: 'Space Grotesk, sans-serif', lineHeight: 1.1 }}>{s.value}</span>
@@ -723,7 +705,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, user }) => {
           </div>
         </section>
 
-        {/* ── OPEN SOURCE CTA ── */}
+        {/* ── FINAL CTA ── */}
         <section className="max-w-7xl mx-auto px-6 py-28 border-t" style={{ borderColor: border09 }}>
           <div className="relative rounded-3xl px-10 py-20 md:px-24 text-center overflow-hidden border"
             style={{ background: `${T}0.05)`, borderColor: `${T}0.16)` }}>
@@ -735,30 +717,25 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, user }) => {
             <div className="relative z-10">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-widest mb-6"
                 style={{ borderColor: `${T}0.28)`, color: '#C96A48', background: `${T}0.08)` }}>
-                Open Source
+                <span className="w-2 h-2 rounded-full animate-pulse-ring" style={{ background: '#C96A48', flexShrink: 0 }} />
+                Ready to Ship
               </div>
               <h2 className="font-extrabold mb-6"
                 style={{ fontSize: 'clamp(2.2rem,6vw,4rem)', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '-0.03em', lineHeight: 1.1, color: 'var(--text-primary)' }}>
-                Open Core.{' '}
-                <span className="gradient-text">Community Driven.</span>
+                Debug Faster.{' '}
+                <span className="gradient-text">Ship with Confidence.</span>
               </h2>
               <p className="max-w-2xl mx-auto mb-12 leading-relaxed" style={{ fontSize: '1.125rem', color: textMuted55 }}>
-                Transparent Traceon algorithms for a transparent future. Join{' '}
-                <strong style={{ color: '#C96A48' }}>12,000+</strong> engineers building the next generation of C++ debugging tools.
+                Traceon gives you the execution intelligence to catch bugs before they reach production.
+                Trusted by engineers who care about code quality.
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a
-                  href="https://github.com/NkOffiCiAL07/AI-Powered-C-Execution-Flow-Visualizer"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ghost-btn flex items-center gap-3 px-8 py-4 rounded-xl font-bold text-sm"
-                  style={{ textDecoration: 'none' }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#C96A48' }}>star</span>
-                  Star on GitHub
-                  <div className="w-px h-4 mx-1" style={{ background: border20 }} />
-                  <span style={{ color: '#C96A48', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px' }}>{githubStars ?? '★'}</span>
-                </a>
+                <button className="ghost-btn flex items-center gap-3 px-8 py-4 rounded-xl font-bold text-sm"
+                  onClick={() => onSwitchView('pricing')}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#C96A48' }}>local_offer</span>
+                  View Pricing
+                </button>
                 <button className="cta-primary flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm"
                   onClick={() => user?.role === 'member' ? onSwitchView('editor') : launch()}>
                   <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
@@ -769,7 +746,12 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, user }) => {
               </div>
 
               <div className="flex flex-wrap items-center justify-center gap-10 mt-16 pt-14 border-t" style={{ borderColor: border10 }}>
-                {[{ value: githubStars ?? '…', label: 'GitHub Stars' }, { value: '50k+', label: 'Traces Analyzed' }, { value: '< 200ms', label: 'Avg. Analysis' }, { value: '99.9%', label: 'Uptime' }].map((s, i) => (
+                {[
+                  { value: '50k+',    label: 'Traces Analyzed' },
+                  { value: '< 200ms', label: 'Avg. Analysis' },
+                  { value: '4',       label: 'Languages' },
+                  { value: '99.9%',   label: 'Uptime' },
+                ].map((s, i) => (
                   <div key={i} className="text-center">
                     <div className="text-3xl font-extrabold mb-1" style={{ color: '#C96A48', fontFamily: 'Space Grotesk, sans-serif' }}>{s.value}</div>
                     <div className="text-xs uppercase tracking-widest font-bold" style={{ color: textMuted38 }}>{s.label}</div>
@@ -799,7 +781,6 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, user }) => {
               </p>
               <div className="flex gap-2.5">
                 {[
-                  { icon: 'terminal',    label: 'GitHub',    href: GITHUB_URL },
                   { icon: 'description', label: 'Docs',      onClick: () => onSwitchView('docs') },
                   { icon: 'group',       label: 'Community', onClick: () => onSwitchView('community') },
                   { icon: 'mail',        label: 'Email',     href: 'mailto:nishantkumar19041@gmail.com' },
