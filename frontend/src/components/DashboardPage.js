@@ -1,9 +1,77 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import NewProjectModal from './NewProjectModal';
 import NewsPage from './NewsPage';
 import { fetchProjects, deleteProject, fetchFiles } from '../services/api';
 import { useTheme } from '../theme';
 import '../styles/DashboardPage.css';
+
+// ── Activity helpers ──────────────────────────────────────────────────────────
+
+const ACTIVITY_KEY = 'traceon_activity';
+
+function getStoredActivity() {
+  try { return JSON.parse(localStorage.getItem(ACTIVITY_KEY) || '{}'); }
+  catch { return {}; }
+}
+
+function recordActivity(count = 1) {
+  const today = new Date().toISOString().split('T')[0];
+  // Only record once per browser session per day to avoid inflation on re-renders
+  const sessionKey = `traceon_sess_${today}`;
+  if (sessionStorage.getItem(sessionKey)) return;
+  sessionStorage.setItem(sessionKey, '1');
+  const stored = getStoredActivity();
+  stored[today] = (stored[today] || 0) + count;
+  try { localStorage.setItem(ACTIVITY_KEY, JSON.stringify(stored)); } catch {}
+}
+
+function recordProjectOpen() {
+  const today = new Date().toISOString().split('T')[0];
+  const stored = getStoredActivity();
+  stored[today] = (stored[today] || 0) + 1;
+  try { localStorage.setItem(ACTIVITY_KEY, JSON.stringify(stored)); } catch {}
+}
+
+/** Merge localStorage data + project timestamps into a date→count map */
+function buildActivityMap(projects) {
+  const map = { ...getStoredActivity() };
+  projects.forEach(p => {
+    [p.created_at, p.last_accessed].forEach(iso => {
+      if (!iso) return;
+      const d = new Date(iso).toISOString().split('T')[0];
+      map[d] = (map[d] || 0) + 1;
+    });
+  });
+  return map;
+}
+
+const WEEKS = 10; // columns in the heatmap
+
+/** Build a WEEKS×7 grid of Date objects, oldest first */
+function buildGrid() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  // align start to Monday
+  const dayOfWeek = (today.getDay() + 6) % 7; // Mon=0 … Sun=6
+  const start = new Date(today);
+  start.setDate(today.getDate() - dayOfWeek - (WEEKS - 1) * 7);
+  return Array.from({ length: WEEKS }, (_, w) =>
+    Array.from({ length: 7 }, (_, d) => {
+      const date = new Date(start);
+      date.setDate(start.getDate() + w * 7 + d);
+      return date;
+    })
+  );
+}
+
+function intensityLevel(count) {
+  if (!count) return 0;
+  if (count === 1) return 1;
+  if (count <= 3) return 2;
+  return 3;
+}
+
+const DAY_LABELS = ['M', '', 'W', '', 'F', '', '']; // Mon,Tue,Wed,Thu,Fri,Sat,Sun
 
 const LANG_LABELS = { cpp: 'C++', c: 'C', python: 'Python', java: 'Java' };
 
@@ -49,6 +117,7 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
     try {
       const data = await fetchProjects();
       setProjects(data.projects || []);
+      recordActivity(); // count each dashboard visit once per session/day
     } catch (err) {
       if (err.name !== 'AbortError') setFetchError(err.message);
     } finally {
@@ -59,6 +128,9 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
   useEffect(() => {
     if (activeNav === 'projects') loadProjects();
   }, [activeNav, loadProjects]);
+
+  const activityMap = useMemo(() => buildActivityMap(projects), [projects]);
+  const heatmapGrid = useMemo(() => buildGrid(), []);
 
   const handleDelete = async (e, projectId) => {
     e.stopPropagation();
@@ -76,6 +148,7 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
 
   const handleOpenProject = async (project) => {
     setOpeningId(project.id);
+    recordProjectOpen(); // count every project open as activity
     try {
       const data = await fetchFiles(project.id);
       const files = data.files || [];
@@ -339,33 +412,61 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
                   )}
                 </div>
                 <aside className="dash-activity-sidebar">
-                  <h3>Activity</h3>
-                  <div className="activity-heatmap">
-                    {(() => {
-                      const now = Date.now();
-                      const day = 86400000;
-                      const accessedDays = new Set(
-                        projects
-                          .filter(p => p.last_accessed)
-                          .map(p => Math.floor((now - new Date(p.last_accessed).getTime()) / day))
+                  <h3 className="activity-title">Activity</h3>
+
+                  {/* Month labels */}
+                  <div className="activity-month-row">
+                    {heatmapGrid.map((week, wi) => {
+                      const firstDay = week[0];
+                      const prevWeek = wi > 0 ? heatmapGrid[wi - 1][0] : null;
+                      const showMonth = !prevWeek || firstDay.getMonth() !== prevWeek.getMonth();
+                      return (
+                        <div key={wi} className="activity-month-cell">
+                          {showMonth && firstDay.toLocaleDateString(undefined, { month: 'short' })}
+                        </div>
                       );
-                      return Array.from({ length: 35 }).map((_, i) => {
-                        const daysAgo = 34 - i;
-                        const active = accessedDays.has(daysAgo);
-                        return (
-                          <div
-                            key={i}
-                            className="heatmap-cell"
-                            style={{ opacity: active ? 0.85 : 0.12 }}
-                            title={active ? `Active ${daysAgo === 0 ? 'today' : `${daysAgo}d ago`}` : 'No activity'}
-                          />
-                        );
-                      });
-                    })()}
+                    })}
                   </div>
-                  <div className="activity-meta">
-                    <span>Less</span>
-                    <span>More</span>
+
+                  {/* Grid: day-labels + week columns */}
+                  <div className="activity-grid-wrap">
+                    {/* Day-of-week labels */}
+                    <div className="activity-day-labels">
+                      {DAY_LABELS.map((label, i) => (
+                        <div key={i} className="activity-day-label">{label}</div>
+                      ))}
+                    </div>
+
+                    {/* Week columns */}
+                    <div className="activity-grid">
+                      {heatmapGrid.map((week, wi) => (
+                        <div key={wi} className="activity-week-col">
+                          {week.map((date, di) => {
+                            const iso = date.toISOString().split('T')[0];
+                            const count = activityMap[iso] || 0;
+                            const level = intensityLevel(count);
+                            const isToday = iso === new Date().toISOString().split('T')[0];
+                            const label = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                            return (
+                              <div
+                                key={di}
+                                className={`heatmap-cell level-${level}${isToday ? ' heatmap-today' : ''}`}
+                                title={`${label}: ${count} event${count !== 1 ? 's' : ''}`}
+                              />
+                            );
+                          })}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Legend */}
+                  <div className="activity-legend">
+                    <span className="activity-legend-label">Less</span>
+                    {[0, 1, 2, 3].map(l => (
+                      <div key={l} className={`heatmap-cell level-${l}`} style={{ flexShrink: 0 }} />
+                    ))}
+                    <span className="activity-legend-label">More</span>
                   </div>
                 </aside>
               </div>
