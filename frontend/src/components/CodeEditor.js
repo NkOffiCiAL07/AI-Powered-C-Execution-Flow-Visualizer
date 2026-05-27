@@ -710,8 +710,24 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest,
   const lines = code.split("\n");
   const isDebugging = currentLine !== undefined && currentLine !== null;
 
+  // ── Feature 6: Share Code ──────────────────────────────────────────────────
+  const [shareToast, setShareToast] = useState(false);
+  const shareTimerRef = useRef(null);
+  const handleShare = () => {
+    try {
+      const encoded = btoa(unescape(encodeURIComponent(code)));
+      const url = `${window.location.origin}${window.location.pathname}#lang=${language}&code=${encoded}`;
+      navigator.clipboard.writeText(url).catch(() => {});
+      // Also set the hash so the page reflects it immediately
+      window.history.replaceState(null, '', `#lang=${language}&code=${encoded}`);
+      setShareToast(true);
+      clearTimeout(shareTimerRef.current);
+      shareTimerRef.current = setTimeout(() => setShareToast(false), 2400);
+    } catch {}
+  };
+
   return (
-    <div className="code-editor" ref={containerRef}>
+    <div className="code-editor" ref={containerRef} data-tour="editor">
       {/* Execution status banner — shown only while debugger is stepping */}
       {isDebugging && (
         <div className="exec-line-banner">
@@ -731,7 +747,18 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest,
         {!compact && !isDebugging && (
           <div className="editor-toolbar">
             <span className="editor-language-pill">{language === "python" ? "Python" : language === "c" ? "C" : language === "java" ? "Java" : "C++"}</span>
-            <span className="editor-toolbar-tip">Write code, then run the existing analyzer and visualizer</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span className="editor-toolbar-tip">Write code, then run the existing analyzer and visualizer</span>
+              {/* ── Share Button ── */}
+              <button
+                className="share-code-btn"
+                onClick={handleShare}
+                title="Copy shareable link with your code"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 14 }}>share</span>
+                Share
+              </button>
+            </div>
           </div>
         )}
         <Editor
@@ -751,7 +778,21 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest,
           ? <>Line: <span className="line-count">{currentLine}</span> of <span className="char-count">{lines.length}</span></>
           : <>Lines: <span className="line-count">{lines.length}</span>{" "}| Characters: <span className="char-count">{code.length}</span></>
         }
+        {performance && (
+          <span style={{ marginLeft: 'auto', fontSize: 10, opacity: 0.7 }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 11, verticalAlign: 'middle' }}>thermostat</span>
+            {' '}Heatmap active
+          </span>
+        )}
       </div>
+
+      {/* Share toast */}
+      {shareToast && (
+        <div className="share-toast">
+          <span className="material-symbols-outlined" style={{ fontSize: 16, color: '#22C55E' }}>check_circle</span>
+          Link copied to clipboard!
+        </div>
+      )}
     </div>
   );
 }

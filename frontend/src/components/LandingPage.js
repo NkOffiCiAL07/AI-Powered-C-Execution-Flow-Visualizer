@@ -1,6 +1,147 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import LoginModal from './LoginModal';
 import { useTheme, isDarkTheme } from '../theme';
+
+/* ── Animated Count-Up Hook ── */
+function useCountUp(target, duration = 1600, start = false) {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    if (!start) return;
+    let startTime = null;
+    const step = (ts) => {
+      if (!startTime) startTime = ts;
+      const progress = Math.min((ts - startTime) / duration, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(Math.floor(eased * target));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, [target, duration, start]);
+  return value;
+}
+
+const STATS = [
+  { target: 50000, suffix: '+', label: 'Traces Analyzed',     icon: 'analytics' },
+  { target: 4,     suffix: '',  label: 'Languages Supported', icon: 'code' },
+  { target: 200,   suffix: 'ms',label: 'Avg. Analysis Time',  icon: 'bolt' },
+  { target: 99,    suffix: '.9%',label: 'Platform Uptime',    icon: 'verified' },
+];
+
+function formatStat(val, s) {
+  if (s.target >= 1000) return (val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val) + s.suffix;
+  return val + s.suffix;
+}
+
+function StatsSection({ dark, border09, textMuted38, textMuted55 }) {
+  const sectionRef = useRef(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } }, { threshold: 0.25 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  const v0 = useCountUp(STATS[0].target, 1800, visible);
+  const v1 = useCountUp(STATS[1].target, 900,  visible);
+  const v2 = useCountUp(STATS[2].target, 1200, visible);
+  const v3 = useCountUp(STATS[3].target, 1500, visible);
+  const vals = [v0, v1, v2, v3];
+
+  return (
+    <section ref={sectionRef} className="max-w-7xl mx-auto px-6 py-20 border-t" style={{ borderColor: border09 }}>
+      <div className="text-center mb-14">
+        <span className="inline-block text-xs font-bold uppercase tracking-widest mb-4 px-3 py-1 rounded-full border"
+          style={{ color: '#C96A48', borderColor: 'rgba(201,106,72,0.28)', background: 'rgba(201,106,72,0.07)' }}>
+          By The Numbers
+        </span>
+        <h2 className="font-extrabold leading-tight"
+          style={{ fontSize: 'clamp(1.8rem,4vw,3rem)', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
+          Built for Real-World Code
+        </h2>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        {STATS.map((s, i) => (
+          <div key={i} className="stat-card rounded-2xl p-8 text-center border"
+            style={{ background: dark ? 'rgba(255,255,255,0.03)' : 'rgba(201,106,72,0.03)', borderColor: dark ? 'rgba(232,226,217,0.09)' : 'rgba(201,106,72,0.1)' }}>
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-5"
+              style={{ background: 'linear-gradient(135deg,rgba(201,106,72,0.18),rgba(139,62,36,0.08))' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 22, color: '#C96A48' }}>{s.icon}</span>
+            </div>
+            <div className="text-4xl font-extrabold mb-2 stat-number"
+              style={{ fontFamily: 'Space Grotesk, monospace', color: '#C96A48', lineHeight: 1 }}>
+              {formatStat(vals[i], s)}
+            </div>
+            <div className="text-xs uppercase tracking-widest font-bold" style={{ color: textMuted38 }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+const TESTIMONIALS = [
+  { name: 'Arjun Mehta',   role: 'CS Student, IIT Delhi',       avatar: 'AM', text: 'Traceon completely changed how I debug. Watching variables change step-by-step made pointer bugs obvious instantly.' },
+  { name: 'Priya Singh',   role: 'Backend Engineer',             avatar: 'PS', text: 'The AI Insights feature saved me hours. It explained a complex memory issue in plain English — something no debugger had done before.' },
+  { name: 'Lucas Weber',   role: 'Competitive Programmer',       avatar: 'LW', text: 'The execution flow graph is legendary. I can see exactly which branches my algorithm takes and optimize accordingly.' },
+  { name: 'Chen Wei',      role: 'Software Dev, Startup',        avatar: 'CW', text: 'Deployed faster because I caught edge cases early. The heatmap showed me exactly which lines were bottlenecks.' },
+];
+
+function TestimonialsSection({ dark, border09, textMuted50, textMuted38 }) {
+  const [active, setActive] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setActive(a => (a + 1) % TESTIMONIALS.length), 4000);
+    return () => clearInterval(id);
+  }, []);
+
+  const t = TESTIMONIALS[active];
+  const bgCard = dark ? 'rgba(255,255,255,0.04)' : 'rgba(201,106,72,0.04)';
+  const border = dark ? 'rgba(232,226,217,0.1)' : 'rgba(201,106,72,0.12)';
+
+  return (
+    <section className="max-w-7xl mx-auto px-6 py-20 border-t" style={{ borderColor: border09 }}>
+      <div className="text-center mb-14">
+        <span className="inline-block text-xs font-bold uppercase tracking-widest mb-4 px-3 py-1 rounded-full border"
+          style={{ color: '#C96A48', borderColor: 'rgba(201,106,72,0.28)', background: 'rgba(201,106,72,0.07)' }}>
+          Loved by Developers
+        </span>
+        <h2 className="font-extrabold"
+          style={{ fontSize: 'clamp(1.8rem,4vw,3rem)', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
+          What Engineers Say
+        </h2>
+      </div>
+
+      {/* Main card */}
+      <div className="max-w-2xl mx-auto mb-10">
+        <div key={active} className="testimonial-card rounded-3xl p-10 border text-center"
+          style={{ background: bgCard, borderColor: border }}>
+          <span className="text-5xl leading-none mb-6 block" style={{ color: 'rgba(201,106,72,0.3)', fontFamily: 'Georgia, serif' }}>"</span>
+          <p className="text-lg leading-relaxed mb-8 font-medium" style={{ color: 'var(--text-primary)', fontStyle: 'italic' }}>{t.text}</p>
+          <div className="flex items-center justify-center gap-4">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-white text-sm shrink-0"
+              style={{ background: 'linear-gradient(135deg,#C96A48,#8B3E24)' }}>{t.avatar}</div>
+            <div className="text-left">
+              <div className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{t.name}</div>
+              <div className="text-xs" style={{ color: textMuted50 }}>{t.role}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Dot nav */}
+      <div className="flex justify-center gap-2.5">
+        {TESTIMONIALS.map((_, i) => (
+          <button key={i} onClick={() => setActive(i)}
+            className="testimonial-dot transition-all duration-300"
+            style={{ width: i === active ? 24 : 8, height: 8, borderRadius: 999, background: i === active ? '#C96A48' : dark ? 'rgba(232,226,217,0.18)' : 'rgba(201,106,72,0.2)', border: 'none', cursor: 'pointer', padding: 0 }}
+            aria-label={`Testimonial ${i + 1}`}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
 
 const STEPS = [
   { icon: 'code',       n: '01', title: 'Write Your Code',         desc: 'Use the built-in editor with syntax highlighting for C, C++, Python, and Java. Switch languages from the dropdown.' },
@@ -707,6 +848,12 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, user }) => {
             </div>
           </div>
         </section>
+
+        {/* ── ANIMATED STATS ── */}
+        <StatsSection dark={dark} border09={border09} textMuted38={textMuted38} textMuted55={textMuted55} />
+
+        {/* ── TESTIMONIALS ── */}
+        <TestimonialsSection dark={dark} border09={border09} textMuted50={textMuted50} textMuted38={textMuted38} />
 
         {/* ── FINAL CTA ── */}
         <section className="max-w-7xl mx-auto px-6 py-28 border-t" style={{ borderColor: border09 }}>

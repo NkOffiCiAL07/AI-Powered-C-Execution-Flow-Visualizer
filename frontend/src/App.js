@@ -24,6 +24,8 @@ import {
 } from "./services/api";
 import NewsPage from "./components/NewsPage";
 import CodeFlowGraph from "./components/CodeFlowGraph";
+import Confetti from "./components/Confetti";
+import OnboardingTour from "./components/OnboardingTour";
 import { useAuth } from "./contexts/AuthContext";
 import "./App.css";
 import "./styles/CppEditorPage.css";
@@ -116,6 +118,14 @@ function App() {
   });
   const [bpJumpTarget, setBpJumpTarget] = useState(null); // { step, version }
   const [bpDebugResult, setBpDebugResult] = useState(null); // GDB hits result
+
+  // ── Feature 2: Confetti ───────────────────────────────────────────────────
+  const [confettiTrigger, setConfettiTrigger] = useState(false);
+  const prevAnalysisRef = useRef(null);
+
+  // ── Feature 9: Onboarding Tour ───────────────────────────────────────────
+  const [tourActive, setTourActive] = useState(false);
+
   const abortControllerRef = useRef(null);
   const aiAbortControllerRef = useRef(null);
   const stepAbortControllerRef = useRef(null);
@@ -179,6 +189,26 @@ function App() {
       setView("landing");
     }
   }, [user, view]);
+
+  // ── Feature 2: Fire confetti when a new analysis result arrives ─────────
+  useEffect(() => {
+    if (analysisResult && analysisResult !== prevAnalysisRef.current) {
+      prevAnalysisRef.current = analysisResult;
+      if (analysisResult.snapshots?.length > 0) {
+        setConfettiTrigger(t => !t);
+      }
+    }
+  }, [analysisResult]);
+
+  // ── Feature 9: Show onboarding tour for first-time users on editor/visualizer ─
+  useEffect(() => {
+    if ((view === 'editor' || view === 'visualizer') && user) {
+      if (!localStorage.getItem('traceon_tour_done')) {
+        const timer = setTimeout(() => setTourActive(true), 800);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [view, user]);
 
   // Restore hash-based code share — runs immediately, before auth resolves
   useEffect(() => {
@@ -1053,6 +1083,7 @@ function App() {
                 language={language}
                 compact
                 compileError={error}
+                performance={performanceMetrics}
                 breakpoints={breakpoints}
                 onBreakpointsChange={setBreakpoints}
               />
@@ -1111,6 +1142,7 @@ function App() {
                         onClick={() => handleAnalyze()}
                         disabled={loading || aiLoading}
                         title="Analyze code & start step-through debugger"
+                        data-tour="analyze"
                       >
                         <span className={`material-symbols-outlined${loading ? " spin" : ""}`}>
                           {loading ? "sync" : "play_arrow"}
@@ -1186,18 +1218,19 @@ function App() {
                   <div className="section-header debugger-tab-header">
                     <div className="tab-bar" role="tablist" aria-label="Debugger view tabs">
                       {[
-                        { id: "flow",        label: "Execution Flow",  icon: "account_tree" },
+                        { id: "flow",        label: "Execution Flow",  icon: "account_tree", tourAttr: "flow-tab" },
                         { id: "graph",       label: "Flow Graph",      icon: "schema",        hidden: !analysisResult },
                         { id: "breakpoints", label: "Breakpoints",     icon: "adjust",        hidden: breakpoints.size === 0 },
                         { id: "memory",      label: "Memory Map",      icon: "memory_alt" },
                         { id: "ai",          label: "AI Insights",     icon: "auto_awesome",  hidden: !aiExplanation && !aiLoading },
                         { id: "output",      label: "Output",          icon: "terminal" },
-                      ].filter(t => !t.hidden).map(({ id, label, icon }) => (
+                      ].filter(t => !t.hidden).map(({ id, label, icon, tourAttr }) => (
                         <button
                           key={id}
                           className={`tab ${activeTab === id ? "active" : ""}`}
                           onClick={() => setActiveTab(id)}
                           role="tab"
+                          {...(tourAttr ? { 'data-tour': tourAttr } : {})}
                         >
                           <span className="material-symbols-outlined tab-icon">{icon}</span>
                           {label}
@@ -1331,6 +1364,31 @@ function App() {
       </div>
       <LoginModal isOpen={showLoginModal} onLogin={handleLogin} onClose={() => setShowLoginModal(false)} />
       <KeyboardShortcutsModal isOpen={showShortcuts} onClose={() => setShowShortcuts(false)} />
+
+      {/* ── Feature 2: Confetti burst on analysis success ── */}
+      <Confetti trigger={confettiTrigger} />
+
+      {/* ── Feature 9: First-run onboarding tour ── */}
+      <OnboardingTour
+        active={tourActive}
+        onDone={() => {
+          setTourActive(false);
+          localStorage.setItem('traceon_tour_done', '1');
+        }}
+      />
+
+      {/* ── Feature 10: Floating AI FAB (visible in visualizer after analysis) ── */}
+      {view === 'visualizer' && analysisResult && !aiLoading && (
+        <button
+          className="ai-fab"
+          onClick={handleExplain}
+          title="Get AI insights on this code"
+          data-tour="ai-btn"
+        >
+          <span className="material-symbols-outlined">auto_awesome</span>
+          AI Insights
+        </button>
+      )}
     </div>
   );
 }

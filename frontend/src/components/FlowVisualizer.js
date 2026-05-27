@@ -648,9 +648,75 @@ export default function FlowVisualizer({
           )}
           <span className="step-number">Step {safeCurrentStep + 1} of {totalSteps}</span>
           <span className="step-pct">{progressPct}% done</span>
+
+          {/* ── Feature 8: Performance Score Badge ── */}
+          {totalSteps > 0 && (() => {
+            let cls, icon, label;
+            if (totalSteps <= 20)        { cls = 'blazing';  icon = 'bolt';  label = 'Blazing'; }
+            else if (totalSteps <= 120)  { cls = 'moderate'; icon = 'speed'; label = 'Moderate'; }
+            else                         { cls = 'heavy';    icon = 'warning'; label = 'Heavy'; }
+            return (
+              <span key={totalSteps} className={`perf-badge perf-badge--${cls}`} title={`${totalSteps} execution steps — ${label} complexity`}>
+                <span className="material-symbols-outlined" style={{ fontSize: 11 }}>{icon}</span>
+                {label}
+              </span>
+            );
+          })()}
         </div>
-        <div className="progress-bar">
+
+        {/* ── Feature 5: Draggable Timeline Scrubber ── */}
+        <div
+          className="progress-bar scrubber-bar"
+          title="Click or drag to jump to any execution step"
+          onClick={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const pct  = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+            const target = Math.round(pct * (totalSteps - 1));
+            const maxVisited = result?.cursor ?? 0;
+            if (target <= maxVisited) {
+              handlePause();
+              setCurrentStep(target);
+              const snap = visibleSnapshots[target];
+              if (snap?.location?.line && onLineChange) onLineChange(snap.location.line);
+            }
+          }}
+          onMouseMove={(e) => {
+            if (e.buttons !== 1) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const pct  = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+            const target = Math.round(pct * (totalSteps - 1));
+            const maxVisited = result?.cursor ?? 0;
+            if (target <= maxVisited) {
+              handlePause();
+              setCurrentStep(target);
+              const snap = visibleSnapshots[target];
+              if (snap?.location?.line && onLineChange) onLineChange(snap.location.line);
+            }
+          }}
+          style={{ cursor: 'pointer' }}
+        >
+          {/* Visited range */}
           <div className="progress-fill" style={{ width: `${progressPct}%` }} />
+          {/* Scrubber thumb */}
+          <div
+            className="scrubber-thumb"
+            style={{ left: `calc(${progressPct}% - 6px)` }}
+          />
+          {/* Breakpoint markers */}
+          {breakpoints && [...breakpoints].map(bpLine => {
+            // Find the first snapshot index where location.line === bpLine
+            const idx = visibleSnapshots.findIndex(s => s?.location?.line === bpLine);
+            if (idx < 0 || idx > (result?.cursor ?? 0)) return null;
+            const pct = (idx / Math.max(totalSteps - 1, 1)) * 100;
+            return (
+              <div
+                key={bpLine}
+                className="scrubber-bp-marker"
+                style={{ left: `${pct}%` }}
+                title={`Breakpoint — line ${bpLine}`}
+              />
+            );
+          })}
         </div>
       </div>
 
