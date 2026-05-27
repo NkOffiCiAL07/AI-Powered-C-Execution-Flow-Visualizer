@@ -417,19 +417,6 @@ export default function CppEditorPage({
 
             {/* Right group: AI tools */}
             <div className="action-bar-group action-bar-secondary">
-              <button
-                className={`action-btn action-btn--ai${isGuest ? " action-btn--locked" : ""}`}
-                onClick={isGuest ? onSignIn : onExplain}
-                disabled={!isGuest && (aiLoading || loading)}
-                title={isGuest ? "Sign in to use AI Insights" : "Explain code with AI (⌘⇧E)"}
-              >
-                <span className={`material-symbols-outlined${aiLoading ? " spin" : ""}`}>
-                  {aiLoading ? "sync" : "auto_awesome"}
-                </span>
-                Explain
-                {isGuest && <span className="material-symbols-outlined action-lock-icon">lock</span>}
-              </button>
-
               {performance && (
                 <button
                   className={`action-btn action-btn--optimize${isGuest ? " action-btn--locked" : ""}`}
@@ -585,6 +572,21 @@ export default function CppEditorPage({
           )}
         </section>
       </div>
+
+      {/* ── Floating AI Explain FAB ── */}
+      <button
+        className={`ai-fab${aiLoading ? ' ai-fab--loading' : ''}`}
+        onClick={isGuest ? onSignIn : onExplain}
+        disabled={!isGuest && (aiLoading || loading)}
+        title={isGuest ? "Sign in to use AI Insights" : aiLoading ? "AI is thinking…" : "Explain code with AI (⌘⇧E)"}
+        data-tour="ai-btn"
+      >
+        <span className={`material-symbols-outlined${aiLoading ? ' spin' : ''}`}>
+          {aiLoading ? 'sync' : 'auto_awesome'}
+        </span>
+        {isGuest ? 'Explain' : aiLoading ? 'Thinking…' : 'Explain'}
+        {isGuest && <span className="material-symbols-outlined" style={{ fontSize: 14 }}>lock</span>}
+      </button>
     </main>
   );
 }

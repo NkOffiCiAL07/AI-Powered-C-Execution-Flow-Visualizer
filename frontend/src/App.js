@@ -24,7 +24,6 @@ import {
 } from "./services/api";
 import NewsPage from "./components/NewsPage";
 import CodeFlowGraph from "./components/CodeFlowGraph";
-import Confetti from "./components/Confetti";
 import OnboardingTour from "./components/OnboardingTour";
 import { useAuth } from "./contexts/AuthContext";
 import "./App.css";
@@ -119,10 +118,6 @@ function App() {
   const [bpJumpTarget, setBpJumpTarget] = useState(null); // { step, version }
   const [bpDebugResult, setBpDebugResult] = useState(null); // GDB hits result
 
-  // ── Feature 2: Confetti ───────────────────────────────────────────────────
-  const [confettiTrigger, setConfettiTrigger] = useState(false);
-  const prevAnalysisRef = useRef(null);
-
   // ── Feature 9: Onboarding Tour ───────────────────────────────────────────
   const [tourActive, setTourActive] = useState(false);
 
@@ -189,16 +184,6 @@ function App() {
       setView("landing");
     }
   }, [user, view]);
-
-  // ── Feature 2: Fire confetti when a new analysis result arrives ─────────
-  useEffect(() => {
-    if (analysisResult && analysisResult !== prevAnalysisRef.current) {
-      prevAnalysisRef.current = analysisResult;
-      if (analysisResult.snapshots?.length > 0) {
-        setConfettiTrigger(t => !t);
-      }
-    }
-  }, [analysisResult]);
 
   // ── Feature 9: Show onboarding tour for first-time users on editor/visualizer ─
   useEffect(() => {
@@ -1165,19 +1150,6 @@ function App() {
 
                     <div className="action-bar-group action-bar-secondary">
                       <button
-                        className="action-btn action-btn--ai"
-                        onClick={handleExplain}
-                        disabled={aiLoading || loading}
-                        title="Explain code with AI"
-                      >
-                        <span className={`material-symbols-outlined${aiLoading ? " spin" : ""}`}>
-                          {aiLoading ? "sync" : "auto_awesome"}
-                        </span>
-                        {aiLoading ? "Thinking…" : "AI Insights"}
-                        {aiLoading && <span className="editor-tab-spinner" />}
-                      </button>
-
-                      <button
                         className="action-btn action-btn--optimize"
                         onClick={handleOptimizePerformance}
                         disabled={aiLoading || loading || !performanceMetrics}
@@ -1365,9 +1337,6 @@ function App() {
       <LoginModal isOpen={showLoginModal} onLogin={handleLogin} onClose={() => setShowLoginModal(false)} />
       <KeyboardShortcutsModal isOpen={showShortcuts} onClose={() => setShowShortcuts(false)} />
 
-      {/* ── Feature 2: Confetti burst on analysis success ── */}
-      <Confetti trigger={confettiTrigger} />
-
       {/* ── Feature 9: First-run onboarding tour ── */}
       <OnboardingTour
         active={tourActive}
@@ -1377,16 +1346,19 @@ function App() {
         }}
       />
 
-      {/* ── Feature 10: Floating AI FAB (visible in visualizer after analysis) ── */}
-      {view === 'visualizer' && analysisResult && !aiLoading && (
+      {/* ── Feature 10: Floating AI FAB — always visible in visualizer ── */}
+      {view === 'visualizer' && (
         <button
-          className="ai-fab"
+          className={`ai-fab${aiLoading ? ' ai-fab--loading' : ''}`}
           onClick={handleExplain}
-          title="Get AI insights on this code"
+          disabled={aiLoading || loading}
+          title={aiLoading ? "AI is thinking…" : "Get AI insights on this code"}
           data-tour="ai-btn"
         >
-          <span className="material-symbols-outlined">auto_awesome</span>
-          AI Insights
+          <span className={`material-symbols-outlined${aiLoading ? ' spin' : ''}`}>
+            {aiLoading ? 'sync' : 'auto_awesome'}
+          </span>
+          {aiLoading ? 'Thinking…' : 'AI Insights'}
         </button>
       )}
     </div>

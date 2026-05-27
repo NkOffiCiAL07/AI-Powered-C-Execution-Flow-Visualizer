@@ -774,17 +774,6 @@ export default function FlowVisualizer({
           )}
         </div>
 
-        {/* Right: AI explain button */}
-        {onExplainStep && (
-          <button
-            className="exec-ai-btn"
-            onClick={() => onExplainStep(snap)}
-            title="Ask AI to explain this step in detail"
-          >
-            <span className="material-symbols-outlined" style={{ fontSize: 14 }}>auto_awesome</span>
-            AI
-          </button>
-        )}
       </div>
 
       <CallGraphPanel snapshots={visibleSnapshots} currentStep={safeCurrentStep} dark={dark} />
