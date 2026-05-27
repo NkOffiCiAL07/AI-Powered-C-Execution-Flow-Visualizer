@@ -1,6 +1,6 @@
 # Traceon — AI-Powered Execution Flow Visualizer
 
-Traceon is a web-based debugger that steps through C, C++, Python, and Java programs line by line, tracks every variable in real time, and uses Google Gemini to explain what the code is doing and why.
+Traceon is a web-based debugger that steps through C, C++, Python, and Java programs line by line, tracks every variable in real time, visualizes execution as an interactive flow graph, and uses Google Gemini to explain what the code is doing and why.
 
 **Live demo:** https://frontend-gamma-vert-20.vercel.app
 
@@ -8,18 +8,44 @@ Traceon is a web-based debugger that steps through C, C++, Python, and Java prog
 
 ## What it does
 
+### Core Debugger
 - Write and run C, C++, Python, or Java code directly in the browser
-- Step forward and backward through execution one line at a time
+- Step forward and backward through execution one line at a time (Step Over / Step Into / Step Out)
+- Auto-play execution with configurable speed; pauses automatically at breakpoints
 - Watch variables appear, change, and go out of scope as you step
+- Set breakpoints by clicking the editor gutter — jump to next breakpoint with F5
 - Visualize the execution call graph as it builds step by step
 - Inspect the live call stack at every point in execution
-- Click any step on the execution timeline to jump directly to it
-- AI code generation — describe what you want, Gemini writes it
-- AI code explanation — time complexity, space complexity, plain-English walkthrough
-- Save projects and manage multiple files (signed-in users)
-- Memory Spectrometer — visualize heap and stack usage per step
-- Hotspot heatmap — see which lines execute most
-- Five themes: Light, Dark, Nord, Solarized, High Contrast
+- Memory Spectrometer — visualize heap and stack allocations per step
+
+### Code Flow Graph
+- Interactive SVG flowchart built from the actual execution trace
+- Every unique (function, line) pair becomes a node; click to expand for full detail
+- Node detail panel: code snippet, execution count, first/last step, live variables, call stack, visit chips
+- Language-aware node type detection (condition, loop, func-def, call, return, else) for C/C++, Python, Java
+- Pan, zoom, and drag the graph; nodes link to the execution step via visit chips
+
+### Editor & Sharing
+- Monaco Editor with syntax highlighting, bracket matching, and live error squiggles (clang-based)
+- Share Code — one-click button encodes your code + language into a shareable URL
+- AI Generate — describe what you want, Gemini writes it
+- AI Explain (floating FAB) — plain-English breakdown with time/space complexity
+- AI Optimize — uses live hotspot data to recommend targeted optimizations
+
+### Visual Features
+- Execution Heatmap — color-coded gutter bars (blue → yellow → red) showing how often each line ran
+- Playback Scrubber — drag the progress bar to jump to any execution step; breakpoints shown as red markers
+- Performance Score Badge — Blazing / Moderate / Heavy label based on execution step count
+- Smooth view transitions — fade+slide between every page
+- Animated Stats on landing page — scroll-triggered count-up (50k+ traces, 4 languages, 200ms, 99.9%)
+- Testimonials carousel — rotating social-proof cards
+- First-run onboarding tour — 4-step spotlight walkthrough for new users
+
+### Platform
+- Google OAuth sign-in + JWT authentication
+- Projects & multi-file management (Dashboard)
+- Save projects, switch files, rename, delete
+- Five themes: Light (default), Dark, Nord, Solarized, High Contrast
 - Keyboard shortcuts for every action
 
 ---
@@ -84,13 +110,14 @@ Create a `.env` file in the project root:
 GEMINI_API_KEY=your_key_here         # aistudio.google.com — free
 JWT_SECRET=any_long_random_string
 
-# Google OAuth (optional — needed for Sign In)
+# Google OAuth — required for Sign In with Google
 GOOGLE_CLIENT_ID=your_client_id
 GOOGLE_CLIENT_SECRET=your_client_secret
+# Register http://localhost:8000/auth/google/callback in Google Cloud Console
+# under Credentials → OAuth Client → Authorized redirect URIs
 
 # MongoDB (optional — omit to use in-memory storage)
-MONGO_CONNECTION_STRING=mongodb+srv://...
-MONGO_DB_NAME=traceon
+MONGO_URI=mongodb+srv://...
 ```
 
 ### 3. Frontend
@@ -125,26 +152,46 @@ npm start
 ## Usage
 
 1. Open `http://localhost:3000`
-2. Select a language (C, C++, Python, Java) from the dropdown
-3. Write or paste code — or use AI Generate to have Gemini write it
-4. Click **Analyze** to trace execution
+2. Sign in with Google (or use Guest mode for Run-only access)
+3. Create a project from the Dashboard, then open it in the Editor
+4. Select a language (C, C++, Python, Java) from the dropdown
+5. Write or paste code — or click **Generate** to have Gemini write it
+6. Click **Run** (`⌘↵`) to compile and execute
+7. Click **Debug** to launch the step-through debugger
+
+### Debugger controls
 
 | Control | Action |
 |---|---|
-| Next / → / N | Step forward |
-| Back / ← / B | Step back |
-| Space | Play / Pause |
-| Timeline click | Jump to any step |
-| Esc | Reset |
+| Step / → | Step over (next line) |
+| Into / ↓ | Step into function call |
+| Out / ↑ | Step out of current function |
+| Back / ← | Step back |
+| Space | Play / Pause auto-play |
+| Scrubber drag | Jump to any visited step |
+| F5 | Continue to next breakpoint |
+| Click gutter | Toggle breakpoint |
 | ? | Keyboard shortcuts modal |
 
-5. Click **Explain Code** (AI Insights tab) for an AI breakdown of complexity and logic.
+8. Click the floating **AI Insights** button (bottom-right) for an AI breakdown of complexity and logic.
+9. Switch to the **Flow Graph** tab to see the full execution trace as an interactive flowchart.
+
+---
+
+## Google OAuth Setup
+
+1. Go to [Google Cloud Console → APIs & Services → Credentials](https://console.cloud.google.com/apis/credentials)
+2. Create an **OAuth 2.0 Client ID** (Web application type)
+3. Under **Authorized JavaScript origins** add:
+   - `http://localhost:3000`
+   - `http://localhost:8000`
+4. Under **Authorized redirect URIs** add:
+   - `http://localhost:8000/auth/google/callback`
+5. Copy the Client ID and Client Secret into your `.env` file
 
 ---
 
 ## Deployment
-
-The project is deployed at:
 
 | Service | URL |
 |---|---|
@@ -169,34 +216,39 @@ See [DEPLOY.md](./DEPLOY.md) for full deployment instructions.
 │
 ├── src/traceon/server/
 │   ├── app.py                     # FastAPI app, CORS, lifespan
-│   ├── api.py                     # REST endpoints
-│   ├── session_manager.py         # In-memory session store + cleanup
+│   ├── auth.py                    # Google OAuth + JWT + JTI blocklist
 │   ├── ai_service.py              # Gemini code generation & explanation
-│   ├── auth.py                    # Google OAuth + JWT
 │   ├── models.py                  # Shared Pydantic models
 │   ├── mongo_store.py             # MongoDB persistence (optional)
 │   ├── python_tracer.py           # Python step-by-step tracer
-│   └── java_tracer.py             # Java bytecode tracer
+│   ├── java_tracer.py             # Java bytecode tracer
+│   └── news.py                    # Release notes feed
 │
 ├── frontend/src/
-│   ├── App.js                     # Root — view routing, auth state
-│   ├── theme.js                   # Theme context (5 themes)
+│   ├── App.js                     # Root — view routing, auth state, all API calls
+│   ├── theme.js                   # ThemeProvider (5 themes)
 │   ├── services/api.js            # Authenticated fetch wrapper
 │   ├── components/
-│   │   ├── LandingPage.js
+│   │   ├── LandingPage.js         # Landing + stats counter + testimonials
 │   │   ├── Header.js
-│   │   ├── CppEditorPage.js       # Main editor + visualizer layout
-│   │   ├── CodeEditor.js          # Monaco editor wrapper
-│   │   ├── FlowVisualizer.js      # Call graph + variable cards
+│   │   ├── CppEditorPage.js       # Editor layout + run/debug/generate/optimize
+│   │   ├── CodeEditor.js          # Monaco editor + heatmap + share button + breakpoints
+│   │   ├── FlowVisualizer.js      # Debugger: controls, scrubber, perf badge, call graph
+│   │   ├── CodeFlowGraph.js       # Interactive execution trace SVG flowchart
 │   │   ├── ExecutionTimeline.js
 │   │   ├── VariableTracker.js
-│   │   ├── AiExplanation.js       # Gemini explanation panel
+│   │   ├── MemorySpectrometer.js  # Heap/stack visualizer
+│   │   ├── BreakpointsPanel.js    # Breakpoint hit list
+│   │   ├── AiExplanation.js
+│   │   ├── OnboardingTour.js      # First-run spotlight tour
 │   │   ├── OutputPanel.js
 │   │   ├── LoginModal.js
 │   │   ├── DocsPage.js
 │   │   ├── PricingPage.js
-│   │   └── CommunityPage.js
-│   └── styles/                    # Per-component CSS
+│   │   ├── CommunityPage.js
+│   │   ├── NewsPage.js
+│   │   └── DashboardPage.js
+│   └── styles/                    # Per-component CSS modules
 │
 └── .github/workflows/
     └── deploy-frontend.yml        # Auto-deploy frontend to Vercel
@@ -207,8 +259,7 @@ See [DEPLOY.md](./DEPLOY.md) for full deployment instructions.
 ## API reference
 
 ### `POST /analyze`
-
-Compile and trace code, returning all execution snapshots.
+Compile and trace code, returning a debug session with execution snapshots.
 
 ```json
 // Request
@@ -223,51 +274,51 @@ Compile and trace code, returning all execution snapshots.
       "location": { "file": "tmp.cpp", "line": 3, "function": "main" },
       "variables": { "x": "5" },
       "changed_variables": ["x"],
-      "call_stack": ["main"]
+      "call_stack": [{ "function": "main", "line": 3 }]
     }
   ],
   "total_recorded_steps": 12
 }
 ```
 
-### `POST /run`
+### `POST /analyze/{id}/step`
+Step forward or backward in an active debug session.
+- `direction`: `"next"` | `"back"`
+- `step_type`: `"step_over"` | `"step_in"` | `"step_out"`
 
-Compile and run code, returning stdout/stderr.
+### `POST /run`
+Compile and run code; returns `stdout`, `stderr`, and `exit_code`.
+
+### `POST /check`
+Live syntax check (clang -fsyntax-only); returns inline error markers.
 
 ### `POST /generate`
-
-Generate code from a plain-English prompt using Gemini.
+Generate code from a natural-language prompt using Gemini.
 
 ### `POST /explain`
+Return an AI-powered code explanation with complexity analysis.
 
-Explain code — returns complexity analysis and walkthrough.
+### `POST /optimize`
+Return targeted performance recommendations using live hotspot data.
 
 ### `GET /health`
-
 Returns `{"status": "ok"}`.
-
-### `GET /health/db`
-
-Returns `{"mongo_connected": true/false}`.
 
 ---
 
 ## Troubleshooting
 
+**`redirect_uri_mismatch` on Google sign-in**
+Add `http://localhost:8000/auth/google/callback` to **Authorized redirect URIs** (not JavaScript origins) in your Google Cloud Console OAuth client.
+
 **`LLDB not found`**
 Install LLDB for your OS. On macOS: `xcode-select --install`.
 
 **`Compilation failed`**
-The API response includes the compiler output. Check for syntax errors or unsupported features.
-
-**`StrEnum import error`**
-Ensure Python 3.11 or higher is installed. `StrEnum` was added in 3.11.
+The API response includes compiler output. Check for syntax errors.
 
 **`Cannot connect to server` in the UI**
-Make sure the backend is running on port 8000. Check `REACT_APP_API_URL` in `frontend/src/services/api.js`.
-
-**Gemini returns empty / slow**
-Ensure `GEMINI_API_KEY` is set and was generated from [aistudio.google.com](https://aistudio.google.com).
+Make sure the backend is running on port 8000: `python run_server.py`.
 
 **Port conflict**
 ```bash

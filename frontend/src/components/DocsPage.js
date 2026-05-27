@@ -8,9 +8,13 @@ const NAV = [
   ]},
   { group: 'Core Concepts', items: [
     { id: 'execution-flow',    label: 'Execution Flow' },
+    { id: 'flow-graph',        label: 'Code Flow Graph' },
     { id: 'variable-tracking', label: 'Variable Tracking' },
+    { id: 'breakpoints',       label: 'Breakpoints' },
+    { id: 'heatmap',           label: 'Execution Heatmap' },
     { id: 'ai-insights',       label: 'AI Insights' },
     { id: 'memory-map',        label: 'Memory Map' },
+    { id: 'share',             label: 'Share Code' },
   ]},
   { group: 'Reference', items: [
     { id: 'keyboard-shortcuts', label: 'Keyboard Shortcuts' },
@@ -119,7 +123,7 @@ const DocsPage = () => {
               <li><strong style={{ color: 'var(--text-primary)' }}>Write or paste your code</strong> — the editor supports full syntax highlighting and live error checking.</li>
               <li><strong style={{ color: 'var(--text-primary)' }}>Run it</strong> — press <kbd style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '5px', padding: '1px 7px', fontFamily: 'monospace', fontSize: '0.8em' }}>⌘↵</kbd> or click the <strong>Run</strong> button to compile and execute.</li>
               <li><strong style={{ color: 'var(--text-primary)' }}>Debug it</strong> — click <strong>Debug</strong> to launch the step-through execution flow visualizer.</li>
-              <li><strong style={{ color: 'var(--text-primary)' }}>Ask AI</strong> — click <strong>Explain</strong> for a plain-English breakdown including complexity analysis.</li>
+              <li><strong style={{ color: 'var(--text-primary)' }}>Ask AI</strong> — click the floating <strong>AI Insights</strong> button (bottom-right) for a plain-English breakdown including complexity analysis.</li>
             </ol>
             <Note>If your code reads from stdin, enter the input values in the <strong>Program Input</strong> box before running or debugging.</Note>
           </Section>
@@ -175,11 +179,66 @@ const DocsPage = () => {
             </p>
           </Section>
 
+          {/* ── Code Flow Graph ── */}
+          <Section id="flow-graph" title="Code Flow Graph">
+            <p style={{ color: 'var(--text-secondary)', lineHeight: '1.75', marginBottom: '14px' }}>
+              The <strong>Flow Graph</strong> tab renders your entire execution trace as an interactive SVG flowchart.
+              Every unique (function, line) pair in the trace becomes a node — edges represent the actual control flow
+              your program took.
+            </p>
+            <ul style={{ color: 'var(--text-secondary)', lineHeight: '1.75', paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '14px' }}>
+              <li><strong>Click any node</strong> to expand a detail panel: code snippet, execution count, first/last step, live variables at that point, call stack depth, and visit chips</li>
+              <li><strong>Visit chips</strong> — click any step number chip to jump the debugger directly to that execution moment</li>
+              <li><strong>Node types</strong> are color-coded: Entry (orange), Loop (purple), Condition (blue), Call (amber), Return (green), Function def (cyan)</li>
+              <li><strong>Back-edges</strong> (loop iterations) are drawn as curved left-side arrows</li>
+              <li><strong>Pan & zoom</strong> — scroll to zoom, drag the canvas to pan</li>
+            </ul>
+            <Note>The Flow Graph tab appears only after running the debugger. It resets automatically when you start a new analysis session.</Note>
+          </Section>
+
+          {/* ── Breakpoints ── */}
+          <Section id="breakpoints" title="Breakpoints">
+            <p style={{ color: 'var(--text-secondary)', lineHeight: '1.75', marginBottom: '14px' }}>
+              Click any line number in the editor gutter to toggle a breakpoint (red dot). Breakpoints persist
+              across page refreshes via <code style={{ fontFamily: 'monospace', fontSize: '0.85em' }}>localStorage</code>.
+            </p>
+            <ul style={{ color: 'var(--text-secondary)', lineHeight: '1.75', paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '14px' }}>
+              <li><strong>Auto-play pause</strong> — when playing, execution stops automatically when it lands on a breakpointed line. A "Paused at breakpoint" badge appears with a Resume button.</li>
+              <li><strong>F5</strong> — jump to the next breakpoint in the already-recorded trace without re-running</li>
+              <li><strong>Scrubber markers</strong> — red tick marks on the timeline scrubber show exactly where breakpoints landed in the trace</li>
+              <li>The <strong>Breakpoints tab</strong> lists every hit with step number and variable state at that moment</li>
+            </ul>
+          </Section>
+
+          {/* ── Execution Heatmap ── */}
+          <Section id="heatmap" title="Execution Heatmap">
+            <p style={{ color: 'var(--text-secondary)', lineHeight: '1.75', marginBottom: '14px' }}>
+              After running the debugger, the editor gutter shows colored bars next to every executed line.
+              The color indicates how frequently that line ran relative to the hottest line in your program:
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '14px' }}>
+              {[
+                { color: '#3A6A9E', label: 'Cool (blue)', desc: '1–30% of max hit count' },
+                { color: '#f59e0b', label: 'Warm (amber)', desc: '31–70% of max hit count' },
+                { color: '#ef4444', label: 'Hot (red)', desc: '>70% of max hit count' },
+              ].map(h => (
+                <div key={h.label} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{ width: 14, height: 14, borderRadius: 3, background: h.color, flexShrink: 0, display: 'inline-block' }} />
+                  <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}><strong style={{ color: 'var(--text-primary)' }}>{h.label}</strong> — {h.desc}</span>
+                </div>
+              ))}
+            </div>
+            <p style={{ color: 'var(--text-secondary)', lineHeight: '1.75' }}>
+              Hover over a colored bar to see the exact hit count. The heatmap is most useful alongside the
+              <strong> Optimize</strong> button, which uses this data to produce targeted performance recommendations.
+            </p>
+          </Section>
+
           {/* ── AI Insights ── */}
           <Section id="ai-insights" title="AI Insights">
             <p style={{ color: 'var(--text-secondary)', lineHeight: '1.75', marginBottom: '14px' }}>
-              Click <strong>Explain</strong> in the action bar to get an AI-powered analysis of your code.
-              The response includes:
+              Click the <strong>floating AI Insights button</strong> (bottom-right of the screen) to get
+              an AI-powered analysis of your code. The response includes:
             </p>
             <ul style={{ color: 'var(--text-secondary)', lineHeight: '1.75', paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '14px' }}>
               <li>A plain-English overview of what the code does</li>
@@ -188,10 +247,21 @@ const DocsPage = () => {
               <li>3–5 key technical observations and improvement hints</li>
             </ul>
             <p style={{ color: 'var(--text-secondary)', lineHeight: '1.75', marginBottom: '14px' }}>
-              The <strong>Optimize</strong> button is available after running the debugger. It uses live
-              performance data (hotspot lines, execution counts) to produce targeted optimization recommendations.
+              The <strong>Optimize</strong> button (in the debugger action bar) is unlocked after running
+              the debugger. It uses live performance data — hotspot lines and execution counts from the
+              heatmap — to produce targeted optimization recommendations.
             </p>
             <Note>AI features require a signed-in account. Guest mode only has access to Run — sign in to unlock Explain, Generate, and Optimize.</Note>
+          </Section>
+
+          {/* ── Share Code ── */}
+          <Section id="share" title="Share Code">
+            <p style={{ color: 'var(--text-secondary)', lineHeight: '1.75', marginBottom: '14px' }}>
+              Click the <strong>Share</strong> button in the editor toolbar to generate a shareable link.
+              The link encodes your current code and selected language into the URL hash — anyone who opens
+              it will see your code pre-loaded in the editor, ready to run.
+            </p>
+            <Note>Shared links are purely URL-based — no server-side storage is involved. The code is Base64-encoded in the URL fragment (<code style={{ fontFamily: 'monospace', fontSize: '0.85em' }}>#lang=cpp&code=...</code>) so it never leaves the browser on navigation.</Note>
           </Section>
 
           {/* ── Memory Map ── */}
