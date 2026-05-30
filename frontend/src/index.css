@@ -1,3 +1,10 @@
+/* ── Smooth global scroll & rendering ── */
+html {
+  scroll-behavior: smooth;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
 *,
 *::before,
 *::after {
@@ -250,7 +257,10 @@ body {
   font-size: 13px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
   background-image: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(201,106,72,0.04) 0%, transparent 60%);
+  overscroll-behavior-y: none;
 }
 
 #root {
@@ -281,10 +291,10 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Scrollbar styling */
+/* ── Scrollbar styling – thin, smooth ── */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -292,13 +302,19 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(100, 70, 40, 0.18);
-  border-radius: 3px;
+  background: rgba(100, 70, 40, 0.16);
+  border-radius: 99px;
+  transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 70, 40, 0.30);
+  background: rgba(100, 70, 40, 0.32);
 }
+
+::-webkit-scrollbar-corner { background: transparent; }
+
+/* Firefox thin scrollbar */
+* { scrollbar-width: thin; scrollbar-color: rgba(100, 70, 40, 0.18) transparent; }
 
 ::selection {
   background: rgba(201, 106, 72, 0.22);
@@ -313,6 +329,13 @@ button, [role="button"] {
   cursor: pointer;
   user-select: none;
   font-family: var(--font-sans);
+  transition:
+    background var(--t-fast) ease,
+    color var(--t-fast) ease,
+    border-color var(--t-fast) ease,
+    opacity var(--t-fast) ease,
+    transform var(--t-fast) var(--ease-out),
+    box-shadow var(--t-fast) ease;
 }
 
 /* ── Focus ring (keyboard navigation) ── */
@@ -322,10 +345,11 @@ button, [role="button"] {
   border-radius: 4px;
 }
 
-/* ── Active press feedback on all interactive buttons ── */
+/* ── Active press feedback – crisp spring ── */
 button:active:not(:disabled),
 [role="button"]:active:not([aria-disabled="true"]) {
-  transform: scale(0.97);
+  transform: scale(0.96);
+  transition-duration: 80ms;
 }
 
 /* ── Global Button System ── */
@@ -424,6 +448,7 @@ button:active:not(:disabled),
 
 /* ── Card hover lift system ── */
 .card-hover {
+  will-change: transform, box-shadow;
   transition:
     border-color var(--t-base) ease,
     box-shadow var(--t-base) ease,
@@ -709,7 +734,8 @@ button:active:not(:disabled),
     0 4px 18px rgba(201,106,72,0.45),
     0 0 0 0 rgba(201,106,72,0.4);
   animation: fab-in 0.4s cubic-bezier(0.34,1.56,0.64,1) both, fab-pulse 2.4s 1.2s ease-in-out infinite;
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  transition: transform 0.18s var(--ease-spring), box-shadow 0.18s ease;
+  will-change: transform, box-shadow;
 }
 .ai-fab:hover:not(:disabled) {
   transform: scale(1.06) translateY(-2px);
@@ -853,3 +879,69 @@ button:active:not(:disabled),
 .toast-success .material-symbols-outlined { color: var(--accent-green); }
 .toast-error   { border-color: rgba(192,57,43,0.28) !important; background: rgba(192,57,43,0.06) !important; }
 .toast-error .material-symbols-outlined   { color: var(--accent-red); }
+
+/* ══════════════════════════════════════════════════════
+   Smooth Scroll Containers
+   ══════════════════════════════════════════════════════ */
+
+/* All overflow scroll areas get smooth scrolling + contain overscroll */
+[class*="scroll"],
+[class*="-list"],
+[class*="-panel"],
+[class*="-wrap"],
+[class*="output"],
+[class*="sidebar"] {
+  scroll-behavior: smooth;
+}
+
+/* All overflow containers: contain bounce/overscroll so panels don't chain-scroll */
+.flow-visualizer,
+.sidebar-list,
+.call-graph-scroll,
+.output-panel,
+.editor-content-wrap,
+.ai-drawer-body,
+.modal-body {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ══════════════════════════════════════════════════════
+   Input & Textarea – smooth focus transitions
+   ══════════════════════════════════════════════════════ */
+input, textarea, select {
+  transition:
+    border-color var(--t-fast) ease,
+    box-shadow var(--t-fast) ease,
+    background var(--t-fast) ease;
+}
+
+/* ══════════════════════════════════════════════════════
+   Link hover – smooth underline
+   ══════════════════════════════════════════════════════ */
+a {
+  transition: color var(--t-fast) ease, opacity var(--t-fast) ease;
+}
+
+/* ══════════════════════════════════════════════════════
+   Reduced-motion: respect system preference
+   ══════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .ai-fab {
+    animation: none !important;
+  }
+
+  .skeleton {
+    animation: none !important;
+    background: var(--bg-card);
+  }
+}

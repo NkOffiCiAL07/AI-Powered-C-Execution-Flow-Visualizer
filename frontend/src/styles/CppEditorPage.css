@@ -43,6 +43,9 @@
   flex: 1;
   overflow-y: auto;
   padding: 6px 0;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .file-item {
@@ -51,7 +54,10 @@
   gap: 8px;
   padding: 6px 12px;
   cursor: pointer;
-  transition: background var(--t-fast) ease, color var(--t-fast) ease;
+  transition:
+    background var(--t-fast) ease,
+    color var(--t-fast) ease,
+    padding-left var(--t-fast) var(--ease-out);
   color: var(--text-secondary);
   font-size: 12px;
   position: relative;
@@ -147,7 +153,11 @@
   align-items: center;
   justify-content: center;
   gap: 5px;
-  transition: all 0.15s;
+  transition:
+    border-color var(--t-fast) ease,
+    color var(--t-fast) ease,
+    background var(--t-fast) ease,
+    transform var(--t-fast) var(--ease-out);
   font-family: var(--font-sans);
 }
 
@@ -302,7 +312,12 @@
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s;
+  transition:
+    background var(--t-fast) ease,
+    border-color var(--t-fast) ease,
+    color var(--t-fast) ease,
+    opacity var(--t-fast) ease,
+    transform var(--t-fast) var(--ease-out);
   white-space: nowrap;
   font-family: var(--font-sans);
 }
@@ -344,7 +359,11 @@
   font-weight: 600;
   font-family: var(--font-sans);
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition:
+    background var(--t-fast) ease,
+    color var(--t-fast) ease,
+    border-color var(--t-fast) ease,
+    transform var(--t-fast) var(--ease-out);
   white-space: nowrap;
 }
 
@@ -428,8 +447,12 @@
   background: var(--primary);
   color: #fff;
   cursor: pointer;
-  transition: opacity 0.15s, transform 0.15s;
+  transition:
+    opacity var(--t-fast) ease,
+    transform var(--t-fast) var(--ease-spring),
+    box-shadow var(--t-fast) ease;
   flex-shrink: 0;
+  will-change: transform;
 }
 
 .ai-prompt-modal-btn .material-symbols-outlined { font-size: 16px; }

@@ -267,6 +267,9 @@
   overflow-y: auto;
   padding: 32px 36px;
   min-width: 0;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .dash-topbar {
@@ -363,10 +366,16 @@
   font-size: 13px;
   font-family: var(--font-sans);
   outline: none;
-  transition: border-color 0.18s;
+  transition:
+    border-color var(--t-fast) ease,
+    box-shadow var(--t-fast) ease,
+    background var(--t-fast) ease;
 }
 
-.dash-search-input:focus { border-color: var(--accent-blue); }
+.dash-search-input:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px var(--accent-blue-glow);
+}
 .dash-search-input::placeholder { color: var(--text-muted); }
 
 .dash-search-clear {
@@ -400,7 +409,11 @@
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s;
+  transition:
+    background var(--t-fast) ease,
+    border-color var(--t-fast) ease,
+    color var(--t-fast) ease,
+    transform var(--t-fast) var(--ease-out);
 }
 .dash-chip:hover { border-color: var(--border-strong); color: var(--text-primary); }
 .dash-chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
@@ -602,7 +615,11 @@
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s;
+  transition:
+    background var(--t-fast) ease,
+    border-color var(--t-fast) ease,
+    color var(--t-fast) ease,
+    transform var(--t-fast) var(--ease-spring);
 }
 
 .settings-theme-btn:hover {
@@ -688,9 +705,10 @@
   transition:
     border-color var(--t-base) ease,
     box-shadow var(--t-base) ease,
-    transform var(--t-base) var(--ease-out);
+    transform 200ms var(--ease-out);
   overflow: hidden;
   min-height: 110px;
+  will-change: transform, box-shadow;
 }
 
 .proj-card:hover {
@@ -699,7 +717,7 @@
   transform: translateY(-3px);
 }
 
-.proj-card:active { transform: translateY(-1px); }
+.proj-card:active { transform: translateY(-1px) scale(0.99); }
 
 .proj-card.proj-card-opening { opacity: 0.7; pointer-events: none; }
 
@@ -920,7 +938,10 @@
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s;
+  transition:
+    background var(--t-fast) ease,
+    border-color var(--t-fast) ease,
+    color var(--t-fast) ease;
 }
 
 .npm-lang-tab:hover { background: var(--bg-hover); color: var(--text-primary); }
@@ -947,7 +968,10 @@
   background: var(--bg-secondary);
   cursor: pointer;
   text-align: left;
-  transition: all 0.15s;
+  transition:
+    background var(--t-fast) ease,
+    border-color var(--t-fast) ease,
+    transform var(--t-fast) var(--ease-out);
 }
 
 .npm-template-card:hover {

@@ -11,6 +11,9 @@
   overflow-y: auto;
   max-height: 100%;
   font-family: var(--font-sans);
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ── Cards ── */

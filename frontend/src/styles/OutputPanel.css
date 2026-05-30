@@ -7,6 +7,9 @@
   flex-direction: column;
   height: 100%;
   overflow: auto;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .output-panel-loading,
@@ -53,6 +56,9 @@
   flex: 1;
   overflow: auto;
   padding: 12px;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .output-table {

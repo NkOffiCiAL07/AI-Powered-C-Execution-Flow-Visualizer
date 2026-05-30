@@ -10,6 +10,9 @@
   background-color: var(--bg-primary);
   overflow-y: auto;
   height: 100%;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ── Execution Call Graph ── */
@@ -49,6 +52,9 @@
   padding: 4px 4px 2px;
   min-height: 80px;
   max-height: 220px;
+  scroll-behavior: smooth;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .call-graph-legend {
@@ -127,11 +133,12 @@
   gap: 4px;
   font-family: var(--font-sans);
   user-select: none;
+  will-change: transform;
   transition:
     background var(--t-fast) ease,
     border-color var(--t-fast) ease,
     color var(--t-fast) ease,
-    transform var(--t-fast) var(--ease-out),
+    transform var(--t-fast) var(--ease-spring),
     box-shadow var(--t-fast) ease;
 }
 
@@ -208,7 +215,10 @@
   font-weight: 600;
   font-family: var(--font-sans);
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background var(--t-fast) ease,
+    color var(--t-fast) ease,
+    transform var(--t-fast) var(--ease-out);
   user-select: none;
 }
 
@@ -321,7 +331,8 @@
   height: 100%;
   background: linear-gradient(90deg, var(--primary), var(--secondary));
   border-radius: var(--radius-full);
-  transition: width 0.3s var(--ease-out);
+  transition: width 0.25s var(--ease-out);
+  will-change: width;
 }
 
 /* ── Graphical Execution State Panel ── */
@@ -514,19 +525,25 @@
   font-weight: 700;
   font-family: var(--font-sans);
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  transition:
+    background var(--t-fast) ease,
+    border-color var(--t-fast) ease,
+    transform var(--t-fast) var(--ease-spring),
+    box-shadow var(--t-fast) ease;
   flex-shrink: 0;
   align-self: stretch;
   letter-spacing: 0.03em;
+  will-change: transform;
 }
 
 .exec-ai-btn:hover {
   background: rgba(217, 119, 87, 0.2);
   border-color: rgba(217, 119, 87, 0.45);
   transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(217, 119, 87, 0.22);
 }
 
-.exec-ai-btn:active { transform: scale(0.95); }
+.exec-ai-btn:active { transform: scale(0.94); }
 
 /* ── Keep old explanation-box for backward compat (unused but safe) ── */
 .explanation-box {
@@ -723,7 +740,10 @@
   font-weight: 600;
   font-size: 13px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition:
+    background var(--t-fast) ease,
+    color var(--t-fast) ease,
+    border-color var(--t-fast) ease;
 }
 
 .restricted-btn-outline:hover {
@@ -783,10 +803,12 @@
   border: 2px solid #fff;
   box-shadow: 0 1px 5px rgba(0,0,0,0.28);
   pointer-events: none;
-  transition: transform 0.1s ease;
+  transition: transform 0.12s var(--ease-spring), box-shadow 0.12s ease;
+  will-change: transform;
 }
 .scrubber-bar:hover .scrubber-thumb {
-  transform: translateY(-50%) scale(1.35);
+  transform: translateY(-50%) scale(1.4);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.36), 0 0 0 4px var(--primary-glow);
 }
 
 .scrubber-bp-marker {
