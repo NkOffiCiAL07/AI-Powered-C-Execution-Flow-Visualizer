@@ -23,6 +23,7 @@ import {
   debugWithBreakpoints,
 } from "./services/api";
 import NewsPage from "./components/NewsPage";
+import BlogPage from "./components/BlogPage";
 import CodeFlowGraph from "./components/CodeFlowGraph";
 import OnboardingTour from "./components/OnboardingTour";
 import { useAuth } from "./contexts/AuthContext";
@@ -218,7 +219,10 @@ function App() {
 
     let projCtrl = null;
 
-    if (urlView === "view" && urlPid) {
+    // Public pages accessible without login
+    if (urlView === "blog" || urlView === "docs" || urlView === "pricing" || urlView === "community" || urlView === "news") {
+      setView(urlView);
+    } else if (urlView === "view" && urlPid) {
       setView("editor");
       projCtrl = new AbortController();
       (async () => {
@@ -237,7 +241,7 @@ function App() {
 
       if (urlView === "dashboard" && isMember) {
         setView("dashboard");
-      } else if (urlView === "docs" || urlView === "pricing" || urlView === "community" || urlView === "news") {
+      } else if (urlView === "docs" || urlView === "pricing" || urlView === "community" || urlView === "news" || urlView === "blog") {
         setView(urlView);
       } else if (urlView === "editor" || urlView === "visualizer") {
         // Restore the exact view the user was on — "editor" or "visualizer" (debugger mode)
@@ -291,7 +295,7 @@ function App() {
   // Sync view + project → URL so refresh restores the same screen
   useEffect(() => {
     const params = new URLSearchParams();
-    const SYNCABLE = ["dashboard", "editor", "visualizer", "docs", "pricing", "community", "news"];
+    const SYNCABLE = ["dashboard", "editor", "visualizer", "docs", "pricing", "community", "news", "blog"];
     if (SYNCABLE.includes(view)) {
       params.set("v", view);
       if ((view === "editor" || view === "visualizer") && currentProject?.project) {
@@ -926,6 +930,8 @@ function App() {
         return <CommunityPage onStart={() => setView("editor")} />;
       case "news":
         return <NewsPage onSwitchView={setView} />;
+      case "blog":
+        return <BlogPage onSwitchView={setView} />;
       case "editor":
         return (
           <CppEditorPage

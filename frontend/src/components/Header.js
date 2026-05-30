@@ -18,6 +18,7 @@ const VIEW_OPTIONS = [
 const NAV_PAGES = [
   { value: "landing",   label: "Home",      icon: "home"       },
   { value: "docs",      label: "Docs",      icon: "menu_book"  },
+  { value: "blog",      label: "Blog",      icon: "article"    },
   { value: "pricing",   label: "Pricing",   icon: "sell"       },
   { value: "community", label: "Community", icon: "groups"     },
 ];
@@ -114,6 +115,7 @@ export default function Header({ view, onSwitchView, user, onLogout, onSignIn, l
         <nav className="header-nav" aria-label="Main navigation">
           <a className={`nav-link ${view === "landing"   ? "active" : ""}`} href="?v=landing"   onClick={(e) => { e.preventDefault(); onSwitchView("landing"); }}>Home</a>
           <a className={`nav-link ${view === "docs"      ? "active" : ""}`} href="?v=docs"      onClick={(e) => { e.preventDefault(); onSwitchView("docs"); }}>Docs</a>
+          <a className={`nav-link ${view === "blog"      ? "active" : ""}`} href="?v=blog"      onClick={(e) => { e.preventDefault(); onSwitchView("blog"); }}>Blog</a>
           <a className={`nav-link ${view === "pricing"   ? "active" : ""}`} href="?v=pricing"   onClick={(e) => { e.preventDefault(); onSwitchView("pricing"); }}>Pricing</a>
           <a className={`nav-link ${view === "community" ? "active" : ""}`} href="?v=community" onClick={(e) => { e.preventDefault(); onSwitchView("community"); }}>Community</a>
           <a className={`nav-link ${view === "news"      ? "active" : ""}`} href="?v=news"      onClick={(e) => { e.preventDefault(); onSwitchView("news"); }}>News</a>
