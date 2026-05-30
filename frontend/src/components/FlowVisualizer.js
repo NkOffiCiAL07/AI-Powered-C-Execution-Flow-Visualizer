@@ -460,20 +460,31 @@ export default function FlowVisualizer({
   if (loading) {
     return (
       <div className="flow-visualizer-loading">
-        <div className="spinner"></div>
-        <p>Running your program step by step... please wait ⏳</p>
+        <div className="spinner" />
+        <p>Tracing your program step by step…</p>
       </div>
     );
   }
 
   if (!result || snapshots.length === 0) {
+    const isOutputOnly = result?.execution_mode === "output_only";
     return (
       <div className="flow-visualizer-empty">
-        <p>
-          {result?.execution_mode === "output_only"
-            ? "This program was run with stdin input in output-only mode. Open Output & Details to see the result."
-            : <><strong>Analyze &amp; Run</strong> to watch your program execute!</>}
-        </p>
+        <div className="empty-state">
+          <div className="empty-state-icon">
+            <span className="material-symbols-outlined">
+              {isOutputOnly ? "output" : "play_circle"}
+            </span>
+          </div>
+          <div className="empty-state-title">
+            {isOutputOnly ? "Output-only mode" : "No execution trace yet"}
+          </div>
+          <p className="empty-state-desc">
+            {isOutputOnly
+              ? "This run used stdin and produced output. Switch to the Output tab to see results."
+              : "Click Analyze & Debug above to trace your program's execution, step by step."}
+          </p>
+        </div>
       </div>
     );
   }

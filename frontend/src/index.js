@@ -4,6 +4,7 @@ import App from "./App";
 import "./index.css";
 import { ThemeProvider } from "./theme";
 import { AuthProvider } from "./contexts/AuthContext";
+import ErrorBoundary from "./components/ErrorBoundary";
 import logger from "./utils/logger";
 
 logger.info("Traceon initializing", { env: process.env.NODE_ENV });
@@ -13,7 +14,9 @@ root.render(
   <React.StrictMode>
     <ThemeProvider>
       <AuthProvider>
-        <App />
+        <ErrorBoundary>
+          <App />
+        </ErrorBoundary>
       </AuthProvider>
     </ThemeProvider>
   </React.StrictMode>

@@ -477,6 +477,7 @@ export default function CppEditorPage({
           </div>
 
           {/* ═══ TAB CONTENT ═══ */}
+          <div key={tab} className="tab-panel-enter" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'auto' }}>
           {tab === "output" ? (
             <div className="editor-output-tab">
 
@@ -570,6 +571,7 @@ export default function CppEditorPage({
               <AiExplanation data={aiExplanation} loading={aiLoading} />
             </div>
           )}
+          </div>
         </section>
       </div>
 

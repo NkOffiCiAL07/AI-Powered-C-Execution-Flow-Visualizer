@@ -763,8 +763,19 @@ function App() {
   const handleExplainStep = useCallback(async (snapshot) => {
     if (!snapshot) return;
     const line = snapshot.location?.line;
-    const prompt = `I am debugging my ${language} code. At line ${line}, the variables are: ${JSON.stringify(snapshot.variables)}. What exactly is happening here and why did the variables change like this?`;
-    
+    // Build a synthetic "code" string that gives Gemini enough context for a step explanation
+    const stepContext = [
+      `// Language: ${language}`,
+      `// Current line: ${line}`,
+      `// Function: ${snapshot.location?.function || "unknown"}`,
+      `// Variables at this step:`,
+      ...Object.entries(snapshot.variables || {}).map(([k, v]) => `//   ${k} = ${JSON.stringify(v)}`),
+      `// Call stack: ${(snapshot.call_stack || []).map(f => f.function).join(" → ")}`,
+      ``,
+      `// User code below (explain what is happening at line ${line}):`,
+      code,
+    ].join("\n");
+
     if (aiAbortControllerRef.current) {
       aiAbortControllerRef.current.abort();
     }
@@ -774,13 +785,12 @@ function App() {
     setError(null);
     setActiveTab("ai");
     try {
-      const result = await generateCode(prompt, language, aiAbortControllerRef.current.signal);
-      // Hack: we reuse AiExplanation which expects explainCode format. We'll map the raw response to explanation field.
+      const result = await explainCode(stepContext, aiAbortControllerRef.current.signal, language);
       setAiExplanation({
-        explanation: result.code || result.explanation || "No explanation provided.",
-        time_complexity: "N/A (Step-level analysis)",
-        space_complexity: "N/A (Step-level analysis)",
-        key_points: ["Step-level execution analysis"]
+        ...result,
+        explanation: `**Step at line ${line}** — ${result.explanation || "No explanation provided."}`,
+        time_complexity: result.time_complexity || "N/A (Step-level)",
+        space_complexity: result.space_complexity || "N/A (Step-level)",
       });
     } catch (err) {
       if (err.name === "AbortError") return;
@@ -789,7 +799,7 @@ function App() {
       setAiLoading(false);
       aiAbortControllerRef.current = null;
     }
-  }, [language]);
+  }, [language, code]);
 
   const handleOptimizePerformance = useCallback(async () => {
     if (!code.trim() || !performanceMetrics) {
@@ -981,7 +991,7 @@ function App() {
             }}
           />
         );
-      case "visualizer":
+      case "visualizer": {
         const isGuest = !user || user.role === "guest";
         const noProject = !currentProject;
         const debugLangLabel = language === "c" ? "C" : language === "python" ? "Python" : language === "java" ? "Java" : "C++";
@@ -1232,6 +1242,7 @@ function App() {
                   )}
 
                   {/* ═══ Tab content ═══ */}
+                  <div key={activeTab} className="tab-panel-enter" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
                   {activeTab === "flow" ? (
                     <FlowVisualizer
                       result={analysisResult}
@@ -1277,11 +1288,14 @@ function App() {
                   ) : (
                     <OutputPanel result={analysisResult} loading={loading} />
                   )}
+                  </div>
                 </>
               )}
             </section>
           </main>
                 );
+
+      } // end case "visualizer"
 
       default:
         return <LandingPage onStart={() => setView("editor")} onSwitchView={setView} />;
@@ -1347,20 +1361,29 @@ function App() {
       />
 
       {/* ── Feature 10: Floating AI FAB — always visible in visualizer ── */}
-      {view === 'visualizer' && (
-        <button
-          className={`ai-fab${aiLoading ? ' ai-fab--loading' : ''}`}
-          onClick={handleExplain}
-          disabled={aiLoading || loading}
-          title={aiLoading ? "AI is thinking…" : "Get AI insights on this code"}
-          data-tour="ai-btn"
-        >
-          <span className={`material-symbols-outlined${aiLoading ? ' spin' : ''}`}>
-            {aiLoading ? 'sync' : 'auto_awesome'}
-          </span>
-          {aiLoading ? 'Thinking…' : 'AI Insights'}
-        </button>
-      )}
+      {view === 'visualizer' && (() => {
+        const fabIsGuest = !user || user.role === "guest";
+        const fabLocked = fabIsGuest || !currentProject;
+        return (
+          <button
+            className={`ai-fab${aiLoading ? ' ai-fab--loading' : ''}`}
+            onClick={fabLocked ? () => setShowLoginModal(true) : handleExplain}
+            disabled={!fabLocked && (aiLoading || loading)}
+            title={
+              fabIsGuest ? "Sign in to use AI Insights" :
+              !currentProject ? "Open a project to use AI Insights" :
+              aiLoading ? "AI is thinking…" : "Get AI insights on this code"
+            }
+            data-tour="ai-btn"
+          >
+            <span className={`material-symbols-outlined${aiLoading ? ' spin' : ''}`}>
+              {aiLoading ? 'sync' : 'auto_awesome'}
+            </span>
+            {aiLoading ? 'Thinking…' : 'AI Insights'}
+            {fabLocked && <span className="material-symbols-outlined" style={{ fontSize: 13 }}>lock</span>}
+          </button>
+        );
+      })()}
     </div>
   );
 }

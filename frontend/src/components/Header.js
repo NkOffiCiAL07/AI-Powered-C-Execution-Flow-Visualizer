@@ -69,7 +69,7 @@ export default function Header({ view, onSwitchView, user, onLogout, onSignIn, l
             </span>
             <span className="breadcrumb-sep">/</span>
             <span className="breadcrumb-item file-crumb">
-              {currentProject.file?.name ?? "Loading…"}
+              {currentProject.files?.find(f => f.id === currentProject.activeFileId)?.name ?? "Loading…"}
             </span>
           </div>
         )}
@@ -147,29 +147,27 @@ export default function Header({ view, onSwitchView, user, onLogout, onSignIn, l
           </Dropdown>
         )}
 
-        {/* Theme picker — only on non-editor views */}
-        {!inApp && (
-          <Dropdown
-            align="right"
-            trigger={(open) => (
-              <button className="theme-toggle-btn" title="Change theme" aria-label="Change theme" aria-expanded={open}>
-                <span className="material-symbols-outlined">palette</span>
-              </button>
-            )}
-          >
-            {(close) => THEME_OPTIONS.map(opt => (
-              <li key={opt.value}
-                className={`hdr-dropdown-item ${opt.value === theme ? "active" : ""}`}
-                role="menuitem"
-                onClick={() => { setTheme(opt.value); close(); }}
-              >
-                <span className="theme-swatch" style={{ background: opt.swatch }} />
-                {opt.label}
-                {opt.value === theme && <span className="material-symbols-outlined hdr-check">check</span>}
-              </li>
-            ))}
-          </Dropdown>
-        )}
+        {/* Theme picker — available in all views */}
+        <Dropdown
+          align="right"
+          trigger={(open) => (
+            <button className="theme-toggle-btn" title="Change theme" aria-label="Change theme" aria-expanded={open}>
+              <span className="material-symbols-outlined">palette</span>
+            </button>
+          )}
+        >
+          {(close) => THEME_OPTIONS.map(opt => (
+            <li key={opt.value}
+              className={`hdr-dropdown-item ${opt.value === theme ? "active" : ""}`}
+              role="menuitem"
+              onClick={() => { setTheme(opt.value); close(); }}
+            >
+              <span className="theme-swatch" style={{ background: opt.swatch }} />
+              {opt.label}
+              {opt.value === theme && <span className="material-symbols-outlined hdr-check">check</span>}
+            </li>
+          ))}
+        </Dropdown>
 
         {/* User */}
         {user ? (
