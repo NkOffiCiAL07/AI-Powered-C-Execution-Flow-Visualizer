@@ -64,9 +64,10 @@ const TIERS = [
   },
 ];
 
-export default function PricingPage({ onStart, onSignIn }) {
+export default function PricingPage({ onStart, onSignIn, user }) {
   const { theme } = useTheme();
   const dark = isDarkTheme(theme);
+  const isMember = user?.role === 'member';
 
   const muted55 = dark ? 'rgba(232,226,217,0.55)' : 'rgba(26,19,16,0.55)';
   const muted40 = dark ? 'rgba(232,226,217,0.40)' : 'rgba(26,19,16,0.40)';
@@ -75,8 +76,15 @@ export default function PricingPage({ onStart, onSignIn }) {
   const handleCta = (tier) => {
     if (tier.id === 'free') { onStart(); return; }
     if (tier.id === 'enterprise') { window.open('mailto:nishantkumar19041@gmail.com?subject=Traceon Enterprise', '_blank'); return; }
+    // Pro tier — if already a member, just open the editor
+    if (isMember) { onStart(); return; }
     if (onSignIn) onSignIn();
     else window.open('mailto:nishantkumar19041@gmail.com?subject=Traceon Pro Interest', '_blank');
+  };
+
+  const getProCtaLabel = (tier) => {
+    if (tier.id === 'pro' && isMember) return 'Open Editor';
+    return tier.cta;
   };
 
   return (
@@ -197,14 +205,14 @@ export default function PricingPage({ onStart, onSignIn }) {
                     style={{ ...sharedStyle, textDecoration: 'none', textAlign: 'center', boxSizing: 'border-box' }}
                     onMouseEnter={e => { e.currentTarget.style.opacity = '0.82'; }}
                     onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}>
-                    {tier.cta}
+                    {getProCtaLabel(tier)}
                   </a>
                 ) : (
                   <button onClick={() => handleCta(tier)}
                     style={{ ...sharedStyle, fontFamily: 'inherit' }}
                     onMouseEnter={e => { e.currentTarget.style.opacity = '0.82'; }}
                     onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}>
-                    {tier.cta}
+                    {getProCtaLabel(tier)}
                   </button>
                 );
               })()}

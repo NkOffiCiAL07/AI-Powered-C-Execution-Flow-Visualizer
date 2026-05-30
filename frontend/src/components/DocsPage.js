@@ -60,12 +60,12 @@ const shortcuts = [
 
 const DocsPage = () => {
   return (
-    <div style={{ background: 'var(--bg-primary)', minHeight: '100vh', padding: '72px 0 80px' }}>
+    <div className="landing-root" style={{ background: 'var(--bg-primary)', minHeight: '100vh', padding: '72px 0 80px' }}>
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 24px', display: 'flex', gap: '48px' }}>
 
         {/* Sidebar */}
         <aside style={{ width: '200px', flexShrink: 0 }}>
-          <nav style={{ position: 'sticky', top: '88px', display: 'flex', flexDirection: 'column', gap: '28px' }}>
+          <nav style={{ position: 'sticky', top: '60px', display: 'flex', flexDirection: 'column', gap: '28px' }}>
             {NAV.map(group => (
               <div key={group.group}>
                 <p style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--primary)', marginBottom: '10px' }}>

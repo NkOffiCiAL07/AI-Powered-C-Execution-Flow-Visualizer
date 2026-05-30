@@ -523,6 +523,29 @@ export default function CppEditorPage({
                   </div>
                 )}
 
+                {/* Share prompt — shown on successful runs */}
+                {success && (
+                  <a
+                    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Just traced my ${language?.toUpperCase() || 'C++'} code execution with Traceon 🔥\n\nWatch every variable, every function call, step by step — with AI insights.\n\nhttps://traceon.vercel.app`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '7px',
+                      marginBottom: '10px', padding: '7px 14px', borderRadius: '8px',
+                      background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.1)',
+                      color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 600,
+                      textDecoration: 'none', transition: 'background 0.15s, color 0.15s',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.08)'; e.currentTarget.style.color = '#000'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.264 5.634 5.9-5.634zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                    Share your trace on X
+                  </a>
+                )}
+
                 <div className="editor-output-grid">
                   <div className="editor-output-block">
                     <div className="output-block-head">

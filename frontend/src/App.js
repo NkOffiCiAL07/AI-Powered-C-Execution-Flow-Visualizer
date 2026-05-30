@@ -925,11 +925,11 @@ function App() {
       case "docs":
         return <DocsPage />;
       case "pricing":
-        return <PricingPage onStart={() => setView("editor")} onSignIn={() => setShowLoginModal(true)} />;
+        return <PricingPage user={user} onStart={() => setView("editor")} onSignIn={() => setShowLoginModal(true)} />;
       case "community":
         return <CommunityPage onStart={() => setView("editor")} />;
       case "news":
-        return <NewsPage onSwitchView={setView} />;
+        return <NewsPage user={user} onSwitchView={setView} />;
       case "blog":
         return <BlogPage onSwitchView={setView} />;
       case "editor":

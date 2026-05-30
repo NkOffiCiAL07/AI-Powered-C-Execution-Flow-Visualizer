@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import LoginModal from './LoginModal';
 import { useTheme, isDarkTheme } from '../theme';
+import { joinWaitlist } from '../services/api';
 
 /* ── Animated Count-Up Hook ── */
 function useCountUp(target, duration = 1600, start = false) {
@@ -180,7 +181,7 @@ const GRAPH_EDGES = [
 
 const FOOTER_COLS = [
   { title: 'Product',   links: ['Features', 'Docs', 'Pricing', 'Release Notes'] },
-  { title: 'Resources', links: ['Tutorials', 'Examples', 'API Reference'] },
+  { title: 'Resources', links: ['Blog', 'Tutorials', 'Examples', 'API Reference'] },
   { title: 'Company',   links: ['About', 'Community', 'Contact'] },
 ];
 
@@ -204,6 +205,8 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, user }) => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [heroReady, setHeroReady] = useState(false);
   const [activeNodeIdx, setActiveNodeIdx] = useState(0);
+  const [waitlistEmail, setWaitlistEmail] = useState('');
+  const [waitlistState, setWaitlistState] = useState('idle'); // idle | loading | done | error
 
   useEffect(() => {
     const t = setTimeout(() => setHeroReady(true), 80);
@@ -244,12 +247,28 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, user }) => {
     }
   };
 
+  const handleWaitlist = async (e) => {
+    e.preventDefault();
+    const email = waitlistEmail.trim();
+    if (!email) return;
+    setWaitlistState('loading');
+    try {
+      await joinWaitlist(email);
+      setWaitlistState('done');
+      setWaitlistEmail('');
+    } catch {
+      setWaitlistState('error');
+      setTimeout(() => setWaitlistState('idle'), 3000);
+    }
+  };
+
   const getFooterLinkAction = (label) => {
     const actions = {
       'Docs':           () => onSwitchView('docs'),
       'Tutorials':      () => onSwitchView('docs'),
       'Examples':       () => onSwitchView('editor'),
       'API Reference':  () => onSwitchView('docs'),
+      'Blog':           () => onSwitchView('blog'),
       'Community':      () => onSwitchView('community'),
       'Pricing':        () => onSwitchView('pricing'),
       'Release Notes':  () => onSwitchView('news'),
@@ -289,8 +308,8 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, user }) => {
             <span className="text-lg font-bold tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--text-primary)' }}>Traceon</span>
           </button>
 
-          <nav className="hidden md:flex items-center gap-1">
-            {[['Home','landing'],['Docs','docs'],['Pricing','pricing'],['Community','community']].map(([label, view]) => (
+          <nav className="flex items-center gap-1">
+            {[['Home','landing'],['Docs','docs'],['Blog','blog'],['Pricing','pricing'],['Community','community'],['News','news']].map(([label, view]) => (
               <button key={label} className="nav-link" onClick={() => onSwitchView(view)}>{label}</button>
             ))}
           </nav>
@@ -298,7 +317,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, user }) => {
           <div className="flex items-center gap-3">
             {user ? (
               <>
-                <span className="nav-link hidden md:block" style={{ cursor: 'default', opacity: 0.8 }}>
+                <span className="nav-link" style={{ cursor: 'default', opacity: 0.8 }}>
                   {user.name?.split(' ')[0] || 'Hi'}
                 </span>
                 <button className="cta-primary px-5 py-2 rounded-lg text-sm font-bold" onClick={launch}>
@@ -307,7 +326,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, user }) => {
               </>
             ) : (
               <>
-                <button className="nav-link hidden md:block" onClick={launch}>Sign In</button>
+                <button className="nav-link" onClick={launch}>Sign In</button>
                 <button className="cta-primary px-5 py-2 rounded-lg text-sm font-bold" onClick={launch}>Launch App</button>
               </>
             )}
@@ -373,6 +392,62 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, user }) => {
                   </>
                 )}
               </div>
+
+              {/* ── Waitlist / Update capture (only shown to guests) ── */}
+              {!user && waitlistState !== 'done' && (
+                <form onSubmit={handleWaitlist}
+                  style={{ marginTop: '28px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                  <p style={{ fontSize: '0.78rem', color: textMuted40, letterSpacing: '0.04em', textTransform: 'uppercase', fontWeight: 600 }}>
+                    Get notified of new features &amp; updates
+                  </p>
+                  <div style={{ display: 'flex', gap: '8px', width: '100%', maxWidth: '400px' }}>
+                    <input
+                      type="email"
+                      placeholder="you@example.com"
+                      value={waitlistEmail}
+                      onChange={e => setWaitlistEmail(e.target.value)}
+                      required
+                      style={{
+                        flex: 1, padding: '10px 14px', borderRadius: '10px',
+                        border: `1px solid ${border25}`,
+                        background: dark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.8)',
+                        color: 'var(--text-primary)', fontSize: '0.875rem',
+                        outline: 'none', fontFamily: 'Inter, sans-serif',
+                        transition: 'border-color 0.15s',
+                      }}
+                      onFocus={e => e.target.style.borderColor = 'rgba(201,106,72,0.55)'}
+                      onBlur={e => e.target.style.borderColor = border25}
+                    />
+                    <button type="submit" disabled={waitlistState === 'loading'}
+                      style={{
+                        padding: '10px 18px', borderRadius: '10px', border: 'none',
+                        background: '#C96A48', color: '#fff', fontWeight: '700',
+                        fontSize: '0.8rem', cursor: waitlistState === 'loading' ? 'wait' : 'pointer',
+                        fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap',
+                        opacity: waitlistState === 'loading' ? 0.7 : 1,
+                        transition: 'opacity 0.15s',
+                      }}>
+                      {waitlistState === 'loading' ? '…' : 'Notify Me'}
+                    </button>
+                  </div>
+                  {waitlistState === 'error' && (
+                    <p style={{ fontSize: '0.75rem', color: 'var(--accent-red)', margin: 0 }}>
+                      Something went wrong — try again.
+                    </p>
+                  )}
+                </form>
+              )}
+              {!user && waitlistState === 'done' && (
+                <div style={{
+                  marginTop: '20px', display: 'flex', alignItems: 'center', gap: '8px',
+                  padding: '10px 20px', borderRadius: '10px',
+                  background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)',
+                  color: '#22c55e', fontSize: '0.875rem', fontWeight: 600,
+                }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>check_circle</span>
+                  You're on the list — we'll keep you posted!
+                </div>
+              )}
             </div>
           </div>
 

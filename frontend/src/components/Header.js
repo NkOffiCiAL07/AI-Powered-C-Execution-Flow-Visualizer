@@ -21,6 +21,7 @@ const NAV_PAGES = [
   { value: "blog",      label: "Blog",      icon: "article"    },
   { value: "pricing",   label: "Pricing",   icon: "sell"       },
   { value: "community", label: "Community", icon: "groups"     },
+  { value: "news",      label: "News",      icon: "newspaper"  },
 ];
 
 

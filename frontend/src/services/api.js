@@ -222,3 +222,10 @@ export async function postComment(articleId, text, signal) {
     signal,
   });
 }
+
+export async function joinWaitlist(email) {
+  return apiFetch(`${API_BASE_URL}/waitlist`, {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}

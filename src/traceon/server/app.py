@@ -1104,6 +1104,29 @@ gdb.execute("quit")
         finally:
             shutil.rmtree(work_dir, ignore_errors=True)
 
+    # ── Waitlist endpoint ─────────────────────────────────────────────────────
+    from pydantic import BaseModel, EmailStr
+
+    class WaitlistRequest(BaseModel):
+        email: str
+
+    @app.post("/waitlist", tags=["public"], status_code=201)
+    async def join_waitlist(body: WaitlistRequest):
+        email = body.email.strip().lower()
+        if not email or "@" not in email or "." not in email.split("@")[-1]:
+            raise HTTPException(422, "Invalid email address")
+        db = mongo_app_store.db
+        if db is None:
+            raise HTTPException(503, "Database unavailable")
+        existing = await db["waitlist"].find_one({"email": email})
+        if existing:
+            return {"status": "already_registered"}
+        await db["waitlist"].insert_one({
+            "email": email,
+            "joined_at": datetime.now(tz=timezone.utc).isoformat(),
+        })
+        return {"status": "ok"}
+
     app.include_router(sessions_router)
     app.include_router(auth_router)
     app.include_router(news_router)

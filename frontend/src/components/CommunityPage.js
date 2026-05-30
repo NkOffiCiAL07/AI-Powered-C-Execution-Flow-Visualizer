@@ -1,6 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-const CommunityPage = () => (
+const CommunityPage = () => {
+  const [discordToast, setDiscordToast] = useState(false);
+
+  const handleDiscordClick = () => {
+    setDiscordToast(true);
+    setTimeout(() => setDiscordToast(false), 3500);
+  };
+
+  return (
   <div className="landing-root" style={{ background: 'var(--bg-primary)', minHeight: '100vh', padding: '72px 24px 80px' }}>
     <div style={{ maxWidth: '900px', margin: '0 auto' }}>
 
@@ -72,7 +80,7 @@ const CommunityPage = () => (
             and get feedback from other engineers using Traceon.
           </p>
           <button
-            onClick={() => alert('Discord server coming soon — check back shortly.')}
+            onClick={handleDiscordClick}
             style={{
               padding: '11px 28px', borderRadius: '10px', fontWeight: '700', fontSize: '0.875rem',
               cursor: 'pointer', background: 'transparent', color: 'var(--text-primary)',
@@ -81,7 +89,19 @@ const CommunityPage = () => (
             }}
             onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}
             onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-          >Coming Soon</button>
+          >Notify Me</button>
+          {discordToast && (
+            <div style={{
+              marginTop: '10px', padding: '10px 16px', borderRadius: '10px',
+              background: 'var(--bg-secondary)', border: '1px solid var(--border)',
+              borderLeft: '3px solid var(--primary)', fontSize: '0.8rem',
+              color: 'var(--text-secondary)', lineHeight: '1.5', textAlign: 'left',
+            }}>
+              <strong style={{ color: 'var(--primary)' }}>Discord coming soon!</strong>
+              {' '}We'll announce launch on our{' '}
+              <a href="mailto:nishantkumar19041@gmail.com" style={{ color: 'var(--primary)', fontWeight: 600 }}>mailing list</a>.
+            </div>
+          )}
         </div>
       </div>
 
@@ -114,6 +134,7 @@ const CommunityPage = () => (
 
     </div>
   </div>
-);
+  );
+};
 
 export default CommunityPage;
