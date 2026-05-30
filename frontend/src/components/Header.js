@@ -110,17 +110,19 @@ export default function Header({ view, onSwitchView, user, onLogout, onSignIn, l
         )}
       </div>
 
-      {/* ── Center: nav links (non-app views only) ── */}
-      {!inApp && (
-        <nav className="header-nav" aria-label="Main navigation">
-          <a className={`nav-link ${view === "landing"   ? "active" : ""}`} href="?v=landing"   onClick={(e) => { e.preventDefault(); onSwitchView("landing"); }}>Home</a>
-          <a className={`nav-link ${view === "docs"      ? "active" : ""}`} href="?v=docs"      onClick={(e) => { e.preventDefault(); onSwitchView("docs"); }}>Docs</a>
-          <a className={`nav-link ${view === "blog"      ? "active" : ""}`} href="?v=blog"      onClick={(e) => { e.preventDefault(); onSwitchView("blog"); }}>Blog</a>
-          <a className={`nav-link ${view === "pricing"   ? "active" : ""}`} href="?v=pricing"   onClick={(e) => { e.preventDefault(); onSwitchView("pricing"); }}>Pricing</a>
-          <a className={`nav-link ${view === "community" ? "active" : ""}`} href="?v=community" onClick={(e) => { e.preventDefault(); onSwitchView("community"); }}>Community</a>
-          <a className={`nav-link ${view === "news"      ? "active" : ""}`} href="?v=news"      onClick={(e) => { e.preventDefault(); onSwitchView("news"); }}>News</a>
-        </nav>
-      )}
+      {/* ── Center col: nav links (non-app views only) ── */}
+      <div className="header-center">
+        {!inApp && (
+          <nav className="header-nav" aria-label="Main navigation">
+            <a className={`nav-link ${view === "landing"   ? "active" : ""}`} href="?v=landing"   onClick={(e) => { e.preventDefault(); onSwitchView("landing"); }}>Home</a>
+            <a className={`nav-link ${view === "docs"      ? "active" : ""}`} href="?v=docs"      onClick={(e) => { e.preventDefault(); onSwitchView("docs"); }}>Docs</a>
+            <a className={`nav-link ${view === "blog"      ? "active" : ""}`} href="?v=blog"      onClick={(e) => { e.preventDefault(); onSwitchView("blog"); }}>Blog</a>
+            <a className={`nav-link ${view === "pricing"   ? "active" : ""}`} href="?v=pricing"   onClick={(e) => { e.preventDefault(); onSwitchView("pricing"); }}>Pricing</a>
+            <a className={`nav-link ${view === "community" ? "active" : ""}`} href="?v=community" onClick={(e) => { e.preventDefault(); onSwitchView("community"); }}>Community</a>
+            <a className={`nav-link ${view === "news"      ? "active" : ""}`} href="?v=news"      onClick={(e) => { e.preventDefault(); onSwitchView("news"); }}>News</a>
+          </nav>
+        )}
+      </div>
 
       {/* ── Right: app controls + theme + user ── */}
       <div className="header-right">
