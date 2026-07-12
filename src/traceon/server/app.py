@@ -120,6 +120,7 @@ class _PythonSession:
 
 
 _python_sessions: dict[str, _PythonSession] = {}
+_python_sessions_lock = threading.Lock()
 
 _TRACER_SCRIPT = Path(__file__).parent / "python_tracer.py"
 _JAVA_TRACER_SCRIPT = Path(__file__).parent / "java_tracer.py"
@@ -302,10 +303,11 @@ async def _session_cleanup_loop() -> None:
         try:
             cutoff = datetime.now(tz=timezone.utc) - timedelta(minutes=SESSION_TTL_MINUTES)
             # Expire Python sessions
-            py_stale = [sid for sid, s in list(_python_sessions.items()) if s.created_at < cutoff]
-            for sid in py_stale:
-                _python_sessions.pop(sid, None)
-                logger.info("Expired Python session %s", sid)
+            with _python_sessions_lock:
+                py_stale = [sid for sid, s in list(_python_sessions.items()) if s.created_at < cutoff]
+                for sid in py_stale:
+                    _python_sessions.pop(sid, None)
+                    logger.info("Expired Python session %s", sid)
             # Expire C/C++ sessions
             stale = [
                 sid
@@ -413,11 +415,12 @@ def create_app() -> FastAPI:
                 raise HTTPException(status_code=400, detail="No executable statements found in Python code.")
 
             session_id = f"py_{uuid.uuid4().hex[:12]}"
-            _python_sessions[session_id] = _PythonSession(
-                session_id=session_id,
-                snapshots=snapshots,
-                cursor=0,
-            )
+            with _python_sessions_lock:
+                _python_sessions[session_id] = _PythonSession(
+                    session_id=session_id,
+                    snapshots=snapshots,
+                    cursor=0,
+                )
             logger.info("Python session created: %s (%d steps)", session_id, len(snapshots))
             return AnalyzeCodeResponse(
                 session_id=session_id,
@@ -445,11 +448,12 @@ def create_app() -> FastAPI:
                 raise HTTPException(status_code=400, detail="No executable statements found in Java code.")
 
             session_id = f"jv_{uuid.uuid4().hex[:12]}"
-            _python_sessions[session_id] = _PythonSession(
-                session_id=session_id,
-                snapshots=snapshots,
-                cursor=0,
-            )
+            with _python_sessions_lock:
+                _python_sessions[session_id] = _PythonSession(
+                    session_id=session_id,
+                    snapshots=snapshots,
+                    cursor=0,
+                )
             logger.info("Java session created: %s (%d steps)", session_id, len(snapshots))
             return AnalyzeCodeResponse(
                 session_id=session_id,
@@ -544,8 +548,9 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=400, detail="Direction must be either 'next' or 'back'")
 
         # ── Python session ──
-        if session_id in _python_sessions:
-            py = _python_sessions[session_id]
+        with _python_sessions_lock:
+            py = _python_sessions.get(session_id)
+        if py is not None:
             total = len(py.snapshots)
             if direction == "next":
                 if py.cursor < total - 1:
@@ -616,17 +621,20 @@ def create_app() -> FastAPI:
                 src_path = Path(tmpdir) / "main.py"
                 src_path.write_text(request.code)
                 try:
+                    _t0 = time.perf_counter()
                     run_proc = subprocess.run(
                         ["python3", str(src_path)],
                         input=request.stdin or "",
                         capture_output=True, text=True,
                         timeout=10,
                     )
+                    _elapsed = int((time.perf_counter() - _t0) * 1000)
                     return RunCodeResponse(
                         success=run_proc.returncode == 0,
                         stdout=run_proc.stdout,
                         stderr=run_proc.stderr,
                         exit_code=run_proc.returncode,
+                        elapsed_ms=_elapsed,
                     )
                 except subprocess.TimeoutExpired:
                     return RunCodeResponse(
@@ -666,16 +674,19 @@ def create_app() -> FastAPI:
                         stdout="", stderr="", exit_code=compile_proc.returncode,
                     )
                 try:
+                    _t0 = time.perf_counter()
                     run_proc = subprocess.run(
                         ["java", "-classpath", tmpdir, class_name],
                         input=request.stdin or "",
                         capture_output=True, text=True, timeout=10,
                     )
+                    _elapsed = int((time.perf_counter() - _t0) * 1000)
                     return RunCodeResponse(
                         success=run_proc.returncode == 0,
                         stdout=run_proc.stdout,
                         stderr=run_proc.stderr,
                         exit_code=run_proc.returncode,
+                        elapsed_ms=_elapsed,
                     )
                 except FileNotFoundError:
                     return RunCodeResponse(
@@ -718,17 +729,20 @@ def create_app() -> FastAPI:
                 )
 
             try:
+                _t0 = time.perf_counter()
                 run_proc = subprocess.run(
                     [str(exe_path)],
                     input=request.stdin or "",
                     capture_output=True, text=True,
                     timeout=10,
                 )
+                _elapsed = int((time.perf_counter() - _t0) * 1000)
                 return RunCodeResponse(
                     success=True,
                     stdout=run_proc.stdout,
                     stderr=run_proc.stderr,
                     exit_code=run_proc.returncode,
+                    elapsed_ms=_elapsed,
                 )
             except subprocess.TimeoutExpired:
                 return RunCodeResponse(
@@ -805,6 +819,42 @@ def create_app() -> FastAPI:
                 err = _adjust_error_lines(err, line_off, col_off)
                 return CheckCodeResponse(ok=False, errors=err)
             return CheckCodeResponse(ok=True)
+
+    # ── Format endpoint ──────────────────────────────────────────────────────
+    from pydantic import BaseModel as _BM
+
+    class FormatRequest(_BM):
+        code: str
+        language: str = "cpp"
+
+    class FormatResponse(_BM):
+        code: str
+        changed: bool
+
+    @app.post("/format", response_model=FormatResponse, tags=["run"])
+    def format_code(req: FormatRequest):
+        lang = (req.language or "cpp").lower()
+        code = req.code
+        if not code.strip():
+            return FormatResponse(code=code, changed=False)
+        try:
+            if lang in ("c", "cpp"):
+                result = subprocess.run(
+                    ["clang-format", "-style=Google", "-"],
+                    input=code, capture_output=True, text=True, timeout=10,
+                )
+                formatted = result.stdout if result.returncode == 0 else code
+            elif lang == "python":
+                result = subprocess.run(
+                    ["python3", "-m", "autopep8", "--max-line-length=100", "-"],
+                    input=code, capture_output=True, text=True, timeout=10,
+                )
+                formatted = result.stdout if result.returncode == 0 else code
+            else:
+                formatted = code
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            formatted = code
+        return FormatResponse(code=formatted, changed=formatted != code)
 
     @app.post("/generate", response_model=GenerateCodeResponse, tags=["analysis"])
     def generate_code(req: GenerateCodeRequest, http_request: Request):
@@ -1111,17 +1161,17 @@ gdb.execute("quit")
         email: str
 
     @app.post("/waitlist", tags=["public"], status_code=201)
-    async def join_waitlist(body: WaitlistRequest):
+    def join_waitlist(body: WaitlistRequest):
         email = body.email.strip().lower()
         if not email or "@" not in email or "." not in email.split("@")[-1]:
             raise HTTPException(422, "Invalid email address")
         db = mongo_app_store.db
         if db is None:
             raise HTTPException(503, "Database unavailable")
-        existing = await db["waitlist"].find_one({"email": email})
+        existing = db["waitlist"].find_one({"email": email})
         if existing:
             return {"status": "already_registered"}
-        await db["waitlist"].insert_one({
+        db["waitlist"].insert_one({
             "email": email,
             "joined_at": datetime.now(tz=timezone.utc).isoformat(),
         })

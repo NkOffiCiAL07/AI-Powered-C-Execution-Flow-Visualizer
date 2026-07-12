@@ -710,20 +710,29 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest,
   const lines = code.split("\n");
   const isDebugging = currentLine !== undefined && currentLine !== null;
 
-  // ── Feature 6: Share Code ──────────────────────────────────────────────────
-  const [shareToast, setShareToast] = useState(false);
-  const shareTimerRef = useRef(null);
-  const handleShare = () => {
+  // ── Feature 10: Share Modal ────────────────────────────────────────────────
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [shareCopied, setShareCopied] = useState('');
+  const shareCopyTimer = useRef(null);
+
+  const buildShareUrl = () => {
     try {
       const encoded = btoa(unescape(encodeURIComponent(code)));
-      const url = `${window.location.origin}${window.location.pathname}#lang=${language}&code=${encoded}`;
-      navigator.clipboard.writeText(url).catch(() => {});
-      // Also set the hash so the page reflects it immediately
-      window.history.replaceState(null, '', `#lang=${language}&code=${encoded}`);
-      setShareToast(true);
-      clearTimeout(shareTimerRef.current);
-      shareTimerRef.current = setTimeout(() => setShareToast(false), 2400);
-    } catch {}
+      return `${window.location.origin}${window.location.pathname}#lang=${language}&code=${encoded}`;
+    } catch { return window.location.href; }
+  };
+
+  const handleShare = () => {
+    const url = buildShareUrl();
+    window.history.replaceState(null, '', url.replace(window.location.origin, ''));
+    setShareModalOpen(true);
+  };
+
+  const copyToClipboard = (text, key) => {
+    navigator.clipboard.writeText(text).catch(() => {});
+    setShareCopied(key);
+    clearTimeout(shareCopyTimer.current);
+    shareCopyTimer.current = setTimeout(() => setShareCopied(''), 2000);
   };
 
   return (
@@ -786,13 +795,79 @@ export default function CodeEditor({ code, onChange, currentLine, onEditRequest,
         )}
       </div>
 
-      {/* Share toast */}
-      {shareToast && (
-        <div className="share-toast">
-          <span className="material-symbols-outlined" style={{ fontSize: 16, color: '#22C55E' }}>check_circle</span>
-          Link copied to clipboard!
-        </div>
-      )}
+      {/* ── Share Modal ── */}
+      {shareModalOpen && (() => {
+        const shareUrl = buildShareUrl();
+        const embedSnippet = `<iframe src="${shareUrl}" width="800" height="600" style="border:none;border-radius:8px"></iframe>`;
+        return (
+          <div className="share-modal-overlay" onClick={() => setShareModalOpen(false)}>
+            <div className="share-modal" onClick={e => e.stopPropagation()}>
+              <div className="share-modal-header">
+                <span className="material-symbols-outlined" style={{ fontSize: 18, color: 'var(--primary)' }}>share</span>
+                <span className="share-modal-title">Share Code</span>
+                <button className="share-modal-close" onClick={() => setShareModalOpen(false)}>
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+
+              <div className="share-modal-body">
+                {/* QR code */}
+                <div className="share-qr-wrap">
+                  <img
+                    className="share-qr-img"
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(shareUrl)}&bgcolor=ffffff&color=000000&margin=4`}
+                    alt="QR code"
+                    width={120}
+                    height={120}
+                  />
+                  <div className="share-qr-hint">Scan to open</div>
+                </div>
+
+                {/* URL preview */}
+                <div className="share-url-section">
+                  <div className="share-url-label">Shareable URL</div>
+                  <div className="share-url-row">
+                    <input
+                      className="share-url-input"
+                      value={shareUrl}
+                      readOnly
+                      onFocus={e => e.target.select()}
+                    />
+                    <button
+                      className={`share-copy-btn${shareCopied === 'url' ? ' copied' : ''}`}
+                      onClick={() => copyToClipboard(shareUrl, 'url')}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
+                        {shareCopied === 'url' ? 'check' : 'content_copy'}
+                      </span>
+                      {shareCopied === 'url' ? 'Copied!' : 'Copy URL'}
+                    </button>
+                  </div>
+
+                  <div className="share-url-label" style={{ marginTop: 12 }}>Embed Snippet</div>
+                  <div className="share-url-row">
+                    <input
+                      className="share-url-input share-embed-input"
+                      value={embedSnippet}
+                      readOnly
+                      onFocus={e => e.target.select()}
+                    />
+                    <button
+                      className={`share-copy-btn${shareCopied === 'embed' ? ' copied' : ''}`}
+                      onClick={() => copyToClipboard(embedSnippet, 'embed')}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
+                        {shareCopied === 'embed' ? 'check' : 'code'}
+                      </span>
+                      {shareCopied === 'embed' ? 'Copied!' : 'Copy'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

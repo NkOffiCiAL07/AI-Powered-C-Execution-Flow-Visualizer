@@ -68,11 +68,16 @@ def _frontend_origin() -> str:
 
 
 def _jwt_secret() -> str:
-    val = _env("JWT_SECRET", _DEV_SECRET)
+    val = os.environ.get("JWT_SECRET")
+    if not val:
+        raise RuntimeError(
+            "CRITICAL: JWT_SECRET environment variable is not set. "
+            "Add JWT_SECRET=<long-random-string> to your .env file before starting the server."
+        )
     if val == _DEV_SECRET:
         logger.critical(
-            "JWT_SECRET is not set — using the insecure dev default. "
-            "Set JWT_SECRET in your .env file before deploying to production."
+            "JWT_SECRET is set to the insecure dev default. "
+            "Change it to a unique random string before deploying to production."
         )
     return val
 

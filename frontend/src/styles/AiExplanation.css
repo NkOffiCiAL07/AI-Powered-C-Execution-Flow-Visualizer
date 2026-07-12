@@ -20,15 +20,19 @@
 .ai-card {
   background: var(--bg-card);
   border: 1px solid var(--border-strong);
+  border-left: 3px solid transparent;
   border-radius: var(--radius-md);
   padding: 16px;
   position: relative;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease, transform 0.18s var(--ease-out), box-shadow 0.2s ease;
   animation: fadeIn 0.4s var(--ease-out) both;
 }
 
 .ai-card:hover {
   border-color: var(--border-accent);
+  border-left-color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 
 .card-header {
@@ -106,7 +110,8 @@
 }
 
 .metric-card:hover {
-  border-color: var(--border-strong);
+  border-color: var(--primary);
+  background: linear-gradient(135deg, var(--bg-secondary), rgba(217, 119, 87, 0.04));
 }
 
 .metric-header {
@@ -169,6 +174,12 @@
   line-height: 1.55;
   animation: slideInLeft 0.3s ease-out both;
   animation-delay: calc(var(--index) * 0.05s);
+  transition: background 0.18s ease, border-left-color 0.18s ease;
+}
+
+.modern-points-list li:hover {
+  background: linear-gradient(90deg, rgba(217, 119, 87, 0.06), var(--bg-secondary));
+  border-left-color: var(--primary);
 }
 
 .point-indicator {

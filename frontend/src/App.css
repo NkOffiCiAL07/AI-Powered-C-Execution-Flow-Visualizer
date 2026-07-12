@@ -783,6 +783,28 @@
   animation: spin 0.8s linear infinite;
 }
 
+/* ── Suspense lazy-load placeholder ── */
+.view-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 300px;
+  gap: 14px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.view-loading::before {
+  content: '';
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border-strong);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
 /* ── Error banner ── */
 
 .error-banner {
@@ -867,4 +889,35 @@
   .resize-divider {
     display: none;
   }
+}
+
+/* ═══════════════════════════════════════
+   Pro UI — Design tokens & utility classes
+   ═══════════════════════════════════════ */
+
+/* ── Glow focus ring token ── */
+:root {
+  --shadow-glow-primary: 0 0 0 3px rgba(201, 106, 72, 0.15);
+}
+
+/* ── Improved glass panel ── */
+.glass-panel {
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.55) inset, var(--shadow-md);
+  border: 1px solid var(--border-strong);
+}
+
+/* ── Pro card utility ── */
+.pro-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm), 0 1px 0 rgba(255, 255, 255, 0.05) inset;
+  transition:
+    border-color var(--t-base) ease,
+    box-shadow var(--t-base) ease,
+    transform var(--t-base) var(--ease-out);
+}
+.pro-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
 }

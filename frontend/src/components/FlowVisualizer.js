@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback, memo } from "react";
 import "../styles/FlowVisualizer.css";
 import VariableTracker from "./VariableTracker";
 import ExecutionTimeline from "./ExecutionTimeline";
@@ -216,7 +216,47 @@ function CallGraphPanel({ snapshots, currentStep, dark }) {
 
 
 
-export default function FlowVisualizer({
+function StepDeltaBar({ snap, prevSnap, currentStep }) {
+  if (!prevSnap || currentStep === 0) return null;
+
+  const prevLine = prevSnap.location?.line;
+  const curLine  = snap.location?.line;
+  const changedVars = snap.changed_variables || [];
+  const prevVarKeys = Object.keys(prevSnap.variables || {});
+  const curVarKeys  = Object.keys(snap.variables  || {});
+  const addedVars   = curVarKeys.filter(k => !prevSnap.variables?.hasOwnProperty(k));
+  const removedVars = prevVarKeys.filter(k => !snap.variables?.hasOwnProperty(k));
+  const mutatedVars = changedVars.filter(k => prevSnap.variables?.hasOwnProperty(k));
+
+  const hasChanges = addedVars.length || mutatedVars.length || removedVars.length;
+
+  return (
+    <div className="step-delta-bar">
+      {prevLine && curLine && prevLine !== curLine && (
+        <span className="delta-token delta-line">
+          <span className="material-symbols-outlined" style={{ fontSize: 11 }}>arrow_right_alt</span>
+          line {prevLine}→{curLine}
+        </span>
+      )}
+      {mutatedVars.slice(0, 3).map(k => (
+        <span key={k} className="delta-token delta-changed">
+          {k} {String(prevSnap.variables[k] ?? '?')}→{String(snap.variables?.[k] ?? '?')}
+        </span>
+      ))}
+      {addedVars.slice(0, 2).map(k => (
+        <span key={k} className="delta-token delta-added">+{k}</span>
+      ))}
+      {removedVars.slice(0, 2).map(k => (
+        <span key={k} className="delta-token delta-removed">−{k}</span>
+      ))}
+      {!hasChanges && (
+        <span className="delta-token delta-noop">no changes this step</span>
+      )}
+    </div>
+  );
+}
+
+const FlowVisualizer = memo(function FlowVisualizer({
   result,
   loading,
   stepLoading,
@@ -627,6 +667,29 @@ export default function FlowVisualizer({
           </button>
         </div>
 
+        {/* ── Export trace ── */}
+        {snapshots.length > 0 && (
+          <div className="control-group">
+            <button
+              className="control-btn"
+              title="Export full execution trace as JSON"
+              onClick={() => {
+                const data = { session_id: result?.session_id, total_steps: snapshots.length, snapshots };
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `trace_${Date.now()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+            >
+              <span className="material-symbols-outlined">download</span>
+              Export
+            </button>
+          </div>
+        )}
+
         {stepLoading && (
           <div className="control-group step-fetching">
             <span className="material-symbols-outlined spin" style={{ fontSize: 15 }}>sync</span>
@@ -731,6 +794,9 @@ export default function FlowVisualizer({
         </div>
       </div>
 
+      {/* ── Sticky step-delta bar (Feature 9) ── */}
+      <StepDeltaBar snap={snap} prevSnap={prevSnap} currentStep={safeCurrentStep} />
+
       {/* ── Graphical Execution State Panel ── */}
       <div className="exec-state-panel">
         {/* Left: current line + function badge */}
@@ -800,6 +866,8 @@ export default function FlowVisualizer({
           variables={snap.variables}
           changedVariables={snap.changed_variables}
           previousSnapshot={prevSnap}
+          allSnapshots={visibleSnapshots}
+          currentStep={safeCurrentStep}
         />
       </div>
 
@@ -835,4 +903,6 @@ export default function FlowVisualizer({
       />
     </div>
   );
-}
+});
+
+export default FlowVisualizer;

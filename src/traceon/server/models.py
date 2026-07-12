@@ -136,6 +136,7 @@ class RunCodeResponse(BaseModel):
     stderr: str = ""
     compile_error: str = ""
     exit_code: int = 0
+    elapsed_ms: int | None = None
 
 
 class AnalyzeCodeRequest(BaseModel):

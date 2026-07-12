@@ -259,8 +259,20 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
-  background-image: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(201,106,72,0.04) 0%, transparent 60%);
+  /* Mesh gradient: soft warm orbs in opposite corners */
+  background-image:
+    radial-gradient(ellipse 60% 50% at 0% 100%, rgba(201,106,72,0.05) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 55% at 100% 0%, rgba(201,106,72,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(201,106,72,0.04) 0%, transparent 60%);
   overscroll-behavior-y: none;
+}
+
+.dark-theme body,
+.dark-theme #root {
+  background-image:
+    radial-gradient(ellipse 60% 50% at 0% 100%, rgba(217,119,87,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 55% at 100% 0%, rgba(217,119,87,0.03) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(217,119,87,0.06) 0%, transparent 55%);
 }
 
 #root {

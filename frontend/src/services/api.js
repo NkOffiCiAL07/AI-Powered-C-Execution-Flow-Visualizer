@@ -229,3 +229,11 @@ export async function joinWaitlist(email) {
     body: JSON.stringify({ email }),
   });
 }
+
+export async function formatCode(code, language, signal) {
+  return apiFetch(`${API_BASE_URL}/format`, {
+    method: "POST",
+    body: JSON.stringify({ code, language }),
+    signal,
+  });
+}

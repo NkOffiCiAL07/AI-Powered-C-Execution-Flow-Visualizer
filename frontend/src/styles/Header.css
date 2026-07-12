@@ -466,3 +466,72 @@
   .header-right { gap: 4px; }
   .analyze-btn span:not(.material-symbols-outlined) { display: none; }
 }
+
+/* ══════════════════════════════════════════════════════
+   Mobile hamburger button
+══════════════════════════════════════════════════════ */
+.header-mobile-menu-btn {
+  display: none;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  padding: 5px;
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast);
+}
+.header-mobile-menu-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+.header-mobile-menu-btn .material-symbols-outlined { font-size: 20px; }
+
+/* Mobile slide-down nav drawer */
+.mobile-nav-drawer {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .header { padding: 0 12px; }
+  .header-nav { display: none !important; }
+  .header-mobile-menu-btn { display: flex; align-items: center; justify-content: center; }
+  .user-name { display: none; }
+
+  .mobile-nav-drawer {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 48px;
+    left: 0;
+    right: 0;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow-lg);
+    z-index: 99;
+    padding: 8px;
+    gap: 2px;
+    animation: drawerSlideDown 0.2s var(--ease-out) both;
+  }
+  @keyframes drawerSlideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .mobile-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background var(--t-fast), color var(--t-fast);
+    text-decoration: none;
+    border: none;
+    background: none;
+    font-family: var(--font-sans);
+    width: 100%;
+    text-align: left;
+  }
+  .mobile-nav-link:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .mobile-nav-link.active { color: var(--primary); background: var(--primary-glow); font-weight: 600; }
+  .mobile-nav-link .material-symbols-outlined { font-size: 18px; flex-shrink: 0; }
+}

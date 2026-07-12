@@ -33,6 +33,11 @@ _CACHE_TTL       = 24 * 3600   # 24 hours
 _REFRESH_HOUR_UTC = 6           # Daily refresh at 06:00 UTC
 _cache_lock      = threading.Lock()
 
+# In-memory layer: avoids disk I/O on every request (refreshed every 60s)
+_mem_cache: dict | None = None
+_mem_cache_time: float = 0.0
+_MEM_TTL = 60.0
+
 # ── Discussions ────────────────────────────────────────────────────────────────
 # {article_id: [{id, user_id, user_name, user_avatar, text, created_at}]}
 _discussions: dict[str, list[dict]] = {}
@@ -210,8 +215,15 @@ def start_news_scheduler():
 @router.get("")
 async def get_news(user=Depends(require_member)):
     """Return the daily news digest from cache (never triggers a live Gemini call)."""
-    with _cache_lock:
-        data = _load_cache() or _load_any_cache()
+    global _mem_cache, _mem_cache_time
+    now = time.time()
+    if _mem_cache is not None and (now - _mem_cache_time) < _MEM_TTL:
+        data = _mem_cache
+    else:
+        with _cache_lock:
+            data = _load_cache() or _load_any_cache()
+        _mem_cache = data
+        _mem_cache_time = now
     if not data:
         raise HTTPException(
             status_code=503,

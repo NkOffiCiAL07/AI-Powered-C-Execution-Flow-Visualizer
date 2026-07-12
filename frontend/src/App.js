@@ -1,20 +1,7 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
-import CodeEditor from "./components/CodeEditor";
-import FlowVisualizer from "./components/FlowVisualizer";
-import OutputPanel from "./components/OutputPanel";
+import React, { useState, useCallback, useRef, useEffect, lazy, Suspense } from "react";
 import Header from "./components/Header";
-import AiExplanation from "./components/AiExplanation";
-import CppEditorPage from "./components/CppEditorPage";
-import LandingPage from "./components/LandingPage";
-import DocsPage from "./components/DocsPage";
-import PricingPage from "./components/PricingPage";
-import CommunityPage from "./components/CommunityPage";
-import LoginModal from "./components/LoginModal";
-import DashboardPage from "./components/DashboardPage";
-import DebuggerRestricted from "./components/DebuggerRestricted";
-import MemorySpectrometer from "./components/MemorySpectrometer";
-import BreakpointsPanel from "./components/BreakpointsPanel";
 import LangDropdown from "./components/LangDropdown";
+import LoginModal from "./components/LoginModal";
 import KeyboardShortcutsModal from "./components/KeyboardShortcutsModal";
 import { FILE_NAMES } from "./components/NewProjectModal";
 import {
@@ -22,13 +9,30 @@ import {
   updateFile, deleteFile, fetchProject, fetchFiles, createFile, fetchPublicProject, API_BASE_URL,
   debugWithBreakpoints,
 } from "./services/api";
-import NewsPage from "./components/NewsPage";
-import BlogPage from "./components/BlogPage";
-import CodeFlowGraph from "./components/CodeFlowGraph";
-import OnboardingTour from "./components/OnboardingTour";
 import { useAuth } from "./contexts/AuthContext";
 import "./App.css";
 import "./styles/CppEditorPage.css";
+
+// View-level lazy imports — only loaded when the user navigates to that view
+const LandingPage        = lazy(() => import("./components/LandingPage"));
+const DashboardPage      = lazy(() => import("./components/DashboardPage"));
+const CppEditorPage      = lazy(() => import("./components/CppEditorPage"));
+const DocsPage           = lazy(() => import("./components/DocsPage"));
+const PricingPage        = lazy(() => import("./components/PricingPage"));
+const CommunityPage      = lazy(() => import("./components/CommunityPage"));
+const NewsPage           = lazy(() => import("./components/NewsPage"));
+const BlogPage           = lazy(() => import("./components/BlogPage"));
+
+// Visualizer sub-components (loaded with the visualizer view)
+const CodeEditor         = lazy(() => import("./components/CodeEditor"));
+const FlowVisualizer     = lazy(() => import("./components/FlowVisualizer"));
+const OutputPanel        = lazy(() => import("./components/OutputPanel"));
+const AiExplanation      = lazy(() => import("./components/AiExplanation"));
+const CodeFlowGraph      = lazy(() => import("./components/CodeFlowGraph"));
+const MemorySpectrometer = lazy(() => import("./components/MemorySpectrometer"));
+const BreakpointsPanel   = lazy(() => import("./components/BreakpointsPanel"));
+const DebuggerRestricted = lazy(() => import("./components/DebuggerRestricted"));
+const OnboardingTour     = lazy(() => import("./components/OnboardingTour"));
 
 // Captured once at module load — before React StrictMode double-mounts any
 // effects and before the URL-sync effect can overwrite window.location.search.
@@ -113,8 +117,11 @@ function App() {
   const [breakpoints, setBreakpoints] = useState(() => {
     try {
       const raw = localStorage.getItem("traceon_breakpoints");
-      return raw ? new Set(JSON.parse(raw)) : new Set();
-    } catch { return new Set(); }
+      if (!raw) return new Set();
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) { console.warn("traceon_breakpoints: expected array, got", typeof parsed); return new Set(); }
+      return new Set(parsed.filter(n => typeof n === "number" && Number.isInteger(n) && n > 0));
+    } catch (e) { console.warn("traceon_breakpoints restore failed:", e); return new Set(); }
   });
   const [bpJumpTarget, setBpJumpTarget] = useState(null); // { step, version }
   const [bpDebugResult, setBpDebugResult] = useState(null); // GDB hits result
@@ -514,15 +521,7 @@ function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code, language, currentProject, view, handleSave]); // 'user' omitted intentionally — guest check inside
 
-  useEffect(() => {
-    const handler = (e) => {
-      const tag = e.target.tagName;
-      const inInput = tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable;
-      if (!inInput && e.key === '?') setShowShortcuts(s => !s);
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, []);
+  // Consolidated global keyboard handler — single listener to avoid duplicate firing
 
   const handleExplain = useCallback(async () => {
     if (!code.trim()) {
@@ -751,6 +750,9 @@ function App() {
 
   useEffect(() => {
     const handler = (e) => {
+      const tag = e.target.tagName;
+      const inInput = tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable;
+      if (!inInput && !e.ctrlKey && !e.metaKey && e.key === '?') { setShowShortcuts(s => !s); return; }
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         if (view === 'editor') handleRun();
@@ -1352,12 +1354,15 @@ function App() {
         </div>
       )}
       <div key={view} className="view-enter" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: ['editor', 'visualizer', 'dashboard'].includes(view) ? 'hidden' : 'auto' }}>
-        {renderView()}
+        <Suspense fallback={<div className="view-loading"><span className="material-symbols-outlined spin">sync</span></div>}>
+          {renderView()}
+        </Suspense>
       </div>
       <LoginModal isOpen={showLoginModal} onLogin={handleLogin} onClose={() => setShowLoginModal(false)} />
       <KeyboardShortcutsModal isOpen={showShortcuts} onClose={() => setShowShortcuts(false)} />
 
       {/* ── Feature 9: First-run onboarding tour ── */}
+      <Suspense fallback={null}>
       <OnboardingTour
         active={tourActive}
         onDone={() => {
@@ -1365,6 +1370,7 @@ function App() {
           localStorage.setItem('traceon_tour_done', '1');
         }}
       />
+      </Suspense>
 
       {/* ── Feature 10: Floating AI FAB — always visible in visualizer ── */}
       {view === 'visualizer' && (() => {

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import CodeEditor from "./CodeEditor";
 import AiExplanation from "./AiExplanation";
 import LangDropdown from "./LangDropdown";
-import { checkCode } from "../services/api";
+import { checkCode, formatCode } from "../services/api";
 import "../styles/CppEditorPage.css";
 
 export default function CppEditorPage({
@@ -43,6 +43,7 @@ export default function CppEditorPage({
   const [prompt, setPrompt] = useState("");
   const [showPrompt, setShowPrompt] = useState(false);
   const [saveState, setSaveState] = useState("idle"); // "idle" | "saving" | "saved" | "error"
+  const [formatLoading, setFormatLoading] = useState(false);
   const promptInputRef = useRef(null);
   const saveTimerRef = useRef(null);
   const [showNewFilePrompt, setShowNewFilePrompt] = useState(false);
@@ -103,6 +104,31 @@ export default function CppEditorPage({
     return () => document.removeEventListener('keydown', handler);
   }, [handleSave]);
 
+  const handleFormat = useCallback(async () => {
+    if (!code.trim() || formatLoading) return;
+    setFormatLoading(true);
+    try {
+      const res = await formatCode(code, language);
+      if (res.changed) onCodeChange(res.code);
+    } catch (e) {
+      console.warn("Format failed:", e);
+    } finally {
+      setFormatLoading(false);
+    }
+  }, [code, language, formatLoading, onCodeChange]);
+
+  // Keyboard shortcut: ⌘⇧F = format
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'f') {
+        e.preventDefault();
+        handleFormat();
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [handleFormat]);
+
   const handleGenerate = () => {
     if (prompt.trim()) {
       onGenerate(prompt);
@@ -145,6 +171,7 @@ export default function CppEditorPage({
 
   const [tab, setTab] = useState("output");
   const [leftPct, setLeftPct] = useState(58);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const dragging = useRef(false);
   const containerRef = useRef(null);
 
@@ -181,9 +208,14 @@ export default function CppEditorPage({
   return (
     <main className="editor-page-main">
 
+      {/* ── Mobile sidebar overlay ── */}
+      {currentProject && mobileSidebarOpen && (
+        <div className="sidebar-mobile-overlay" onClick={() => setMobileSidebarOpen(false)} />
+      )}
+
       {/* ── Left Sidebar: File Explorer ── */}
       {currentProject && (
-        <aside className="editor-sidebar">
+        <aside className={`editor-sidebar${mobileSidebarOpen ? " open" : ""}`}>
           <div className="sidebar-head">
             <span className="material-symbols-outlined">folder_open</span>
             Explorer
@@ -291,6 +323,15 @@ export default function CppEditorPage({
           <div className="editor-page-card editor-card">
             <div className="editor-page-head">
               <div className="editor-head-left">
+                {currentProject && (
+                  <button
+                    className="sidebar-mobile-toggle"
+                    onClick={() => setMobileSidebarOpen(o => !o)}
+                    title="Toggle file explorer"
+                  >
+                    <span className="material-symbols-outlined">menu</span>
+                  </button>
+                )}
                 {currentProject && onBackToDashboard && (
                   <button className="editor-back-btn" onClick={onBackToDashboard} title="Back to dashboard">
                     <span className="material-symbols-outlined">arrow_back</span>
@@ -415,8 +456,20 @@ export default function CppEditorPage({
               </button>
             </div>
 
-            {/* Right group: AI tools */}
+            {/* Right group: AI tools + Format */}
             <div className="action-bar-group action-bar-secondary">
+              <button
+                className="action-btn action-btn--format"
+                onClick={handleFormat}
+                disabled={formatLoading || loading}
+                title={`Format code (${navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}⇧F)`}
+              >
+                <span className={`material-symbols-outlined${formatLoading ? " spin" : ""}`}>
+                  {formatLoading ? "sync" : "auto_fix_high"}
+                </span>
+                {formatLoading ? "Formatting…" : "Format"}
+              </button>
+
               {performance && (
                 <button
                   className={`action-btn action-btn--optimize${isGuest ? " action-btn--locked" : ""}`}

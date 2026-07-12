@@ -34,5 +34,10 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://localhost:8000"
+  "proxy": "http://localhost:8000",
+  "allowScripts": {
+    "core-js@3.49.0": true,
+    "core-js-pure@3.49.0": true,
+    "fsevents@2.3.3": true
+  }
 }

@@ -52,6 +52,7 @@ export default function Header({ view, onSwitchView, user, onLogout, onSignIn, l
   const { theme, setTheme } = useTheme();
   const inApp = view === "editor" || view === "visualizer";
   const currentView = VIEW_OPTIONS.find(o => o.value === view);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   return (
     <header className="header">
@@ -110,6 +111,17 @@ export default function Header({ view, onSwitchView, user, onLogout, onSignIn, l
           </Dropdown>
         )}
       </div>
+
+      {/* Mobile hamburger — only visible on small screens via CSS */}
+      {!inApp && (
+        <button
+          className="header-mobile-menu-btn"
+          onClick={() => setMobileNavOpen(o => !o)}
+          aria-label="Toggle navigation"
+        >
+          <span className="material-symbols-outlined">{mobileNavOpen ? 'close' : 'menu'}</span>
+        </button>
+      )}
 
       {/* ── Center col: nav links (non-app views only) ── */}
       <div className="header-center">
@@ -190,6 +202,22 @@ export default function Header({ view, onSwitchView, user, onLogout, onSignIn, l
           <button className="sign-in-link" onClick={onSignIn}>Sign In</button>
         )}
       </div>
+
+      {/* Mobile nav drawer */}
+      {mobileNavOpen && !inApp && (
+        <nav className="mobile-nav-drawer" aria-label="Mobile navigation">
+          {NAV_PAGES.map(p => (
+            <button
+              key={p.value}
+              className={`mobile-nav-link ${view === p.value ? 'active' : ''}`}
+              onClick={() => { onSwitchView(p.value); setMobileNavOpen(false); }}
+            >
+              <span className="material-symbols-outlined">{p.icon}</span>
+              {p.label}
+            </button>
+          ))}
+        </nav>
+      )}
     </header>
   );
 }

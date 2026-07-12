@@ -12,7 +12,7 @@
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  background: var(--bg-secondary);
+  background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-secondary) 100%);
   border-right: 1px solid var(--border);
   padding: 0;
   overflow: hidden;
@@ -301,7 +301,7 @@
   gap: 6px;
   padding: 0 16px;
   height: var(--btn-h-md);
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--primary), var(--tertiary));
   color: #fff;
   border: none;
   border-radius: var(--radius-md);
@@ -700,6 +700,7 @@
   padding: 16px;
   background: var(--bg-card);
   border: 1px solid var(--border);
+  border-left: 3px solid transparent;
   border-radius: var(--radius-lg);
   cursor: pointer;
   transition:
@@ -711,11 +712,37 @@
   will-change: transform, box-shadow;
 }
 
+.proj-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--primary);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.25s var(--ease-out);
+  border-radius: 1px 1px 0 0;
+}
+
 .proj-card:hover {
-  border-color: var(--border-accent);
-  box-shadow: var(--shadow-md), 0 0 0 1px var(--border-accent);
+  border-left-color: var(--primary);
+  box-shadow: var(--shadow-md), 0 0 0 1px var(--border-strong);
   transform: translateY(-3px);
 }
+
+/* Language-specific accent colors on hover */
+.proj-card:has(.lang-cpp):hover    { border-left-color: var(--accent-blue); }
+.proj-card:has(.lang-c):hover      { border-left-color: #5A8CC0; }
+.proj-card:has(.lang-python):hover { border-left-color: var(--accent-green); }
+.proj-card:has(.lang-java):hover   { border-left-color: var(--primary); }
+
+.proj-card:has(.lang-cpp)::before    { background: var(--accent-blue); }
+.proj-card:has(.lang-c)::before      { background: #5A8CC0; }
+.proj-card:has(.lang-python)::before { background: var(--accent-green); }
+
+.proj-card:hover::before { transform: scaleX(1); }
 
 .proj-card:active { transform: translateY(-1px) scale(0.99); }
 
@@ -1242,5 +1269,94 @@
   .activity-grid-wrap {
     max-width: 320px;
   }
+}
+
+/* ── Portfolio / stats card (Feature 8) ── */
+.dash-stats-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin-bottom: 18px;
+}
+
+.dash-stats-body {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.lang-donut { flex-shrink: 0; }
+
+.donut-empty {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 8px 0;
+}
+
+.dash-stats-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dash-stat-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+}
+
+.dash-stat-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dash-stat-lang {
+  flex: 1;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.dash-stat-count {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.dash-stats-meta {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.dash-stat-meta-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+}
+
+.dash-stat-meta-num {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+.dash-stat-meta-lbl {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
 }
 

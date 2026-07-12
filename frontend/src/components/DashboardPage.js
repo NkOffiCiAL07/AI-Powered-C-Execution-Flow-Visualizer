@@ -73,7 +73,36 @@ function intensityLevel(count) {
 
 const DAY_LABELS = ['M', '', 'W', '', 'F', '', '']; // Mon,Tue,Wed,Thu,Fri,Sat,Sun
 
-const LANG_LABELS = { cpp: 'C++', c: 'C', python: 'Python', java: 'Java' };
+const LANG_LABELS  = { cpp: 'C++', c: 'C', python: 'Python', java: 'Java' };
+const LANG_COLORS  = { cpp: '#D97757', c: '#4ade80', python: '#60a5fa', java: '#f59e0b' };
+
+function LangDonut({ counts, total }) {
+  const R = 22, CX = 32, CY = 32;
+  const circumference = 2 * Math.PI * R;
+  let cumulativeDash = 0;
+  const slices = Object.entries(counts)
+    .filter(([, v]) => v > 0)
+    .map(([lang, count]) => {
+      const dash = (count / total) * circumference;
+      const offset = circumference * 0.25 - cumulativeDash;
+      cumulativeDash += dash;
+      return { lang, count, dash, offset };
+    });
+  if (!total) return <div className="donut-empty">No data</div>;
+  return (
+    <svg width="64" height="64" viewBox="0 0 64 64" className="lang-donut">
+      <circle cx={CX} cy={CY} r={R} fill="none" stroke="var(--border)" strokeWidth="9" />
+      {slices.map(({ lang, dash, offset }) => (
+        <circle key={lang} cx={CX} cy={CY} r={R} fill="none"
+          stroke={LANG_COLORS[lang] || '#888'}
+          strokeWidth="9"
+          strokeDasharray={`${dash.toFixed(2)} ${circumference.toFixed(2)}`}
+          strokeDashoffset={offset.toFixed(2)}
+        />
+      ))}
+    </svg>
+  );
+}
 
 const THEME_OPTIONS = [
   { value: 'light',    label: 'Light',    swatch: '#C96A48' },
@@ -131,6 +160,23 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
 
   const activityMap = useMemo(() => buildActivityMap(projects), [projects]);
   const heatmapGrid = useMemo(() => buildGrid(), []);
+
+  const langCounts = useMemo(() => {
+    const c = {};
+    projects.forEach(p => { c[p.language] = (c[p.language] || 0) + 1; });
+    return c;
+  }, [projects]);
+
+  const totalFiles = useMemo(() =>
+    projects.reduce((sum, p) => sum + (p.file_count || 0), 0), [projects]);
+
+  const lastActiveStr = useMemo(() => {
+    const best = projects.reduce((t, p) => {
+      const v = new Date(p.last_accessed || p.created_at).getTime();
+      return v > t ? v : t;
+    }, 0);
+    return best ? relativeTime(new Date(best).toISOString()) : '—';
+  }, [projects]);
 
   const handleDelete = async (e, projectId) => {
     e.stopPropagation();
@@ -412,6 +458,41 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
                   )}
                 </div>
                 <aside className="dash-activity-sidebar">
+                  {/* ── Portfolio stats card ── */}
+                  {projects.length > 0 && (
+                    <div className="dash-stats-card">
+                      <h3 className="activity-title">Portfolio</h3>
+                      <div className="dash-stats-body">
+                        <LangDonut counts={langCounts} total={projects.length} />
+                        <div className="dash-stats-list">
+                          {Object.entries(langCounts).filter(([, v]) => v > 0).map(([lang, count]) => (
+                            <div key={lang} className="dash-stat-row">
+                              <div className="dash-stat-dot" style={{ background: LANG_COLORS[lang] || '#888' }} />
+                              <span className="dash-stat-lang">{LANG_LABELS[lang] || lang}</span>
+                              <span className="dash-stat-count">{count}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="dash-stats-meta">
+                        <div className="dash-stat-meta-item">
+                          <span className="dash-stat-meta-num">{projects.length}</span>
+                          <span className="dash-stat-meta-lbl">Projects</span>
+                        </div>
+                        {totalFiles > 0 && (
+                          <div className="dash-stat-meta-item">
+                            <span className="dash-stat-meta-num">{totalFiles}</span>
+                            <span className="dash-stat-meta-lbl">Files</span>
+                          </div>
+                        )}
+                        <div className="dash-stat-meta-item">
+                          <span className="dash-stat-meta-num">{lastActiveStr}</span>
+                          <span className="dash-stat-meta-lbl">Last active</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <h3 className="activity-title">Activity</h3>
 
                   {/* Month labels */}

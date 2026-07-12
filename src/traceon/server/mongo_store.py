@@ -146,6 +146,10 @@ class MongoAppStore:
     def enabled(self) -> bool:
         return self._enabled and self._db is not None
 
+    @property
+    def db(self):
+        return self._db if self._enabled else None
+
     def _ensure_indexes(self) -> None:
         self._db.users.create_index("google_id", unique=True)
         self._db.projects.create_index("owner_id")

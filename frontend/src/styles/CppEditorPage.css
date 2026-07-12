@@ -532,7 +532,7 @@
 
 /* ── Run — primary CTA ── */
 .action-btn--run {
-  background: var(--primary);
+  background: linear-gradient(135deg, #D97757, #B85A3A);
   color: #fff;
   border-color: transparent;
   box-shadow: 0 2px 10px rgba(201, 106, 72, 0.35);
@@ -609,6 +609,19 @@
 }
 
 .action-btn--optimize:active:not(:disabled) { transform: scale(0.97); }
+
+/* ── Format button ── */
+.action-btn--format {
+  background: rgba(99, 179, 237, 0.06);
+  color: #63b3ed;
+  border-color: rgba(99, 179, 237, 0.22);
+}
+.action-btn--format:hover:not(:disabled) {
+  background: rgba(99, 179, 237, 0.13);
+  border-color: rgba(99, 179, 237, 0.5);
+  transform: translateY(-1px);
+}
+.action-btn--format:active:not(:disabled) { transform: scale(0.97); }
 
 /* Lock icon on locked action buttons */
 .action-lock-icon {
@@ -1032,4 +1045,135 @@
 @keyframes blink {
   0%, 80%, 100% { opacity: 0; }
   40%           { opacity: 1; }
+}
+
+/* ── Mobile sidebar toggle (hidden on desktop) ── */
+.sidebar-mobile-toggle {
+  display: none;
+}
+
+.sidebar-mobile-overlay {
+  display: none;
+}
+
+/* ═══════════════════════════════════════
+   MOBILE — stack layout ≤ 767px
+   ═══════════════════════════════════════ */
+@media (max-width: 767px) {
+  .editor-page-main {
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100vh - 52px);
+    overflow-y: auto;
+  }
+
+  /* Sidebar becomes fixed slide-in drawer */
+  .editor-sidebar {
+    position: fixed;
+    top: 52px;
+    left: 0;
+    bottom: 0;
+    width: 220px;
+    transform: translateX(-100%);
+    transition: transform 0.22s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+    z-index: 300;
+    box-shadow: 4px 0 28px rgba(0, 0, 0, 0.22);
+  }
+
+  .editor-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-mobile-overlay {
+    display: block;
+    position: fixed;
+    inset: 52px 0 0 0;
+    background: rgba(0, 0, 0, 0.38);
+    z-index: 299;
+    animation: fadeInOverlay 0.18s ease both;
+  }
+
+  @keyframes fadeInOverlay {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .sidebar-mobile-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .sidebar-mobile-toggle:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+
+  .sidebar-mobile-toggle .material-symbols-outlined {
+    font-size: 16px;
+  }
+
+  /* Stacked editor + right panel */
+  .editor-content-wrap {
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  .editor-page-left {
+    width: 100% !important;
+    min-width: 0;
+    max-width: 100%;
+    height: 45vh;
+    min-height: 280px;
+    flex-shrink: 0;
+  }
+
+  .resize-divider { display: none; }
+
+  .editor-page-right {
+    min-height: 360px;
+    height: auto;
+    flex: none;
+  }
+
+  /* Action bar wraps on small screens */
+  .editor-action-bar {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 6px 10px;
+  }
+
+  /* Tab bar text smaller */
+  .editor-tab { padding: 0 10px; font-size: 11px; }
+
+  /* AI FAB repositioned */
+  .ai-fab { bottom: 14px; right: 14px; }
+}
+
+/* ── Pro panel border & resize handle polish ── */
+.editor-page-left {
+  border-right: 1px solid var(--border-strong);
+}
+
+.resize-divider {
+  background: var(--border);
+  transition: background var(--t-fast) ease, width var(--t-fast) ease;
+}
+
+.resize-divider:hover {
+  background: var(--border-accent);
+}
+
+.resize-divider:active {
+  background: var(--primary);
+  opacity: 0.6;
 }

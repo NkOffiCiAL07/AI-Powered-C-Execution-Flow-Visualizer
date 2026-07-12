@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useCallback, useEffect, memo } from 'react';
 import { useTheme, isDarkTheme } from '../theme';
 import '../styles/CodeFlowGraph.css';
 
@@ -219,7 +219,7 @@ function clipId(nodeId) {
 }
 
 // ─── Main component ────────────────────────────────────────────────────────────
-export default function CodeFlowGraph({ result, currentStep, code, language = 'cpp', onJumpToStep }) {
+const CodeFlowGraph = memo(function CodeFlowGraph({ result, currentStep, code, language = 'cpp', onJumpToStep }) {
   const { theme }  = useTheme();
   const dark       = isDarkTheme(theme);
   const codeLines  = useMemo(() => (code || '').split('\n'), [code]);
@@ -515,7 +515,7 @@ export default function CodeFlowGraph({ result, currentStep, code, language = 'c
       </div>
     </div>
   );
-}
+});
 
 // ─── Node detail panel ─────────────────────────────────────────────────────────
 function NodeDetail({ node, snapshots, codeLines, currentStep, onJumpToStep, onClose, dark }) {
@@ -635,3 +635,5 @@ function NodeDetail({ node, snapshots, codeLines, currentStep, onJumpToStep, onC
     </aside>
   );
 }
+
+export default CodeFlowGraph;
