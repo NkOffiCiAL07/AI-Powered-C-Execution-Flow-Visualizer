@@ -188,10 +188,11 @@ function App() {
   }, [breakpoints]);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user && (view === "editor" || view === "visualizer" || view === "dashboard")) {
       setView("landing");
     }
-  }, [user, view]);
+  }, [user, view, authLoading]);
 
   // ── Feature 9: Show onboarding tour for first-time users on editor/visualizer ─
   useEffect(() => {
@@ -225,6 +226,41 @@ function App() {
     const urlFid  = _initialParams.get("fid");
 
     let projCtrl = null;
+
+    // Check if token was passed directly in URL (e.g. from full-tab OAuth redirect)
+    const urlToken = _initialParams.get("token");
+    if (urlToken) {
+      try {
+        const b64 = urlToken.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+        const pad = b64.length % 4;
+        const padded = pad ? b64 + "=".repeat(4 - pad) : b64;
+        const payload = JSON.parse(atob(padded));
+        const userObj = payload.user || {
+          id: payload.sub || payload.user_id,
+          name: payload.name || "Member",
+          email: payload.email || "",
+          role: payload.role || "member",
+          provider: "google",
+        };
+        login(userObj, urlToken);
+        setView("dashboard");
+        const cleanUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState(null, "", cleanUrl);
+        return;
+      } catch (e) {
+        console.error("Failed to parse token from URL:", e);
+      }
+    }
+
+    // Direct /login route or ?v=login / ?login=true support
+    const isLogin = _initialParams.get("login") === "true" || window.location.pathname === "/login" || urlView === "login";
+    if (isLogin) {
+      if (!user) {
+        setShowLoginModal(true);
+      } else {
+        setView(user.role === "member" ? "dashboard" : "editor");
+      }
+    }
 
     // Public pages accessible without login
     if (urlView === "blog" || urlView === "docs" || urlView === "pricing" || urlView === "community" || urlView === "news") {
@@ -912,7 +948,7 @@ function App() {
   const renderView = () => {
     switch (view) {
       case "landing":
-        return <LandingPage onStart={() => setView("editor")} onSwitchView={setView} onLogin={handleLogin} user={user} />;
+        return <LandingPage onStart={() => setView("editor")} onSwitchView={setView} onLogin={handleLogin} onSignIn={() => setShowLoginModal(true)} user={user} serverDown={serverDown} />;
       case "dashboard":
         return (
           <DashboardPage

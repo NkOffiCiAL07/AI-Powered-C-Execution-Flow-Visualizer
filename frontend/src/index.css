@@ -473,6 +473,113 @@ button:active:not(:disabled),
 }
 .card-hover:active { transform: translateY(-1px); }
 
+/* ── Landing Page – Cyber grid background ── */
+.cyber-grid {
+  background-image:
+    linear-gradient(rgba(201,106,72,0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(201,106,72,0.08) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+/* ── Landing Page – Feature tab active indicator ── */
+.feature-tab-btn {
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.feature-tab-btn:hover { opacity: 1 !important; }
+
+/* ── Landing Page – Comparison table ── */
+.comp-row:hover td { background: rgba(201,106,72,0.04); }
+
+/* ── Landing Page – FAQ accordion ── */
+.faq-answer {
+  overflow: hidden;
+  transition: max-height 0.35s cubic-bezier(0.16,1,0.3,1), opacity 0.3s ease;
+}
+
+/* ── Landing Page – Rotating word ── */
+@keyframes wordFadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.rotating-word-enter { animation: wordFadeUp 0.35s var(--ease-out) both; }
+
+/* ── Landing Page – Marquee / ticker ── */
+@keyframes marquee-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.marquee-track {
+  display: flex;
+  gap: 0;
+  width: max-content;
+  animation: marquee-scroll 28s linear infinite;
+  will-change: transform;
+}
+.marquee-track:hover { animation-play-state: paused; }
+.marquee-wrap { overflow: hidden; }
+
+/* ── Landing Page – Hero mockup ── */
+.hero-mockup {
+  transform: perspective(1200px) rotateX(3deg) scale(0.97);
+  transform-origin: top center;
+  transition: transform 0.6s cubic-bezier(0.16,1,0.3,1);
+  will-change: transform;
+}
+.hero-mockup:hover {
+  transform: perspective(1200px) rotateX(1deg) scale(0.985);
+}
+
+/* ── Landing Page – Scroll reveal ── */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1);
+}
+.scroll-reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+.scroll-reveal-delay-1 { transition-delay: 0.1s; }
+.scroll-reveal-delay-2 { transition-delay: 0.2s; }
+.scroll-reveal-delay-3 { transition-delay: 0.3s; }
+
+/* ── Landing Page – Glow divider ── */
+.glow-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201,106,72,0.35), rgba(139,62,36,0.25), transparent);
+  position: relative;
+}
+.glow-divider::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 8px;
+  background: radial-gradient(ellipse, rgba(201,106,72,0.3) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+/* ── Landing Page – Gradient border card ── */
+.gradient-border-card {
+  position: relative;
+  border-radius: 16px;
+  background: clip-padding;
+}
+.gradient-border-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(201,106,72,0.35), rgba(139,62,36,0.15), transparent, rgba(201,106,72,0.15));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
 /* ── Landing Page – Float Orbs ── */
 @keyframes floatOrb {
   0%, 100% { transform: translateY(0) scale(1); }

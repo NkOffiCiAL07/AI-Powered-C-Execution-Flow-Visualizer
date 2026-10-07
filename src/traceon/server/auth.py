@@ -25,9 +25,9 @@ GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
 
 _DEV_SECRET = "traceon-dev-secret-change-in-production"
 
-# ── OAuth state store: state → created_at (unix ts) ─────────────────────────
+# ── OAuth state store: state → (created_at, origin) ─────────────────────────
 # Thread-safe; entries expire after _STATE_TTL seconds to prevent unbounded growth.
-_STATE_STORE: dict[str, float] = {}
+_STATE_STORE: dict[str, tuple[float, str]] = {}
 _STATE_TTL = 600  # 10 minutes
 _STATE_LOCK = threading.Lock()
 
@@ -99,28 +99,29 @@ def _is_auth_rate_limited(ip: str) -> bool:
         return False
 
 
-def _new_state() -> str:
+def _new_state(origin: str = "") -> str:
     """Create a CSRF state token; lazily prune expired entries."""
     now = time.time()
     with _STATE_LOCK:
-        expired = [k for k, ts in _STATE_STORE.items() if now - ts > _STATE_TTL]
+        expired = [k for k, v in _STATE_STORE.items() if now - v[0] > _STATE_TTL]
         for k in expired:
             del _STATE_STORE[k]
         state = secrets.token_urlsafe(16)
-        _STATE_STORE[state] = now
+        _STATE_STORE[state] = (now, origin or _frontend_origin())
     return state
 
 
-def _consume_state(state: str) -> bool:
-    """Validate and atomically remove a state token."""
+def _consume_state(state: str) -> str | None:
+    """Validate and atomically remove a state token. Returns origin on success, None on failure."""
     now = time.time()
     with _STATE_LOCK:
-        ts = _STATE_STORE.pop(state, None)
-        if ts is None:
-            return False
+        val = _STATE_STORE.pop(state, None)
+        if val is None:
+            return None
+        ts, origin = val
         if now - ts > _STATE_TTL:
-            return False
-    return True
+            return None
+    return origin
 
 
 def _is_jti_blocked(jti: str) -> bool:
@@ -158,7 +159,7 @@ def _decode_token(raw: str) -> dict:
 # ── Routes ───────────────────────────────────────────────────────────────────
 
 @router.get("/google")
-def google_login(request: Request):
+def google_login(request: Request, origin: str | None = None):
     client_ip = request.client.host if request.client else "unknown"
     if _is_auth_rate_limited(client_ip):
         raise HTTPException(
@@ -166,7 +167,17 @@ def google_login(request: Request):
             detail="Too many sign-in attempts. Please wait a moment.",
         )
 
-    state = _new_state()
+    frontend_target = origin or request.headers.get("referer") or _frontend_origin()
+    try:
+        parsed = urllib.parse.urlsplit(frontend_target)
+        if parsed.scheme and parsed.netloc:
+            frontend_target = f"{parsed.scheme}://{parsed.netloc}"
+        else:
+            frontend_target = _frontend_origin()
+    except Exception:
+        frontend_target = _frontend_origin()
+
+    state = _new_state(frontend_target)
     params = urllib.parse.urlencode({
         "client_id": _client_id(),
         "redirect_uri": _redirect_uri(),
@@ -190,14 +201,16 @@ async def google_callback(
     if _is_auth_rate_limited(client_ip):
         return HTMLResponse(_popup_html(error="Too many sign-in attempts. Please wait a moment."))
 
+    frontend_origin = _consume_state(state) if state else None
+
     if error:
-        return HTMLResponse(_popup_html(error=f"Google returned: {error}"))
+        return HTMLResponse(_popup_html(error=f"Google returned: {error}", origin=frontend_origin))
 
     if not code:
-        return HTMLResponse(_popup_html(error="No authorization code received from Google."))
+        return HTMLResponse(_popup_html(error="No authorization code received from Google.", origin=frontend_origin))
 
-    if not state or not _consume_state(state):
-        return HTMLResponse(_popup_html(error="Invalid or expired state — please try signing in again."))
+    if not state or frontend_origin is None:
+        return HTMLResponse(_popup_html(error="Invalid or expired state — please try signing in again.", origin=frontend_origin))
 
     async with httpx.AsyncClient(timeout=10) as client:
         token_resp = await client.post(
@@ -213,12 +226,12 @@ async def google_callback(
         )
 
         if token_resp.status_code != 200:
-            return HTMLResponse(_popup_html(error="Token exchange with Google failed."))
+            return HTMLResponse(_popup_html(error="Token exchange with Google failed.", origin=frontend_origin))
 
         token_data = token_resp.json()
         access_token = token_data.get("access_token")
         if not access_token:
-            return HTMLResponse(_popup_html(error="Google did not return an access token."))
+            return HTMLResponse(_popup_html(error="Google did not return an access token.", origin=frontend_origin))
 
         profile_resp = await client.get(
             GOOGLE_USERINFO_URL,
@@ -226,7 +239,7 @@ async def google_callback(
         )
 
         if profile_resp.status_code != 200:
-            return HTMLResponse(_popup_html(error="Failed to fetch profile from Google."))
+            return HTMLResponse(_popup_html(error="Failed to fetch profile from Google.", origin=frontend_origin))
 
         profile = profile_resp.json()
 
@@ -263,7 +276,7 @@ async def google_callback(
         algorithm="HS256",
     )
 
-    return HTMLResponse(_popup_html(token=token, user=user))
+    return HTMLResponse(_popup_html(token=token, user=user, origin=frontend_origin))
 
 
 @router.get("/me")
@@ -332,6 +345,7 @@ def _popup_html(
     token: str | None = None,
     user: dict | None = None,
     error: str | None = None,
+    origin: str | None = None,
 ) -> str:
     if error:
         payload_json = json.dumps({"error": error})
@@ -339,7 +353,7 @@ def _popup_html(
         payload_json = json.dumps({"token": token, "user": user})
 
     payload_json = payload_json.replace("</", "<\\/")
-    origin = _frontend_origin()
+    target_origin = (origin or _frontend_origin()).rstrip("/")
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -371,17 +385,23 @@ def _popup_html(
   <script>
     (function () {{
       var payload = {payload_json};
-      var sent = false;
-      try {{
-        if (window.opener) {{
-          window.opener.postMessage(payload, "{origin}");
-          sent = true;
+      if (window.opener) {{
+        try {{
+          window.opener.postMessage(payload, "{target_origin}");
+        }} catch (_) {{}}
+        try {{
+          window.opener.postMessage(payload, "*");
+        }} catch (_) {{}}
+        setTimeout(function () {{ window.close(); }}, 400);
+      }} else {{
+        // Fallback for full-window navigation (popups blocked or opened directly)
+        var dest = "{target_origin}";
+        if (payload.token) {{
+          window.location.href = dest + "/?token=" + encodeURIComponent(payload.token);
+        }} else {{
+          window.location.href = dest + "/?error=" + encodeURIComponent(payload.error || "Login failed");
         }}
-      }} catch (_) {{}}
-      if (!sent && window.opener) {{
-        try {{ window.opener.postMessage(payload, "*"); }} catch (_) {{}}
       }}
-      setTimeout(function () {{ window.close(); }}, 400);
     }})();
   </script>
 </body>

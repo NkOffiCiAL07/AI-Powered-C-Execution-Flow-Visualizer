@@ -33,7 +33,29 @@ export function getStoredUser() {
 
 export function decodeTokenPayload(token) {
   try {
-    return JSON.parse(atob(token.split(".")[1]));
+    if (!token || typeof token !== "string") return null;
+    const parts = token.split(".");
+    if (parts.length < 2) return null;
+    let base64Url = parts[1];
+    if (!base64Url) return null;
+    let base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const pad = base64.length % 4;
+    if (pad) {
+      base64 += "=".repeat(4 - pad);
+    }
+    const decoded = atob(base64);
+    try {
+      return JSON.parse(
+        decodeURIComponent(
+          decoded
+            .split("")
+            .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+            .join("")
+        )
+      );
+    } catch {
+      return JSON.parse(decoded);
+    }
   } catch {
     return null;
   }
@@ -45,20 +67,18 @@ export function isTokenExpired(token) {
   return payload.exp * 1000 <= Date.now();
 }
 
-// Returns null when the token is malformed — callers must treat null as a
-// rejected session rather than silently granting member access.
+// Returns a normalized user object. Prioritizes server payload,
+// falling back safely to token claims or userData attributes.
 export function normalizeUser(userData, token) {
   if (!userData) return null;
   if (userData.provider === "guest" || userData.role === "guest") {
     return { ...userData, role: "guest" };
   }
-  if (!token) return { ...userData, role: "member" };
-  const payload = decodeTokenPayload(token);
-  if (!payload) return null;
+  const payload = token ? decodeTokenPayload(token) : null;
   return {
     ...userData,
-    role: payload.role || "member",
-    user_id: payload.sub || payload.user_id || userData.id,
+    role: payload?.role || userData.role || "member",
+    user_id: payload?.sub || payload?.user_id || userData.user_id || userData.id,
   };
 }
 

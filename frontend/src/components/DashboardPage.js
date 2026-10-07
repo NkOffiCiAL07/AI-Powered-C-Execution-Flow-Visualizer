@@ -16,7 +16,6 @@ function getStoredActivity() {
 
 function recordActivity(count = 1) {
   const today = new Date().toISOString().split('T')[0];
-  // Only record once per browser session per day to avoid inflation on re-renders
   const sessionKey = `traceon_sess_${today}`;
   if (sessionStorage.getItem(sessionKey)) return;
   sessionStorage.setItem(sessionKey, '1');
@@ -32,7 +31,6 @@ function recordProjectOpen() {
   try { localStorage.setItem(ACTIVITY_KEY, JSON.stringify(stored)); } catch {}
 }
 
-/** Merge localStorage data + project timestamps into a date→count map */
 function buildActivityMap(projects) {
   const map = { ...getStoredActivity() };
   projects.forEach(p => {
@@ -45,14 +43,12 @@ function buildActivityMap(projects) {
   return map;
 }
 
-const WEEKS = 10; // columns in the heatmap
+const WEEKS = 10;
 
-/** Build a WEEKS×7 grid of Date objects, oldest first */
 function buildGrid() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  // align start to Monday
-  const dayOfWeek = (today.getDay() + 6) % 7; // Mon=0 … Sun=6
+  const dayOfWeek = (today.getDay() + 6) % 7;
   const start = new Date(today);
   start.setDate(today.getDate() - dayOfWeek - (WEEKS - 1) * 7);
   return Array.from({ length: WEEKS }, (_, w) =>
@@ -71,10 +67,11 @@ function intensityLevel(count) {
   return 3;
 }
 
-const DAY_LABELS = ['M', '', 'W', '', 'F', '', '']; // Mon,Tue,Wed,Thu,Fri,Sat,Sun
+const DAY_LABELS = ['M', '', 'W', '', 'F', '', ''];
 
-const LANG_LABELS  = { cpp: 'C++', c: 'C', python: 'Python', java: 'Java' };
-const LANG_COLORS  = { cpp: '#D97757', c: '#4ade80', python: '#60a5fa', java: '#f59e0b' };
+const LANG_LABELS = { cpp: 'C++', c: 'C', python: 'Python', java: 'Java' };
+const LANG_COLORS = { cpp: '#D97757', c: '#4ade80', python: '#60a5fa', java: '#f59e0b' };
+const LANG_ICONS  = { cpp: 'data_object', c: 'terminal', python: 'integration_instructions', java: 'code' };
 
 function LangDonut({ counts, total }) {
   const R = 22, CX = 32, CY = 32;
@@ -112,6 +109,15 @@ const THEME_OPTIONS = [
   { value: 'midnight', label: 'Midnight', swatch: '#A855F7' },
 ];
 
+const KEYBOARD_SHORTCUTS = [
+  { keys: ['⌘', 'N'],     desc: 'New project' },
+  { keys: ['⌘', 'K'],     desc: 'Command palette' },
+  { keys: ['⌘', '/'],     desc: 'Toggle comment' },
+  { keys: ['⌘', 'Enter'], desc: 'Run code' },
+  { keys: ['F5'],          desc: 'Step through execution' },
+  { keys: ['Esc'],         desc: 'Close modal / cancel' },
+];
+
 function relativeTime(iso) {
   if (!iso) return '';
   const diff = Date.now() - new Date(iso).getTime();
@@ -140,13 +146,25 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
   const [defaultLang, setDefaultLang]   = useState(() => localStorage.getItem('traceon_default_lang') || 'cpp');
   const [tabSize, setTabSize]           = useState(() => parseInt(localStorage.getItem('traceon_tab_size') || '4'));
 
+  const greeting = useMemo(() => {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
+  }, []);
+
+  const firstName = useMemo(() => {
+    const name = user?.name || '';
+    return name.split(' ')[0] || 'there';
+  }, [user]);
+
   const loadProjects = useCallback(async () => {
     setLoading(true);
     setFetchError(null);
     try {
       const data = await fetchProjects();
       setProjects(data.projects || []);
-      recordActivity(); // count each dashboard visit once per session/day
+      recordActivity();
     } catch (err) {
       if (err.name !== 'AbortError') setFetchError(err.message);
     } finally {
@@ -160,6 +178,19 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
 
   const activityMap = useMemo(() => buildActivityMap(projects), [projects]);
   const heatmapGrid = useMemo(() => buildGrid(), []);
+
+  const streak = useMemo(() => {
+    let count = 0;
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    while (true) {
+      const iso = d.toISOString().split('T')[0];
+      if (!activityMap[iso]) break;
+      count++;
+      d.setDate(d.getDate() - 1);
+    }
+    return count;
+  }, [activityMap]);
 
   const langCounts = useMemo(() => {
     const c = {};
@@ -194,7 +225,7 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
 
   const handleOpenProject = async (project) => {
     setOpeningId(project.id);
-    recordProjectOpen(); // count every project open as activity
+    recordProjectOpen();
     try {
       const data = await fetchFiles(project.id);
       const files = data.files || [];
@@ -206,7 +237,7 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
     }
   };
 
-  const handleCreated = ({ project, file, code, language }) => {
+  const handleCreated = ({ project, file }) => {
     setShowNewModal(false);
     onOpenProject({ project, files: [file], activeFileId: file.id });
   };
@@ -245,10 +276,7 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
         </div>
 
         <nav className="dash-nav">
-          <button
-            className="dash-nav-item"
-            onClick={() => onSwitchView('landing')}
-          >
+          <button className="dash-nav-item" onClick={() => onSwitchView('landing')}>
             <span className="material-symbols-outlined">home</span>
             Home
           </button>
@@ -265,6 +293,9 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
           >
             <span className="material-symbols-outlined">folder_open</span>
             My Projects
+            {projects.length > 0 && (
+              <span className="dash-nav-badge">{projects.length}</span>
+            )}
           </button>
           <button
             className={`dash-nav-item ${activeNav === 'news' ? 'active' : ''}`}
@@ -325,21 +356,67 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
       <main className="dash-main">
         {activeNav === 'projects' && (
           <>
-            <div className="dash-topbar">
-              <div>
-                <h1 className="dash-title">My Projects</h1>
-                <p className="dash-subtitle">
-                  {projects.length > 0
-                    ? `${filteredProjects.length} of ${projects.length} project${projects.length !== 1 ? 's' : ''}`
-                    : 'Create a project to get started'}
-                </p>
+            {/* Welcome banner */}
+            <div className="dash-welcome">
+              <div className="dash-welcome-left">
+                <div className="dash-welcome-greeting">{greeting}, {firstName}!</div>
+                <div className="dash-welcome-meta">
+                  {loadingProjects
+                    ? 'Loading your workspace…'
+                    : projects.length === 0
+                      ? 'Create your first project to get started'
+                      : `${projects.length} project${projects.length !== 1 ? 's' : ''} · ${totalFiles} file${totalFiles !== 1 ? 's' : ''} · Last active ${lastActiveStr}`
+                  }
+                </div>
               </div>
-              <button className="dash-new-btn" onClick={() => setShowNewModal(true)}>
+              {!loadingProjects && (
+                <div className="dash-quick-stats">
+                  <div className="dash-stat-chip">
+                    <span className="material-symbols-outlined">folder_open</span>
+                    <div>
+                      <div className="dash-stat-chip-num">{projects.length}</div>
+                      <div className="dash-stat-chip-lbl">Projects</div>
+                    </div>
+                  </div>
+                  <div className="dash-stat-chip">
+                    <span className="material-symbols-outlined">description</span>
+                    <div>
+                      <div className="dash-stat-chip-num">{totalFiles}</div>
+                      <div className="dash-stat-chip-lbl">Files</div>
+                    </div>
+                  </div>
+                  <div className="dash-stat-chip dash-stat-chip-streak">
+                    <span className="material-symbols-outlined">local_fire_department</span>
+                    <div>
+                      <div className="dash-stat-chip-num">{streak}</div>
+                      <div className="dash-stat-chip-lbl">Day streak</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Quick actions */}
+            <div className="dash-quick-actions">
+              <button className="dash-qa-btn dash-qa-primary" onClick={() => setShowNewModal(true)}>
                 <span className="material-symbols-outlined">add</span>
                 New Project
               </button>
+              <button className="dash-qa-btn" onClick={onOpenPlayground}>
+                <span className="material-symbols-outlined">play_circle</span>
+                Open Playground
+              </button>
+              <button className="dash-qa-btn" onClick={() => setActiveNav('news')}>
+                <span className="material-symbols-outlined">newspaper</span>
+                Weekly Digest
+              </button>
+              <button className="dash-qa-btn" onClick={() => setActiveNav('settings')}>
+                <span className="material-symbols-outlined">settings</span>
+                Settings
+              </button>
             </div>
 
+            {/* Search / filter row — only when projects exist */}
             {projects.length > 0 && (
               <div className="dash-search-row">
                 <div className="dash-search-wrap">
@@ -399,13 +476,21 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
                 <div className="dash-main-col">
                   {projects.length === 0 ? (
                     <div className="dash-empty-state">
-                      <span className="material-symbols-outlined dash-empty-icon">folder_open</span>
+                      <div className="dash-empty-illustration">
+                        <span className="material-symbols-outlined">code_blocks</span>
+                      </div>
                       <h3>No projects yet</h3>
                       <p>Create a project to organise and save your code across sessions.</p>
-                      <button className="dash-new-btn" onClick={() => setShowNewModal(true)}>
-                        <span className="material-symbols-outlined">add</span>
-                        Create your first project
-                      </button>
+                      <div className="dash-empty-actions">
+                        <button className="dash-new-btn" onClick={() => setShowNewModal(true)}>
+                          <span className="material-symbols-outlined">add</span>
+                          Create first project
+                        </button>
+                        <button className="dash-qa-btn" onClick={onOpenPlayground}>
+                          <span className="material-symbols-outlined">play_circle</span>
+                          Try Playground
+                        </button>
+                      </div>
                     </div>
                   ) : filteredProjects.length === 0 ? (
                     <div className="dash-empty-state">
@@ -415,32 +500,57 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
                     </div>
                   ) : (
                     <div className="proj-grid">
-                      {filteredProjects.map(proj => (
+                      {filteredProjects.map((proj, idx) => (
                         <div
                           key={proj.id}
                           className={`proj-card ${openingId === proj.id ? 'proj-card-opening' : ''}`}
+                          style={{ '--card-idx': idx }}
                           onClick={() => openingId ? null : handleOpenProject(proj)}
                         >
+                          {/* Faded background language icon */}
+                          <div className="proj-card-bg-icon">
+                            <span className="material-symbols-outlined">
+                              {LANG_ICONS[proj.language] || 'code'}
+                            </span>
+                          </div>
+
                           <div className="proj-card-header">
                             <span className={`lang-badge lang-${proj.language}`}>
                               {LANG_LABELS[proj.language] || proj.language}
                             </span>
-                            <button
-                              className="proj-delete-btn"
-                              onClick={(e) => handleDelete(e, proj.id)}
-                              disabled={deletingId === proj.id}
-                              title="Delete project"
-                            >
-                              <span className="material-symbols-outlined">
-                                {deletingId === proj.id ? 'hourglass_empty' : 'delete'}
-                              </span>
-                            </button>
+                            <div className="proj-card-header-right">
+                              {proj.file_count > 0 && (
+                                <span className="proj-file-count">
+                                  <span className="material-symbols-outlined">description</span>
+                                  {proj.file_count}
+                                </span>
+                              )}
+                              <button
+                                className="proj-delete-btn"
+                                onClick={(e) => handleDelete(e, proj.id)}
+                                disabled={deletingId === proj.id}
+                                title="Delete project"
+                              >
+                                <span className="material-symbols-outlined">
+                                  {deletingId === proj.id ? 'hourglass_empty' : 'delete'}
+                                </span>
+                              </button>
+                            </div>
                           </div>
+
                           <div className="proj-card-name">{proj.name}</div>
-                          <div className="proj-card-meta">
-                            <span className="material-symbols-outlined proj-clock">schedule</span>
-                            {relativeTime(proj.last_accessed)}
+
+                          <div className="proj-card-footer">
+                            <div className="proj-card-meta">
+                              <span className="material-symbols-outlined proj-clock">schedule</span>
+                              {relativeTime(proj.last_accessed)}
+                            </div>
+                            <div className="proj-open-hint">
+                              Open
+                              <span className="material-symbols-outlined">arrow_forward</span>
+                            </div>
                           </div>
+
                           {openingId === proj.id && (
                             <div className="proj-card-opening-overlay">
                               <div className="dash-spinner" />
@@ -457,8 +567,9 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
                     </div>
                   )}
                 </div>
+
                 <aside className="dash-activity-sidebar">
-                  {/* ── Portfolio stats card ── */}
+                  {/* Portfolio stats card */}
                   {projects.length > 0 && (
                     <div className="dash-stats-card">
                       <h3 className="activity-title">Portfolio</h3>
@@ -511,14 +622,11 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
 
                   {/* Grid: day-labels + week columns */}
                   <div className="activity-grid-wrap">
-                    {/* Day-of-week labels */}
                     <div className="activity-day-labels">
                       {DAY_LABELS.map((label, i) => (
                         <div key={i} className="activity-day-label">{label}</div>
                       ))}
                     </div>
-
-                    {/* Week columns */}
                     <div className="activity-grid">
                       {heatmapGrid.map((week, wi) => (
                         <div key={wi} className="activity-week-col">
@@ -660,6 +768,34 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
                 </div>
               </div>
 
+              {/* Keyboard shortcuts */}
+              <div className="settings-section">
+                <div className="settings-section-hdr">
+                  <div className="settings-section-icon"><span className="material-symbols-outlined">keyboard</span></div>
+                  <div>
+                    <div className="settings-section-title">Keyboard Shortcuts</div>
+                    <div className="settings-section-desc">Quick reference for common actions</div>
+                  </div>
+                </div>
+                <div className="settings-section-body">
+                  <div className="settings-shortcuts-grid">
+                    {KEYBOARD_SHORTCUTS.map(({ keys, desc }) => (
+                      <div key={desc} className="settings-shortcut-row">
+                        <span className="settings-shortcut-desc">{desc}</span>
+                        <div className="settings-shortcut-keys">
+                          {keys.map((k, i) => (
+                            <React.Fragment key={i}>
+                              <kbd className="settings-kbd">{k}</kbd>
+                              {i < keys.length - 1 && <span className="settings-kbd-plus">+</span>}
+                            </React.Fragment>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
               {/* Security */}
               <div className="settings-section">
                 <div className="settings-section-hdr">
@@ -670,6 +806,9 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
                   </div>
                 </div>
                 <div className="settings-section-body">
+                  <p className="settings-security-note">
+                    Signed in as <strong>{user?.email}</strong> via Google OAuth.
+                  </p>
                   <button className="settings-danger-btn" onClick={onLogout}>
                     <span className="material-symbols-outlined">logout</span>
                     Sign out of all devices

@@ -17,8 +17,9 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import Response
+from starlette.responses import RedirectResponse, Response
 
 logger = logging.getLogger(__name__)
 
@@ -80,8 +81,7 @@ def _is_rate_limited(ip: str) -> bool:
 
 
 from traceon.server.api import router as sessions_router, session_manager
-from traceon.server.ai_service import explain_code_ai, generate_code_ai, optimize_code_ai
-from traceon.server.auth import optional_user, require_member, router as auth_router
+from traceon.server.auth import _frontend_origin, optional_user, require_member, router as auth_router
 from traceon.server.news import router as news_router, start_news_scheduler
 from traceon.server.mongo_store import mongo_app_store
 from traceon.server.models import (
@@ -98,6 +98,8 @@ from traceon.server.models import (
     ExplainCodeRequest,
     ExplainCodeResponse,
     FileUpsertRequest,
+    FormatRequest,
+    FormatResponse,
     GenerateCodeRequest,
     GenerateCodeResponse,
     OptimizeCodeRequest,
@@ -109,6 +111,33 @@ from traceon.server.models import (
     SessionStatus,
     SourceFile,
 )
+
+
+class _BreakpointHit(BaseModel):
+    breakpoint_line: int
+    hit_number: int
+    locals: dict
+    args: dict
+    call_stack: list
+
+
+class _BPDebugRequest(BaseModel):
+    code: str
+    language: str = "c"
+    breakpoints: list[int]
+    stdin: str = ""
+
+
+class _BPDebugResponse(BaseModel):
+    hits: list[_BreakpointHit]
+    stdout: str
+    stderr: str
+    exit_code: int
+    compile_error: str | None = None
+
+
+class WaitlistRequest(BaseModel):
+    email: str
 
 
 @dataclass
@@ -821,16 +850,6 @@ def create_app() -> FastAPI:
             return CheckCodeResponse(ok=True)
 
     # ── Format endpoint ──────────────────────────────────────────────────────
-    from pydantic import BaseModel as _BM
-
-    class FormatRequest(_BM):
-        code: str
-        language: str = "cpp"
-
-    class FormatResponse(_BM):
-        code: str
-        changed: bool
-
     @app.post("/format", response_model=FormatResponse, tags=["run"])
     def format_code(req: FormatRequest):
         lang = (req.language or "cpp").lower()
@@ -996,28 +1015,6 @@ def create_app() -> FastAPI:
 
     # ── GDB Breakpoint Debugger ────────────────────────────────────────────
 
-    from pydantic import BaseModel as _BM
-
-    class _BreakpointHit(_BM):
-        breakpoint_line: int
-        hit_number: int
-        locals: dict
-        args: dict
-        call_stack: list
-
-    class _BPDebugRequest(_BM):
-        code: str
-        language: str = "c"
-        breakpoints: list[int]
-        stdin: str = ""
-
-    class _BPDebugResponse(_BM):
-        hits: list[_BreakpointHit]
-        stdout: str
-        stderr: str
-        exit_code: int
-        compile_error: str | None = None
-
     GDB_PY_TEMPLATE = '''\
 import gdb, json
 
@@ -1155,11 +1152,6 @@ gdb.execute("quit")
             shutil.rmtree(work_dir, ignore_errors=True)
 
     # ── Waitlist endpoint ─────────────────────────────────────────────────────
-    from pydantic import BaseModel, EmailStr
-
-    class WaitlistRequest(BaseModel):
-        email: str
-
     @app.post("/waitlist", tags=["public"], status_code=201)
     def join_waitlist(body: WaitlistRequest):
         email = body.email.strip().lower()
@@ -1176,6 +1168,11 @@ gdb.execute("quit")
             "joined_at": datetime.now(tz=timezone.utc).isoformat(),
         })
         return {"status": "ok"}
+
+    @app.get("/login", include_in_schema=False)
+    @app.get("/auth/login", include_in_schema=False)
+    def login_redirect():
+        return RedirectResponse(f"{_frontend_origin()}/?login=true")
 
     app.include_router(sessions_router)
     app.include_router(auth_router)

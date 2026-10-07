@@ -2,10 +2,26 @@ import React, { useState, useEffect, useRef } from 'react';
 import '../styles/LoginModal.css';
 
 const BACKEND = process.env.REACT_APP_API_URL || "http://localhost:8000";
-// Compare against the *origin* only — avoids mismatches when REACT_APP_API_URL includes a path
 const BACKEND_ORIGIN = (() => {
   try { return new URL(BACKEND).origin; } catch { return BACKEND; }
 })();
+
+function isOriginAllowed(eventOrigin) {
+  if (!eventOrigin) return false;
+  if (eventOrigin === BACKEND_ORIGIN) return true;
+  try {
+    const backendUrl = new URL(BACKEND_ORIGIN);
+    const eventUrl = new URL(eventOrigin);
+    if (backendUrl.port === eventUrl.port) {
+      const bHost = backendUrl.hostname;
+      const eHost = eventUrl.hostname;
+      if ((bHost === 'localhost' && eHost === '127.0.0.1') || (bHost === '127.0.0.1' && eHost === 'localhost')) {
+        return true;
+      }
+    }
+  } catch {}
+  return false;
+}
 
 const LoginModal = ({ isOpen, onClose, onLogin }) => {
   const [loading, setLoading] = useState(false);
@@ -13,6 +29,7 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
   const popupRef = useRef(null);
   const handlerRef = useRef(null);
   const pollRef = useRef(null);
+  const authCompletedRef = useRef(false);
 
   const cleanup = () => {
     if (handlerRef.current) {
@@ -24,6 +41,7 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
       popupRef.current.close();
     }
     popupRef.current = null;
+    authCompletedRef.current = false;
     setLoading(false);
   };
 
@@ -36,19 +54,22 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
   const handleGoogleSignIn = () => {
     setLoading(true);
     setError(null);
+    authCompletedRef.current = false;
 
     const w = 500, h = 620;
     const left = Math.round(window.screenX + (window.outerWidth - w) / 2);
     const top = Math.round(window.screenY + (window.outerHeight - h) / 2);
 
+    const targetUrl = `${BACKEND}/auth/google?origin=${encodeURIComponent(window.location.origin)}`;
+
     const popup = window.open(
-      `${BACKEND}/auth/google`,
+      targetUrl,
       'traceon-google-oauth',
       `width=${w},height=${h},left=${left},top=${top},scrollbars=yes,resizable=yes`
     );
 
     if (!popup) {
-      setError('Popup blocked — please allow popups for this site and try again.');
+      setError('Popup was blocked by your browser. Please allow popups for this site, or use the direct link below.');
       setLoading(false);
       return;
     }
@@ -64,12 +85,17 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
           handlerRef.current = null;
         }
         setLoading(false);
+        if (!authCompletedRef.current) {
+          // If window closed without authentication finishing, show informative message
+          setError('Sign-in window closed before completing. Make sure the backend server is running (python run_server.py).');
+        }
       }
     }, 600);
 
     const onMessage = (event) => {
-      if (event.origin !== BACKEND_ORIGIN) return;
+      if (!isOriginAllowed(event.origin)) return;
 
+      authCompletedRef.current = true;
       clearInterval(pollRef.current);
       window.removeEventListener('message', onMessage);
       handlerRef.current = null;
@@ -130,7 +156,17 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
         {error && (
           <div className="auth-error">
             <span className="material-symbols-outlined">error</span>
-            {error}
+            <div>
+              <div>{error}</div>
+              <div style={{ marginTop: '6px' }}>
+                <a
+                  href={`${BACKEND}/auth/google?origin=${encodeURIComponent(window.location.origin)}`}
+                  style={{ color: 'var(--primary)', textDecoration: 'underline', fontSize: '12px', fontWeight: 500 }}
+                >
+                  Try signing in directly in this tab
+                </a>
+              </div>
+            </div>
           </div>
         )}
 

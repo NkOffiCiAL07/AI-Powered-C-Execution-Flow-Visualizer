@@ -270,3 +270,13 @@ class CheckCodeRequest(BaseModel):
 class CheckCodeResponse(BaseModel):
     ok: bool
     errors: str = ""
+
+
+class FormatRequest(BaseModel):
+    code: str
+    language: str = "cpp"
+
+
+class FormatResponse(BaseModel):
+    code: str
+    changed: bool

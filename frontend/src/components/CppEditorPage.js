@@ -42,10 +42,12 @@ export default function CppEditorPage({
   const isGuest = !user || user.role === "guest";
   const [prompt, setPrompt] = useState("");
   const [showPrompt, setShowPrompt] = useState(false);
-  const [saveState, setSaveState] = useState("idle"); // "idle" | "saving" | "saved" | "error"
+  const [saveState, setSaveState] = useState("idle"); // "idle"|"saving"|"saved"|"error"
   const [formatLoading, setFormatLoading] = useState(false);
+  const [copiedBlock, setCopiedBlock] = useState(null); // null|"stdout"|"stderr"
   const promptInputRef = useRef(null);
   const saveTimerRef = useRef(null);
+  const copyTimerRef = useRef(null);
   const [showNewFilePrompt, setShowNewFilePrompt] = useState(false);
   const [newFileName, setNewFileName] = useState("");
   const [renamingFileId, setRenamingFileId] = useState(null);
@@ -117,7 +119,6 @@ export default function CppEditorPage({
     }
   }, [code, language, formatLoading, onCodeChange]);
 
-  // Keyboard shortcut: ⌘⇧F = format
   useEffect(() => {
     const handler = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'f') {
@@ -128,6 +129,17 @@ export default function CppEditorPage({
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [handleFormat]);
+
+  const copyBlock = useCallback((text, which) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedBlock(which);
+      clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = setTimeout(() => setCopiedBlock(null), 1800);
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => () => clearTimeout(copyTimerRef.current), []);
 
   const handleGenerate = () => {
     if (prompt.trim()) {
@@ -168,6 +180,7 @@ export default function CppEditorPage({
   const stderr = result?.stderr || "";
   const exitCode = result?.exit_code;
   const success = result?.success;
+  const runTimeMs = result?.time_ms ?? performance?.time_ms ?? null;
 
   const [tab, setTab] = useState("output");
   const [leftPct, setLeftPct] = useState(58);
@@ -175,7 +188,6 @@ export default function CppEditorPage({
   const dragging = useRef(false);
   const containerRef = useRef(null);
 
-  // Switch to AI tab automatically when explanation arrives
   React.useEffect(() => {
     if (aiExplanation) setTab("ai");
   }, [aiExplanation]);
@@ -204,6 +216,12 @@ export default function CppEditorPage({
 
   const langLabel = language === "python" ? "Python" : language === "c" ? "C" : language === "java" ? "Java" : "C++";
   const isDebugLocked = !user || user.role === "guest" || !currentProject;
+  const liveErrors = liveCheckError
+    ? (Array.isArray(liveCheckError) ? liveCheckError.length : 1)
+    : 0;
+
+  const activeFileName = currentProject?.files?.find(f => f.id === currentProject?.activeFileId)?.name;
+  const lineCount = code ? code.split('\n').length : 0;
 
   return (
     <main className="editor-page-main">
@@ -244,7 +262,9 @@ export default function CppEditorPage({
                     onClick={(e) => e.stopPropagation()}
                   />
                 ) : (
-                  <span className="file-name" onDoubleClick={(e) => startRename(f, e)} title="Double-click to rename">{f.name}</span>
+                  <span className="file-name" onDoubleClick={(e) => startRename(f, e)} title="Double-click to rename">
+                    {f.name}
+                  </span>
                 )}
                 <button
                   className="file-delete-btn"
@@ -277,6 +297,18 @@ export default function CppEditorPage({
               <span className="material-symbols-outlined">add</span>
               New File
             </button>
+          )}
+
+          {!isDebugLocked && (
+            <div className="sidebar-bp-hint">
+              <div className="sidebar-bp-hint-title">
+                <span className="material-symbols-outlined">adjust</span>
+                Breakpoints
+              </div>
+              <div className="sidebar-bp-hint-text">
+                Click the line gutter to set breakpoints, then press <strong>Debug</strong>.
+              </div>
+            </div>
           )}
         </aside>
       )}
@@ -346,7 +378,6 @@ export default function CppEditorPage({
               </div>
 
               <div className="editor-head-right">
-                {/* Save indicator */}
                 {currentProject && onSave && (
                   <button
                     className={`editor-save-btn editor-save-${saveState}`}
@@ -361,12 +392,11 @@ export default function CppEditorPage({
                   </button>
                 )}
 
-                {/* AI Generate */}
                 <button
                   className={`ai-gen-trigger${isGuest ? " ai-gen-locked" : ""}`}
                   onClick={isGuest ? onSignIn : openPrompt}
                   disabled={generateLoading}
-                  title={isGuest ? "Sign in to generate code with AI" : "Generate code with AI (AI + Code)"}
+                  title={isGuest ? "Sign in to generate code with AI" : "Generate code with AI"}
                 >
                   <span className={`material-symbols-outlined${generateLoading ? " spin" : ""}`}>
                     {generateLoading ? "sync" : "auto_awesome"}
@@ -392,6 +422,42 @@ export default function CppEditorPage({
               onBreakpointsChange={onBreakpointsChange}
             />
           </div>
+
+          {/* ── Bottom status bar ── */}
+          <div className="editor-status-bar">
+            <div className="status-bar-left">
+              <span className="status-item status-lang">
+                <span className="material-symbols-outlined">code</span>
+                {langLabel}
+              </span>
+              {activeFileName && (
+                <span className="status-item">
+                  <span className="material-symbols-outlined">description</span>
+                  {activeFileName}
+                </span>
+              )}
+              <span className="status-item">
+                {lineCount} line{lineCount !== 1 ? 's' : ''} · {code?.length ?? 0} chars
+              </span>
+            </div>
+            <div className="status-bar-right">
+              {liveErrors > 0 ? (
+                <span className="status-item status-errors">
+                  <span className="material-symbols-outlined">error</span>
+                  {liveErrors} error{liveErrors !== 1 ? 's' : ''}
+                </span>
+              ) : code?.trim() ? (
+                <span className="status-item status-ok-hint">
+                  <span className="material-symbols-outlined">check_circle</span>
+                  No errors
+                </span>
+              ) : null}
+              <span className="status-item">
+                <span className="material-symbols-outlined">keyboard</span>
+                ⌘S save · ⌘⇧F format
+              </span>
+            </div>
+          </div>
         </section>
 
         {/* ── Drag divider ── */}
@@ -402,26 +468,25 @@ export default function CppEditorPage({
         {/* ── Right panel ── */}
         <section className="editor-page-right" style={{ flex: 1 }}>
 
-          {/* ═══ Generate → Understand banner ═══ */}
+          {/* Generate → Understand banner */}
           {showGenBanner && (
             <div className="gen-understand-banner">
               <span className="gen-banner-check">
-                <span className="material-symbols-outlined" style={{ fontSize: 14 }}>check_circle</span>
+                <span className="material-symbols-outlined">check_circle</span>
                 Code generated
               </span>
               <button className="gen-banner-cta" onClick={onUnderstandWithAI}>
-                <span className="material-symbols-outlined" style={{ fontSize: 14 }}>auto_awesome</span>
+                <span className="material-symbols-outlined">auto_awesome</span>
                 Understand with AI
               </button>
               <button className="gen-banner-dismiss" onClick={onDismissGenBanner} aria-label="Dismiss">
-                <span className="material-symbols-outlined" style={{ fontSize: 13 }}>close</span>
+                <span className="material-symbols-outlined">close</span>
               </button>
             </div>
           )}
 
-          {/* ═══ PRIMARY ACTION BAR ═══ */}
+          {/* PRIMARY ACTION BAR */}
           <div className="editor-action-bar">
-            {/* Left group: primary run + debug */}
             <div className="action-bar-group action-bar-primary">
               <button
                 className="action-btn action-btn--run"
@@ -440,10 +505,10 @@ export default function CppEditorPage({
 
               <button
                 className={`action-btn action-btn--debug${isDebugLocked ? " action-btn--locked" : ""}`}
-                onClick={onAnalyze}
-                disabled={loading || aiLoading}
+                onClick={isDebugLocked ? (isGuest ? onSignIn : null) : onAnalyze}
+                disabled={!isDebugLocked && (loading || aiLoading)}
                 title={
-                  !user || user.role === "guest"
+                  isGuest
                     ? "Sign in to unlock advanced debugging"
                     : !currentProject
                     ? "Open a project to enable the debugger"
@@ -456,13 +521,12 @@ export default function CppEditorPage({
               </button>
             </div>
 
-            {/* Right group: AI tools + Format */}
             <div className="action-bar-group action-bar-secondary">
               <button
                 className="action-btn action-btn--format"
                 onClick={handleFormat}
                 disabled={formatLoading || loading}
-                title={`Format code (${navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}⇧F)`}
+                title="Format code (⌘⇧F)"
               >
                 <span className={`material-symbols-outlined${formatLoading ? " spin" : ""}`}>
                   {formatLoading ? "sync" : "auto_fix_high"}
@@ -485,7 +549,33 @@ export default function CppEditorPage({
             </div>
           </div>
 
-          {/* ═══ TAB NAVIGATION ═══ */}
+          {/* Debug guide — shown when debug is locked */}
+          {isDebugLocked && (
+            <div className="debug-guide-banner">
+              <div className="debug-guide-icon">
+                <span className="material-symbols-outlined">bug_report</span>
+              </div>
+              <div className="debug-guide-body">
+                <div className="debug-guide-title">
+                  {isGuest ? "Sign in to enable the debugger" : "Open a project to debug"}
+                </div>
+                <div className="debug-guide-desc">
+                  {isGuest
+                    ? "Step through code line-by-line, inspect variables, and trace execution flow"
+                    : "Save code to a project to use step-through debugging with breakpoints"
+                  }
+                </div>
+              </div>
+              {isGuest && (
+                <button className="debug-guide-btn" onClick={onSignIn}>
+                  <span className="material-symbols-outlined">login</span>
+                  Sign In
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* TAB NAVIGATION */}
           <div className="editor-tab-bar">
             <div className="editor-tab-group">
               <button
@@ -511,7 +601,6 @@ export default function CppEditorPage({
               </button>
             </div>
 
-            {/* Mini stdin label as context hint */}
             <div className="tab-bar-hint">
               {result ? (
                 <span className={`tab-bar-status ${result.success ? "status-ok" : "status-fail"}`}>
@@ -519,6 +608,9 @@ export default function CppEditorPage({
                     {result.success ? "check_circle" : "cancel"}
                   </span>
                   Exit {exitCode}
+                  {runTimeMs != null && (
+                    <span className="run-time-badge">{runTimeMs < 1000 ? `${runTimeMs}ms` : `${(runTimeMs / 1000).toFixed(2)}s`}</span>
+                  )}
                 </span>
               ) : (
                 <span className="tab-bar-hint-text">
@@ -529,7 +621,7 @@ export default function CppEditorPage({
             </div>
           </div>
 
-          {/* ═══ TAB CONTENT ═══ */}
+          {/* TAB CONTENT */}
           <div key={tab} className="tab-panel-enter" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'auto' }}>
           {tab === "output" ? (
             <div className="editor-output-tab">
@@ -579,44 +671,76 @@ export default function CppEditorPage({
                 {/* Share prompt — shown on successful runs */}
                 {success && (
                   <a
+                    className="editor-share-link"
                     href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Just traced my ${language?.toUpperCase() || 'C++'} code execution with Traceon 🔥\n\nWatch every variable, every function call, step by step — with AI insights.\n\nhttps://traceon.vercel.app`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: '7px',
-                      marginBottom: '10px', padding: '7px 14px', borderRadius: '8px',
-                      background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.1)',
-                      color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 600,
-                      textDecoration: 'none', transition: 'background 0.15s, color 0.15s',
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.08)'; e.currentTarget.style.color = '#000'; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
                   >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.264 5.634 5.9-5.634zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                     </svg>
                     Share your trace on X
                   </a>
                 )}
 
-                <div className="editor-output-grid">
-                  <div className="editor-output-block">
-                    <div className="output-block-head">
-                      <span className="material-symbols-outlined">output</span>
-                      <h4>stdout</h4>
+                {/* Empty run state */}
+                {!loading && !result && !error && (
+                  <div className="editor-empty-run">
+                    <div className="empty-run-icon">
+                      <span className="material-symbols-outlined">play_circle</span>
                     </div>
-                    <pre className={stdout ? "" : "output-empty"}>{stdout || "(no output)"}</pre>
+                    <div className="empty-run-text">
+                      <div className="empty-run-title">Ready to run</div>
+                      <div className="empty-run-hint">Press <kbd>⌘↵</kbd> or click <strong>Run</strong> to execute your code</div>
+                    </div>
                   </div>
-                  {(stderr || !success) && (
-                    <div className="editor-output-block output-block-stderr">
-                      <div className="output-block-head">
-                        <span className="material-symbols-outlined">error_outline</span>
-                        <h4>stderr</h4>
+                )}
+
+                {/* Terminal-style stdout */}
+                {(result || loading) && (
+                  <div className="terminal-output">
+                    <div className="terminal-titlebar">
+                      <div className="terminal-dots">
+                        <div className="terminal-dot terminal-dot-red" />
+                        <div className="terminal-dot terminal-dot-yellow" />
+                        <div className="terminal-dot terminal-dot-green" />
                       </div>
-                      <pre className={stderr ? "stderr-text" : "output-empty"}>{stderr || "(empty)"}</pre>
+                      <div className="terminal-name">stdout — {langLabel}</div>
+                      {stdout && (
+                        <button className="terminal-copy-btn" onClick={() => copyBlock(stdout, 'stdout')} title="Copy output">
+                          <span className="material-symbols-outlined">
+                            {copiedBlock === 'stdout' ? 'check' : 'content_copy'}
+                          </span>
+                          {copiedBlock === 'stdout' ? 'Copied' : 'Copy'}
+                        </button>
+                      )}
                     </div>
-                  )}
-                </div>
+                    <pre className={`terminal-body ${stdout ? "" : "terminal-empty"}`}>{loading ? "▋ Running…" : stdout || "(no output)"}</pre>
+                  </div>
+                )}
+
+                {/* stderr block */}
+                {(stderr || (result && !success)) && (
+                  <div className="terminal-output terminal-output--stderr">
+                    <div className="terminal-titlebar">
+                      <div className="terminal-dots">
+                        <div className="terminal-dot terminal-dot-red" />
+                        <div className="terminal-dot terminal-dot-red" />
+                        <div className="terminal-dot terminal-dot-red" />
+                      </div>
+                      <div className="terminal-name terminal-name--stderr">stderr</div>
+                      {stderr && (
+                        <button className="terminal-copy-btn" onClick={() => copyBlock(stderr, 'stderr')} title="Copy errors">
+                          <span className="material-symbols-outlined">
+                            {copiedBlock === 'stderr' ? 'check' : 'content_copy'}
+                          </span>
+                          {copiedBlock === 'stderr' ? 'Copied' : 'Copy'}
+                        </button>
+                      )}
+                    </div>
+                    <pre className={`terminal-body terminal-stderr ${stderr ? "" : "terminal-empty"}`}>{stderr || "(empty)"}</pre>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -663,7 +787,7 @@ export default function CppEditorPage({
           {aiLoading ? 'sync' : 'auto_awesome'}
         </span>
         {isGuest ? 'Explain' : aiLoading ? 'Thinking…' : 'Explain'}
-        {isGuest && <span className="material-symbols-outlined" style={{ fontSize: 14 }}>lock</span>}
+        {isGuest && <span className="material-symbols-outlined ai-fab-lock">lock</span>}
       </button>
     </main>
   );
