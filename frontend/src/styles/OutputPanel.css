@@ -100,11 +100,11 @@
 }
 
 .output-row + .output-row {
-  border-top: 1px solid rgba(100, 70, 40, 0.06);
+  border-top: 1px solid var(--border);
 }
 
 .dark-theme .output-row + .output-row {
-  border-top: 1px solid rgba(255, 240, 220, 0.06);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .output-row.expanded {

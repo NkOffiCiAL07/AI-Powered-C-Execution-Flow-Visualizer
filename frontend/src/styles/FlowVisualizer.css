@@ -569,7 +569,7 @@
   font-family: var(--font-mono);
   font-weight: 700;
   color: var(--primary);
-  background: rgba(217, 119, 87, 0.1);
+  background: var(--primary-glow);
   padding: 1px 5px;
   border-radius: 3px;
 }
@@ -590,9 +590,9 @@
   align-items: center;
   justify-content: center;
   gap: 2px;
-  background: rgba(217, 119, 87, 0.1);
+  background: var(--primary-glow);
   color: var(--primary);
-  border: 1px solid rgba(217, 119, 87, 0.25);
+  border: 1px solid var(--border-accent);
   border-radius: var(--radius-sm);
   padding: 5px 8px;
   font-size: 9px;
@@ -611,10 +611,10 @@
 }
 
 .exec-ai-btn:hover {
-  background: rgba(217, 119, 87, 0.2);
-  border-color: rgba(217, 119, 87, 0.45);
+  background: rgba(99, 102, 241, 0.2);
+  border-color: var(--primary);
   transform: translateY(-1px);
-  box-shadow: 0 3px 10px rgba(217, 119, 87, 0.22);
+  box-shadow: 0 3px 10px rgba(99, 102, 241, 0.22);
 }
 
 .exec-ai-btn:active { transform: scale(0.94); }
@@ -645,7 +645,7 @@
 
 .active-function-pill {
   color: var(--primary);
-  background: rgba(217, 119, 87, 0.12);
+  background: var(--primary-glow);
   padding: 1px 7px;
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
@@ -690,7 +690,7 @@
 
 .call-stack-frame.active {
   border-left: 3px solid var(--primary);
-  background: rgba(217, 119, 87, 0.05);
+  background: var(--primary-glow);
 }
 
 .frame-index {

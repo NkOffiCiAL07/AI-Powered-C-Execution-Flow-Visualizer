@@ -386,7 +386,7 @@
 
 .cfg-stack-frame--top {
   border-color: var(--primary);
-  background: rgba(201, 106, 72, 0.06);
+  background: var(--primary-glow);
 }
 
 .cfg-stack-fn {
@@ -441,8 +441,8 @@
 }
 
 .cfg-chip--active {
-  background: rgba(201, 106, 72, 0.12);
-  border-color: rgba(201, 106, 72, 0.35);
+  background: var(--primary-glow);
+  border-color: var(--border-accent);
   color: var(--primary);
 }
 

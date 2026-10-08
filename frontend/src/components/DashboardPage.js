@@ -71,7 +71,7 @@ function intensityLevel(count) {
 const DAY_LABELS = ['M', '', 'W', '', 'F', '', ''];
 
 const LANG_LABELS = { cpp: 'C++', c: 'C', python: 'Python', java: 'Java' };
-const LANG_COLORS = { cpp: '#D97757', c: '#4ade80', python: '#60a5fa', java: '#f59e0b' };
+const LANG_COLORS = { cpp: '#6366F1', c: '#10B981', python: '#38BDF8', java: '#F59E0B' };
 const LANG_ICONS  = { cpp: 'data_object', c: 'terminal', python: 'integration_instructions', java: 'code' };
 
 function LangDonut({ counts, total }) {

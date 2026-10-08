@@ -81,7 +81,7 @@ function StatsSection({ dark, border09, textMuted38 }) {
           <div key={i} className="stat-card rounded-2xl p-8 text-center border"
             style={{ background: dark ? 'rgba(255,255,255,0.03)' : 'rgba(99,102,241,0.03)', borderColor: dark ? 'rgba(232,226,217,0.09)' : 'rgba(99,102,241,0.1)' }}>
             <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-5"
-              style={{ background: 'linear-gradient(135deg,rgba(99,102,241,0.18),rgba(139,62,36,0.08))' }}>
+              style={{ background: 'linear-gradient(135deg,rgba(99,102,241,0.22),rgba(6,182,212,0.12))' }}>
               <span className="material-symbols-outlined" style={{ fontSize: 22, color: '#6366F1' }}>{s.icon}</span>
             </div>
             <div className="text-4xl font-extrabold mb-2 stat-number"
@@ -140,7 +140,7 @@ function FeaturePreview({ type, dark, border12, textMuted38, textMuted55 }) {
             <path d="M0,0 L6,3 L0,6 z" fill="rgba(99,102,241,0.6)" />
           </marker>
         </defs>
-        {[['main()', 200, 20, '#6366F1'], ['fetch_nodes()', 90, 70, '#4F46E5'], ['for_loop()', 200, 70, '#B85A38'], ['process(n)', 200, 120, '#4F46E5'], ['return 0', 310, 120, '#22c55e']].map(([label, x, y, color], i) => (
+        {[['main()', 200, 20, '#6366F1'], ['fetch_nodes()', 90, 70, '#4F46E5'], ['for_loop()', 200, 70, '#8B5CF6'], ['process(n)', 200, 120, '#4F46E5'], ['return 0', 310, 120, '#22c55e']].map(([label, x, y, color], i) => (
           <g key={i}>
             <rect x={x - 52} y={y - 13} width={104} height={26} rx={6} fill={`${color}18`} stroke={`${color}55`} strokeWidth={1.5} />
             <text x={x} y={y + 4} textAnchor="middle" fontSize={10} fontWeight={600} fontFamily="Space Grotesk, monospace" fill={color}>{label}</text>
@@ -234,7 +234,7 @@ const COMPARISON_ROWS = [
 
 function CompCell({ val }) {
   if (val === true)      return <span className="material-symbols-outlined" style={{ color: '#22c55e', fontSize: 20 }}>check_circle</span>;
-  if (val === false)     return <span className="material-symbols-outlined" style={{ color: 'rgba(100,70,40,0.25)', fontSize: 20 }}>cancel</span>;
+  if (val === false)     return <span className="material-symbols-outlined" style={{ color: 'var(--text-muted)', opacity: 0.35, fontSize: 20 }}>cancel</span>;
   if (val === 'partial') return <span className="material-symbols-outlined" style={{ color: '#f59e0b', fontSize: 20 }}>change_history</span>;
   return null;
 }
@@ -252,7 +252,7 @@ const FAQ_ITEMS = [
 function FAQSection({ dark, border09, textMuted55 }) {
   const [open, setOpen] = useState(null);
   const T = 'rgba(99,102,241,';
-  const borderColor = dark ? 'rgba(232,226,217,0.09)' : 'rgba(100,70,40,0.09)';
+  const borderColor = dark ? 'rgba(255,255,255,0.08)' : 'var(--border)';
   return (
     <section className="max-w-3xl mx-auto px-6 py-24 border-t" style={{ borderColor: border09 }}>
       <div className="text-center mb-14">
@@ -319,7 +319,7 @@ function TestimonialsSection({ dark, border09 }) {
         {TESTIMONIALS.map((t, i) => (
           <div key={i} className="rounded-2xl p-7 border flex flex-col gap-4 landing-card"
             style={{ background: bgCard, borderColor: borderCard, backdropFilter: 'blur(8px)' }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = `${T}0.35)`; e.currentTarget.style.boxShadow = dark ? '0 16px 48px rgba(0,0,0,0.3)' : '0 16px 48px rgba(100,70,40,0.1)'; }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = `${T}0.35)`; e.currentTarget.style.boxShadow = dark ? '0 16px 48px rgba(0,0,0,0.3)' : '0 16px 48px rgba(99,102,241,0.12)'; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = borderCard; e.currentTarget.style.boxShadow = 'none'; }}>
             <div className="flex gap-0.5">
               {Array.from({ length: t.stars }, (_, j) => (
@@ -616,7 +616,7 @@ const MARQUEE_ITEMS = [
 
 function MarqueeStrip({ dark }) {
   const doubled = [...MARQUEE_ITEMS, ...MARQUEE_ITEMS];
-  const sep = dark ? 'rgba(232,226,217,0.12)' : 'rgba(100,70,40,0.12)';
+  const sep = dark ? 'rgba(255,255,255,0.08)' : 'var(--border)';
   return (
     <div style={{ borderTop: `1px solid ${sep}`, borderBottom: `1px solid ${sep}`, padding: '13px 0', overflow: 'hidden', background: dark ? 'rgba(255,255,255,0.015)' : 'rgba(99,102,241,0.02)' }}>
       <div className="marquee-wrap">
@@ -624,7 +624,7 @@ function MarqueeStrip({ dark }) {
           {doubled.map((item, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 32px', whiteSpace: 'nowrap' }}>
               <span className="material-symbols-outlined" style={{ fontSize: 15, color: '#6366F1', flexShrink: 0 }}>{item.icon}</span>
-              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: dark ? 'rgba(232,226,217,0.55)' : 'rgba(26,19,16,0.5)', fontFamily: 'Space Grotesk, sans-serif' }}>{item.text}</span>
+              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: dark ? 'rgba(244,244,245,0.65)' : 'var(--text-secondary)', fontFamily: 'Space Grotesk, sans-serif' }}>{item.text}</span>
               <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'rgba(99,102,241,0.35)', flexShrink: 0, marginLeft: 8 }} />
             </div>
           ))}
@@ -799,7 +799,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
             <div className="absolute rounded-full blur-[140px] animate-float-orb"
               style={{ width: 560, height: 560, top: '10%', left: '20%', background: `radial-gradient(circle,${T}0.14) 0%,transparent 70%)` }} />
             <div className="absolute rounded-full blur-[120px] animate-float-orb"
-              style={{ width: 440, height: 440, bottom: '20%', right: '15%', background: `radial-gradient(circle,rgba(139,62,36,0.10) 0%,transparent 70%)`, animationDelay: '2s' }} />
+              style={{ width: 440, height: 440, bottom: '20%', right: '15%', background: `radial-gradient(circle,rgba(6,182,212,0.12) 0%,transparent 70%)`, animationDelay: '2s' }} />
           </div>
 
           <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6 pt-20 pb-10"
@@ -978,7 +978,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
 
             {/* Preview panel */}
             <div className="flex-1 rounded-2xl border overflow-hidden"
-              style={{ borderColor: border14, background: 'var(--bg-card)', boxShadow: dark ? '0 24px 64px rgba(0,0,0,0.3)' : '0 24px 64px rgba(100,70,40,0.1)' }}>
+              style={{ borderColor: border14, background: 'var(--bg-card)', boxShadow: dark ? '0 24px 64px rgba(0,0,0,0.3)' : '0 24px 64px rgba(15,23,42,0.08)' }}>
               {/* Window chrome */}
               <div className="flex items-center gap-2 px-5 py-3 border-b" style={{ borderColor: border10, background: 'var(--bg-secondary)' }}>
                 {['#ef4444','#f59e0b','#22c55e'].map(c => <div key={c} style={{ width: 11, height: 11, borderRadius: '50%', background: c, opacity: 0.7 }} />)}
@@ -1037,7 +1037,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-2 p-8 rounded-2xl border relative overflow-hidden landing-card"
               style={{ background: `${T}0.04)`, borderColor: `${T}0.14)` }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = `${T}0.38)`; e.currentTarget.style.background = `${T}0.08)`; e.currentTarget.style.boxShadow = dark ? '0 24px 64px rgba(232,226,217,0.07), 0 0 32px rgba(99,102,241,0.08)' : '0 24px 64px rgba(100,70,40,0.10), 0 0 32px rgba(99,102,241,0.08)'; }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = `${T}0.38)`; e.currentTarget.style.background = `${T}0.08)`; e.currentTarget.style.boxShadow = dark ? '0 24px 64px rgba(0,0,0,0.3), 0 0 32px rgba(99,102,241,0.12)' : '0 24px 64px rgba(15,23,42,0.08), 0 0 32px rgba(99,102,241,0.12)'; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = `${T}0.14)`; e.currentTarget.style.background = `${T}0.04)`; e.currentTarget.style.boxShadow = 'none'; }}>
               <div className="absolute top-0 right-0 w-56 h-56 rounded-full blur-[90px] pointer-events-none" style={{ background: `${T}0.10)` }} />
               <div className="relative z-10">
@@ -1082,7 +1082,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
 
             <div className="md:col-span-2 p-8 rounded-2xl border relative overflow-hidden landing-card"
               style={{ background: `${T}0.04)`, borderColor: `${T}0.14)` }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = `${T}0.38)`; e.currentTarget.style.background = `${T}0.08)`; e.currentTarget.style.boxShadow = dark ? '0 24px 64px rgba(232,226,217,0.07)' : '0 24px 64px rgba(100,70,40,0.10)'; }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = `${T}0.38)`; e.currentTarget.style.background = `${T}0.08)`; e.currentTarget.style.boxShadow = dark ? '0 24px 64px rgba(0,0,0,0.3)' : '0 24px 64px rgba(15,23,42,0.08)'; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = `${T}0.14)`; e.currentTarget.style.background = `${T}0.04)`; e.currentTarget.style.boxShadow = 'none'; }}>
               <div className="absolute top-0 left-0 w-56 h-56 rounded-full blur-[90px] pointer-events-none" style={{ background: `${T}0.10)` }} />
               <div className="relative z-10">
@@ -1123,7 +1123,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
           </div>
 
           <div className="rounded-2xl border overflow-hidden"
-            style={{ borderColor: border14, boxShadow: dark ? '0 24px 64px rgba(0,0,0,0.25)' : '0 24px 64px rgba(100,70,40,0.08)' }}>
+            style={{ borderColor: border14, boxShadow: dark ? '0 24px 64px rgba(0,0,0,0.35)' : '0 24px 64px rgba(15,23,42,0.08)' }}>
             {/* Header */}
             <div className="grid grid-cols-4 gap-0 border-b" style={{ borderColor: border10, background: 'var(--bg-secondary)' }}>
               {[
@@ -1145,7 +1145,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
             {/* Rows */}
             {COMPARISON_ROWS.map((row, i) => (
               <div key={i} className="grid grid-cols-4 gap-0 border-b comp-row"
-                style={{ borderColor: border09, background: i % 2 === 0 ? 'transparent' : (dark ? 'rgba(255,255,255,0.01)' : 'rgba(100,70,40,0.015)') }}>
+                style={{ borderColor: border09, background: i % 2 === 0 ? 'transparent' : (dark ? 'rgba(255,255,255,0.015)' : 'rgba(99,102,241,0.02)') }}>
                 <div style={{ padding: '14px 20px', fontSize: '0.88rem', fontWeight: 500, color: 'var(--text-primary)' }}>{row.feature}</div>
                 {['printf', 'gdb', 'traceon'].map((col, ci) => (
                   <div key={col} style={{
@@ -1191,7 +1191,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 relative" style={{ alignItems: 'start' }}>
             <div className="hidden md:block absolute"
-              style={{ top: 40, left: '20%', right: '20%', height: 1, background: 'linear-gradient(90deg,transparent,rgba(99,102,241,0.35),rgba(139,62,36,0.3),transparent)' }} />
+              style={{ top: 40, left: '20%', right: '20%', height: 1, background: 'linear-gradient(90deg,transparent,rgba(99,102,241,0.45),rgba(6,182,212,0.4),transparent)' }} />
             {STEPS.map((step, i) => (
               <div key={i} className="flex flex-col items-center text-center">
                 <div className="relative mb-8">
@@ -1216,12 +1216,12 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
                     { id: 'ret',     label: 'return 0',  type: 'EXIT',  cx: 120, cy: 170, hw: 36, hh: 11, color: '#22c55e', rgb: '34,197,94' },
                   ];
                   const ME = [[0,1],[0,2],[1,4],[2,3],[3,4]];
-                  const ec = dark ? 'rgba(232,226,217,0.16)' : 'rgba(100,70,40,0.18)';
+                  const ec = dark ? 'rgba(255,255,255,0.14)' : 'var(--border-strong)';
                   const nb = dark ? '#1E1A17' : '#FFFAF6';
                   const nb2 = dark ? 'rgba(232,226,217,0.14)' : 'rgba(99,102,241,0.22)';
                   const tc = dark ? '#E8E2D9' : '#1A1310';
                   return (
-                    <div style={{ margin: '20px auto 0', width: '100%', maxWidth: '240px', borderRadius: '14px', overflow: 'hidden', border: `1px solid ${T}0.18)`, background: dark ? 'rgba(20,18,16,0.75)' : 'rgba(242,237,231,0.85)', boxShadow: dark ? '0 8px 32px rgba(0,0,0,0.35)' : '0 8px 28px rgba(100,70,40,0.10)' }}>
+                    <div style={{ margin: '20px auto 0', width: '100%', maxWidth: '240px', borderRadius: '14px', overflow: 'hidden', border: `1px solid ${T}0.18)`, background: dark ? 'rgba(20,18,16,0.75)' : 'rgba(242,237,231,0.85)', boxShadow: dark ? '0 12px 36px rgba(0,0,0,0.4)' : '0 12px 36px rgba(15,23,42,0.08)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 10px', borderBottom: `1px solid ${T}0.12)`, background: dark ? 'rgba(28,25,23,0.92)' : 'rgba(252,250,247,0.92)' }}>
                         {['#ff5f57','#febc2e','#28c840'].map(c => <div key={c} style={{ width: 7, height: 7, borderRadius: '50%', background: c }} />)}
                         <span style={{ marginLeft: 4, fontSize: '9px', fontWeight: 700, color: textMuted38, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Flow Graph</span>
@@ -1250,7 +1250,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
                         })}
                       </svg>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '6px 10px', borderTop: `1px solid ${T}0.10)` }}>
-                        {MN.map((_, ni) => <div key={ni} style={{ width: ni === activeNodeIdx ? 14 : 5, height: 5, borderRadius: 3, background: ni === activeNodeIdx ? '#6366F1' : (dark ? 'rgba(232,226,217,0.18)' : 'rgba(100,70,40,0.18)'), transition: 'all 0.35s ease' }} />)}
+                        {MN.map((_, ni) => <div key={ni} style={{ width: ni === activeNodeIdx ? 14 : 5, height: 5, borderRadius: 3, background: ni === activeNodeIdx ? '#6366F1' : (dark ? 'rgba(255,255,255,0.18)' : 'rgba(99,102,241,0.18)'), transition: 'all 0.35s ease' }} />)}
                       </div>
                     </div>
                   );
@@ -1278,7 +1278,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
           </div>
 
           <div className="rounded-2xl border overflow-hidden"
-            style={{ borderColor: border14, background: 'var(--bg-card)', boxShadow: dark ? '0 32px 80px rgba(232,226,217,0.05), 0 0 0 1px rgba(232,226,217,0.04)' : '0 32px 80px rgba(100,70,40,0.12), 0 0 0 1px rgba(100,70,40,0.06)' }}>
+            style={{ borderColor: border14, background: 'var(--bg-card)', boxShadow: dark ? '0 32px 80px rgba(0,0,0,0.35)' : '0 32px 80px rgba(15,23,42,0.1)' }}>
             <div className="flex items-center gap-2 px-6 py-3.5 border-b"
               style={{ background: 'var(--bg-secondary)', borderColor: border10 }}>
               <div className="w-3 h-3 rounded-full" style={{ background: '#ef4444', opacity: 0.7 }} />
@@ -1375,7 +1375,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
           <div className="relative rounded-3xl px-10 py-20 md:px-24 text-center overflow-hidden border"
             style={{ background: `${T}0.05)`, borderColor: `${T}0.16)` }}>
             <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full blur-[130px] pointer-events-none" style={{ background: `${T}0.12)` }} />
-            <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full blur-[130px] pointer-events-none" style={{ background: 'rgba(139,62,36,0.09)' }} />
+            <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full blur-[130px] pointer-events-none" style={{ background: 'rgba(6,182,212,0.10)' }} />
             <div className="absolute inset-0 pointer-events-none opacity-25"
               style={{ backgroundImage: `linear-gradient(${T}0.06) 1px,transparent 1px),linear-gradient(90deg,${T}0.06) 1px,transparent 1px)`, backgroundSize: '40px 40px' }} />
 
@@ -1510,7 +1510,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
         <div className="absolute top-0 left-1/4 rounded-full blur-[220px]"
           style={{ width: 800, height: 800, background: `${T}0.06)` }} />
         <div className="absolute bottom-0 right-1/4 rounded-full blur-[200px]"
-          style={{ width: 640, height: 640, background: 'rgba(139,62,36,0.05)' }} />
+          style={{ width: 640, height: 640, background: 'rgba(6,182,212,0.06)' }} />
       </div>
 
       <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} onLogin={onLogin} />

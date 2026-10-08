@@ -60,13 +60,13 @@
 }
 
 .timeline-step.past .step-dot {
-  background: rgba(217, 119, 87, 0.55);
+  background: rgba(99, 102, 241, 0.55);
 }
 
 .timeline-step.active .step-dot {
   background: var(--primary);
   transform: scale(1.4);
-  box-shadow: 0 0 6px rgba(217, 119, 87, 0.5);
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.7);
 }
 
 .timeline-step.diff .step-dot {
