@@ -36,29 +36,6 @@ function useCountUp(target, duration = 1600, start = false) {
   return value;
 }
 
-/* ── Rotating hero word ── */
-const HERO_WORDS = ['Narrative', 'Logic', 'Flow', 'Bugs', 'Truth'];
-function RotatingWord({ words }) {
-  const [idx, setIdx] = useState(0);
-  const [vis, setVis] = useState(true);
-  useEffect(() => {
-    const id = setInterval(() => {
-      setVis(false);
-      setTimeout(() => { setIdx(i => (i + 1) % words.length); setVis(true); }, 350);
-    }, 2800);
-    return () => clearInterval(id);
-  }, [words.length]);
-  return (
-    <span className="gradient-text" key={idx} style={{
-      display: 'inline-block',
-      transition: 'opacity 0.35s ease, transform 0.35s ease',
-      opacity: vis ? 1 : 0,
-      transform: vis ? 'translateY(0)' : 'translateY(-10px)',
-    }}>
-      {words[idx]}
-    </span>
-  );
-}
 
 /* ── Stats ── */
 const STATS = [
@@ -430,55 +407,92 @@ function HeroMockup() {
   const EDGES = [[0,1],[0,2],[1,3],[2,4]];
 
   return (
-    <div className="hero-mockup w-full max-w-5xl mx-auto mt-14 rounded-2xl overflow-hidden"
-      style={{ border: '1px solid rgba(99,102,241,0.2)', boxShadow: '0 48px 120px rgba(0,0,0,0.18), 0 0 0 1px rgba(99,102,241,0.06), inset 0 1px 0 rgba(255,255,255,0.04)', background: '#1C1917' }}>
+    <div className="hero-mockup liquid-glass-elevated w-full max-w-5xl mx-auto mt-12 rounded-2xl overflow-hidden"
+      style={{
+        border: '1px solid var(--glass-border)',
+        boxShadow: 'var(--glass-shadow), 0 0 80px rgba(99,102,241,0.15)',
+        background: 'rgba(8, 12, 24, 0.75)',
+        backdropFilter: 'blur(28px) saturate(160%)',
+        WebkitBackdropFilter: 'blur(28px) saturate(160%)',
+      }}>
 
-      {/* Browser chrome */}
-      <div style={{ background: '#231F1C', borderBottom: '1px solid rgba(232,226,217,0.06)', padding: '9px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
-        <div style={{ display: 'flex', gap: 6 }}>
-          {['#ff5f57','#febc2e','#28c840'].map(c => <div key={c} style={{ width: 10, height: 10, borderRadius: '50%', background: c, opacity: 0.75 }} />)}
+      {/* Liquid Glass macOS Window Chrome */}
+      <div style={{
+        background: 'rgba(15, 22, 42, 0.65)',
+        borderBottom: '1px solid var(--glass-border)',
+        padding: '10px 18px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        backdropFilter: 'blur(20px)',
+      }}>
+        <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
+          <div style={{ width: 11, height: 11, borderRadius: '50%', background: '#ff5f57', boxShadow: '0 0 8px rgba(255,95,87,0.5)' }} />
+          <div style={{ width: 11, height: 11, borderRadius: '50%', background: '#febc2e', boxShadow: '0 0 8px rgba(254,188,46,0.4)' }} />
+          <div style={{ width: 11, height: 11, borderRadius: '50%', background: '#28c840', boxShadow: '0 0 8px rgba(40,200,64,0.5)' }} />
         </div>
         <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-          <div style={{ padding: '4px 22px', borderRadius: 6, background: 'rgba(232,226,217,0.04)', border: '1px solid rgba(232,226,217,0.07)', fontSize: '11px', color: 'rgba(232,226,217,0.32)', fontFamily: 'JetBrains Mono, monospace' }}>
-            app.traceon.dev/editor
+          <div style={{
+            padding: '4px 20px',
+            borderRadius: 8,
+            background: 'var(--glass-bg-subtle)',
+            border: '1px solid var(--glass-border)',
+            fontSize: '11px',
+            color: 'var(--text-secondary)',
+            fontFamily: 'JetBrains Mono, monospace',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+          }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 13, color: 'var(--accent-primary)' }}>lock</span>
+            app.traceon.dev/visualizer
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 5, background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)' }}>
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e' }} />
-          <span style={{ fontSize: 9, fontWeight: 700, color: '#22c55e', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Running</span>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          padding: '4px 10px',
+          borderRadius: 20,
+          background: 'rgba(34,197,94,0.12)',
+          border: '1px solid rgba(34,197,94,0.3)',
+          boxShadow: '0 0 12px rgba(34,197,94,0.2)',
+        }}>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', animation: 'pulse 2s infinite' }} />
+          <span style={{ fontSize: 9.5, fontWeight: 700, color: '#22c55e', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Step 4 of 8 ● Executing</span>
         </div>
       </div>
 
       {/* App layout */}
-      <div style={{ display: 'flex', height: 'clamp(300px,38vw,420px)' }}>
+      <div style={{ display: 'flex', height: 'clamp(320px,40vw,440px)', background: 'rgba(6, 10, 20, 0.6)' }}>
 
         {/* Icon sidebar */}
-        <div style={{ width: 46, background: '#1A1614', borderRight: '1px solid rgba(232,226,217,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 14, gap: 10, flexShrink: 0 }}>
+        <div style={{ width: 48, background: 'rgba(10, 16, 32, 0.5)', borderRight: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 14, gap: 10, flexShrink: 0 }}>
           {[['folder_open',false],['code',true],['hub',false],['memory',false],['psychology',false]].map(([icon, active], i) => (
-            <div key={i} style={{ width: 30, height: 30, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', background: active ? 'rgba(99,102,241,0.15)' : 'transparent', border: active ? '1px solid rgba(99,102,241,0.28)' : 'none' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: 15, color: active ? '#6366F1' : 'rgba(232,226,217,0.2)' }}>{icon}</span>
+            <div key={i} style={{ width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: active ? 'rgba(99,102,241,0.22)' : 'transparent', border: active ? '1px solid rgba(99,102,241,0.45)' : 'none' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 16, color: active ? '#818cf8' : 'var(--text-muted)' }}>{icon}</span>
             </div>
           ))}
         </div>
 
         {/* File tree */}
-        <div style={{ width: 148, background: '#1E1A17', borderRight: '1px solid rgba(232,226,217,0.05)', paddingTop: 10, flexShrink: 0, overflow: 'hidden' }}>
-          <div style={{ padding: '2px 10px 8px', fontSize: 8, fontWeight: 800, color: 'rgba(232,226,217,0.2)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Explorer</div>
+        <div style={{ width: 156, background: 'rgba(8, 14, 28, 0.45)', borderRight: '1px solid var(--glass-border)', paddingTop: 10, flexShrink: 0, overflow: 'hidden' }}>
+          <div style={{ padding: '4px 12px 8px', fontSize: 8.5, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Explorer</div>
           {[{ n: 'src/', indent: 0, folder: true },{ n: 'main.cpp', indent: 1, active: true },{ n: 'fibonacci.h', indent: 1 },{ n: 'utils.cpp', indent: 1 },{ n: 'tests/', indent: 0, folder: true },{ n: 'test_fib.cpp', indent: 1 }].map((f, i) => (
-            <div key={i} style={{ padding: `3px 10px 3px ${10 + f.indent * 12}px`, display: 'flex', alignItems: 'center', gap: 5, background: f.active ? 'rgba(99,102,241,0.12)' : 'transparent', borderLeft: f.active ? '2px solid #6366F1' : '2px solid transparent' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: 11, color: f.active ? '#6366F1' : f.folder ? 'rgba(232,226,217,0.3)' : 'rgba(232,226,217,0.2)', flexShrink: 0 }}>{f.folder ? 'folder' : 'description'}</span>
-              <span style={{ fontSize: 10, color: f.active ? '#E8E2D9' : 'rgba(232,226,217,0.35)', whiteSpace: 'nowrap', fontFamily: 'JetBrains Mono, monospace' }}>{f.n}</span>
+            <div key={i} style={{ padding: `4px 10px 4px ${10 + f.indent * 12}px`, display: 'flex', alignItems: 'center', gap: 6, background: f.active ? 'rgba(99,102,241,0.18)' : 'transparent', borderLeft: f.active ? '2px solid #818cf8' : '2px solid transparent' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 12, color: f.active ? '#818cf8' : f.folder ? 'var(--accent-primary)' : 'var(--text-muted)', flexShrink: 0 }}>{f.folder ? 'folder' : 'description'}</span>
+              <span style={{ fontSize: 10.5, color: f.active ? 'var(--text-primary)' : 'var(--text-secondary)', whiteSpace: 'nowrap', fontFamily: 'JetBrains Mono, monospace' }}>{f.n}</span>
             </div>
           ))}
         </div>
 
         {/* Code editor */}
-        <div style={{ width: '36%', borderRight: '1px solid rgba(232,226,217,0.05)', display: 'flex', flexDirection: 'column', background: '#1C1917', flexShrink: 0 }}>
-          <div style={{ padding: '6px 12px', borderBottom: '1px solid rgba(232,226,217,0.05)', display: 'flex', gap: 5, alignItems: 'center' }}>
-            <div style={{ padding: '2px 8px', borderRadius: 4, background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.22)', fontSize: 9, color: '#6366F1', fontFamily: 'JetBrains Mono, monospace' }}>main.cpp</div>
-            <div style={{ padding: '2px 8px', borderRadius: 4, fontSize: 9, color: 'rgba(232,226,217,0.22)', fontFamily: 'JetBrains Mono, monospace' }}>fibonacci.h</div>
-            <button style={{ marginLeft: 'auto', padding: '3px 10px', borderRadius: 5, background: 'linear-gradient(135deg,#6366F1,#4F46E5)', fontSize: 9, color: '#fff', fontWeight: 700, border: 'none', cursor: 'default', display: 'flex', alignItems: 'center', gap: 3 }}>
-              <span className="material-symbols-outlined" style={{ fontSize: 10 }}>play_arrow</span>Run
+        <div style={{ width: '38%', borderRight: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', background: 'rgba(10, 15, 30, 0.55)', flexShrink: 0 }}>
+          <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--glass-border)', display: 'flex', gap: 6, alignItems: 'center' }}>
+            <div style={{ padding: '3px 10px', borderRadius: 6, background: 'rgba(99,102,241,0.18)', border: '1px solid rgba(99,102,241,0.35)', fontSize: 9.5, color: '#818cf8', fontFamily: 'JetBrains Mono, monospace' }}>main.cpp</div>
+            <div style={{ padding: '3px 8px', borderRadius: 6, fontSize: 9.5, color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>fibonacci.h</div>
+            <button style={{ marginLeft: 'auto', padding: '4px 11px', borderRadius: 6, background: 'linear-gradient(135deg,#6366F1,#4F46E5)', fontSize: 9.5, color: '#fff', fontWeight: 700, border: 'none', cursor: 'default', display: 'flex', alignItems: 'center', gap: 4, boxShadow: '0 0 12px rgba(99,102,241,0.4)' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 11 }}>play_arrow</span>Run
             </button>
           </div>
           <div style={{ flex: 1, padding: '8px 4px', fontFamily: 'JetBrains Mono, monospace', fontSize: '10.5px', lineHeight: 1.75, overflow: 'hidden' }}>
@@ -492,26 +506,26 @@ function HeroMockup() {
         </div>
 
         {/* Flow graph panel */}
-        <div style={{ flex: 1, background: '#141210', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-          <div style={{ padding: '6px 14px', borderBottom: '1px solid rgba(232,226,217,0.05)', display: 'flex', alignItems: 'center', gap: 7 }}>
-            <span className="material-symbols-outlined" style={{ fontSize: 12, color: '#6366F1' }}>hub</span>
-            <span style={{ fontSize: 9, fontWeight: 800, color: 'rgba(232,226,217,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Execution Flow</span>
-            <div style={{ marginLeft: 'auto', display: 'flex', gap: 5 }}>
-              <span style={{ fontSize: 9, color: 'rgba(232,226,217,0.3)', fontFamily: 'JetBrains Mono, monospace' }}>5 nodes</span>
-              <span style={{ fontSize: 9, color: 'rgba(99,102,241,0.7)', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700 }}>· O(2ⁿ)</span>
+        <div style={{ flex: 1, background: 'rgba(8, 12, 24, 0.75)', display: 'flex', flexDirection: 'column', minWidth: 0, borderLeft: '1px solid var(--glass-border)' }}>
+          <div style={{ padding: '8px 16px', borderBottom: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(15, 22, 42, 0.4)' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 13, color: 'var(--accent-primary)' }}>hub</span>
+            <span style={{ fontSize: 9.5, fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Execution Flow</span>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center' }}>
+              <span style={{ fontSize: 9.5, color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>5 nodes</span>
+              <span style={{ fontSize: 9.5, color: '#818cf8', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: 'rgba(99,102,241,0.15)' }}>· O(2ⁿ)</span>
             </div>
           </div>
 
           {/* Graph SVG */}
           <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle, rgba(99,102,241,0.12) 1px, transparent 1px)', backgroundSize: '22px 22px', opacity: 0.55 }} />
+            <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle, rgba(99,102,241,0.18) 1px, transparent 1px)', backgroundSize: '20px 20px', opacity: 0.6 }} />
             <svg width="100%" height="100%" style={{ position: 'absolute', inset: 0 }}>
               <defs>
                 <marker id="mk-arr" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
-                  <path d="M0,0 L5,2.5 L0,5 z" fill="rgba(99,102,241,0.45)" />
+                  <path d="M0,0 L5,2.5 L0,5 z" fill="rgba(99,102,241,0.6)" />
                 </marker>
                 <marker id="mk-arr-g" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
-                  <path d="M0,0 L5,2.5 L0,5 z" fill="rgba(34,197,94,0.45)" />
+                  <path d="M0,0 L5,2.5 L0,5 z" fill="rgba(34,197,94,0.6)" />
                 </marker>
               </defs>
               {EDGES.map(([fi, ti], ei) => {
@@ -521,8 +535,8 @@ function HeroMockup() {
                   <line key={ei}
                     x1={`${f.cx}%`} y1={`${f.cy + 5}%`}
                     x2={`${t2.cx}%`} y2={`${t2.cy - 5}%`}
-                    stroke={isGreen ? 'rgba(34,197,94,0.35)' : 'rgba(99,102,241,0.38)'}
-                    strokeWidth="1.3"
+                    stroke={isGreen ? 'rgba(34,197,94,0.5)' : 'rgba(99,102,241,0.5)'}
+                    strokeWidth="1.5"
                     strokeDasharray="4 3"
                     markerEnd={isGreen ? 'url(#mk-arr-g)' : 'url(#mk-arr)'}
                     style={{ transition: 'stroke 0.4s' }}
@@ -533,25 +547,28 @@ function HeroMockup() {
                 const active = ni === activeNode;
                 return (
                   <g key={ni}>
-                    {active && <ellipse cx={`${node.cx}%`} cy={`${node.cy}%`} rx="15%" ry="8%" fill={`rgba(${node.rgb},0.12)`} />}
+                    {active && <ellipse cx={`${node.cx}%`} cy={`${node.cy}%`} rx="16%" ry="9%" fill={`rgba(${node.rgb},0.2)`} />}
                     <rect
-                      x={`calc(${node.cx}% - 40px)`} y={`calc(${node.cy}% - 13px)`}
-                      width="80px" height="26px" rx="6"
-                      fill={active ? node.color : `rgba(${node.rgb},0.12)`}
-                      stroke={active ? node.color : `rgba(${node.rgb},0.4)`}
+                      x={`calc(${node.cx}% - 42px)`} y={`calc(${node.cy}% - 14px)`}
+                      width="84px" height="28px" rx="8"
+                      fill={active ? node.color : `rgba(${node.rgb},0.16)`}
+                      stroke={active ? '#fff' : `rgba(${node.rgb},0.5)`}
                       strokeWidth={active ? 1.5 : 1}
-                      style={{ transition: 'all 0.35s ease' }}
+                      style={{
+                        transition: 'all 0.35s ease',
+                        filter: active ? `drop-shadow(0 0 10px rgba(${node.rgb},0.6))` : 'none'
+                      }}
                     />
                     <text x={`${node.cx}%`} y={`calc(${node.cy}% + 4px)`}
-                      textAnchor="middle" fontSize={8.5} fontFamily="Space Grotesk, monospace"
+                      textAnchor="middle" fontSize={9} fontFamily="Space Grotesk, monospace"
                       fontWeight={active ? 700 : 500}
-                      fill={active ? '#fff' : `rgba(${node.rgb},0.9)`}
+                      fill={active ? '#fff' : `rgba(${node.rgb},0.95)`}
                       style={{ transition: 'fill 0.35s' }}>
                       {node.label}
                     </text>
                     {active && (
-                      <text x={`${node.cx}%`} y={`calc(${node.cy}% + 18px)`}
-                        textAnchor="middle" fontSize={6.5} fontWeight={700}
+                      <text x={`${node.cx}%`} y={`calc(${node.cy}% + 20px)`}
+                        textAnchor="middle" fontSize={7} fontWeight={700}
                         fontFamily="Space Grotesk, monospace"
                         fill={node.color} letterSpacing="0.08em">
                         {node.type}
@@ -564,15 +581,15 @@ function HeroMockup() {
           </div>
 
           {/* AI insight strip */}
-          <div style={{ borderTop: '1px solid rgba(232,226,217,0.06)', background: 'rgba(16,14,12,0.95)', padding: '8px 14px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-              <span className="material-symbols-outlined" style={{ fontSize: 11, color: '#6366F1' }}>psychology</span>
-              <span style={{ fontSize: 9, fontWeight: 800, color: '#6366F1', textTransform: 'uppercase', letterSpacing: '0.08em' }}>AI Analysis</span>
-              <span style={{ marginLeft: 'auto', padding: '1px 7px', borderRadius: 3, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', fontSize: 8, color: '#f59e0b', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700 }}>O(2ⁿ) — Exponential</span>
+          <div style={{ borderTop: '1px solid var(--glass-border)', background: 'rgba(10, 15, 30, 0.85)', padding: '10px 16px', backdropFilter: 'blur(16px)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 13, color: 'var(--accent-primary)' }}>psychology</span>
+              <span style={{ fontSize: 9.5, fontWeight: 800, color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>AI Analysis</span>
+              <span style={{ marginLeft: 'auto', padding: '2px 8px', borderRadius: 4, background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)', fontSize: 8.5, color: '#f59e0b', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700 }}>O(2ⁿ) — Exponential</span>
             </div>
-            <p style={{ fontSize: 9, color: 'rgba(232,226,217,0.45)', lineHeight: 1.6, margin: 0 }}>
+            <p style={{ fontSize: 9.5, color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
               Recursive tree overlapping subproblems detected.{' '}
-              <span style={{ color: '#6366F1' }}>Tip: memoize results to reduce to O(n).</span>
+              <span style={{ color: '#818cf8', fontWeight: 600 }}>Tip: memoize results to reduce to O(n).</span>
             </p>
           </div>
         </div>
@@ -796,33 +813,30 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
               </div>
 
               <h1 className="font-extrabold mb-6 leading-tight"
-                style={{ fontSize: 'clamp(2.6rem,7vw,5rem)', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>
-                See Your Code's{' '}
-                <RotatingWord words={HERO_WORDS} />
+                style={{ fontSize: 'clamp(2.6rem,7vw,5.2rem)', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>
+                See your <span className="gradient-text">C/C++ code</span> execute.
               </h1>
 
               <p className="mb-10 max-w-2xl mx-auto leading-relaxed"
                 style={{ fontSize: 'clamp(1rem,2.2vw,1.2rem)', color: textMuted55 }}>
-                Transform complex C, C++, Python, and Java execution paths into intuitive, high-fidelity visual graphs.
-                Debug with precision using{' '}
-                <span style={{ color: '#6366F1', fontWeight: 600 }}>AI-driven flow analysis</span>.
+                Step through your program visually, understand execution flow, inspect variables, and debug complex logic with an interactive execution map.
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 {user?.role === 'member' ? (
-                  <button onClick={() => onSwitchView('editor')} className="cta-primary flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm w-full sm:w-auto justify-center">
+                  <button onClick={() => onSwitchView('editor')} className="cta-primary flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm w-full sm:w-auto justify-center liquid-glass-glow">
                     <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>code</span>
                     Open Editor
                   </button>
                 ) : (
                   <>
-                    <button onClick={launch} className="cta-primary flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm w-full sm:w-auto justify-center">
-                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>play_arrow</span>
-                      {user ? 'Go to Editor' : 'Start Visualizing — Free'}
+                    <button onClick={launch} className="cta-primary flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm w-full sm:w-auto justify-center liquid-glass-glow" style={{ boxShadow: '0 0 30px rgba(99,102,241,0.45)' }}>
+                      <span>Start Visualizing</span>
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
                     </button>
-                    <button onClick={handleViewDemo} className="cta-secondary flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm w-full sm:w-auto justify-center">
+                    <button onClick={handleViewDemo} className="cta-secondary flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm w-full sm:w-auto justify-center" style={{ backdropFilter: 'blur(16px)', background: 'var(--glass-bg)', borderColor: 'var(--glass-border)' }}>
                       <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>visibility</span>
-                      View Demo
+                      <span>View Example</span>
                     </button>
                   </>
                 )}

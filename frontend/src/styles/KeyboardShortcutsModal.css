@@ -1,7 +1,9 @@
 .ksm-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(4, 7, 18, 0.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -10,12 +12,14 @@
 }
 
 .ksm-modal {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg, 14px);
+  background: var(--glass-bg-elevated);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg, 16px);
   width: 100%;
   max-width: 460px;
-  box-shadow: var(--shadow-lg, 0 20px 60px rgba(0,0,0,0.35));
+  box-shadow: var(--glass-shadow), 0 0 80px rgba(99, 102, 241, 0.15), inset 0 1px 0 var(--glass-highlight);
   overflow: hidden;
   animation: ksmIn 0.18s ease-out;
 }

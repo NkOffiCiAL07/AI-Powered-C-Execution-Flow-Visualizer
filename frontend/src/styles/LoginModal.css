@@ -17,14 +17,16 @@
 }
 
 .login-modal-content {
-  background: var(--bg-primary);
+  background: var(--glass-bg-elevated);
+  backdrop-filter: blur(32px) saturate(160%);
+  -webkit-backdrop-filter: blur(32px) saturate(160%);
   width: 100%;
   max-width: 400px;
   border-radius: 20px;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--glass-border);
   padding: 36px 36px 28px;
   position: relative;
-  box-shadow: var(--shadow-xl), 0 0 48px var(--primary-glow);
+  box-shadow: var(--glass-shadow), 0 0 60px rgba(99, 102, 241, 0.2), inset 0 1px 0 var(--glass-highlight);
   overflow: hidden;
 }
 

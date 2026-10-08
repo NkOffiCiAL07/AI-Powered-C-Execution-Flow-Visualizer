@@ -355,6 +355,11 @@ export default function CppEditorPage({
           <div className="editor-page-card editor-card">
             <div className="editor-page-head">
               <div className="editor-head-left">
+                <div className="editor-window-dots">
+                  <span className="dot dot-close" />
+                  <span className="dot dot-min" />
+                  <span className="dot dot-max" />
+                </div>
                 {currentProject && (
                   <button
                     className="sidebar-mobile-toggle"

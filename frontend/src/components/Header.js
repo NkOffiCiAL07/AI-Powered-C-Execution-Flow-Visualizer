@@ -10,10 +10,6 @@ const THEME_OPTIONS = [
   { value: "midnight", label: "Midnight", swatch: "#A855F7" },
 ];
 
-const VIEW_OPTIONS = [
-  { value: "visualizer", label: "Debugger", icon: "bug_report" },
-  { value: "editor",     label: "Editor",   icon: "code"       },
-];
 
 const NAV_PAGES = [
   { value: "landing",   label: "Home",      icon: "home"       },
@@ -48,10 +44,19 @@ function Dropdown({ trigger, children, align = "left" }) {
   );
 }
 
-export default function Header({ view, onSwitchView, user, onLogout, onSignIn, language, onLanguageChange, currentProject }) {
+export default function Header({
+  view,
+  onSwitchView,
+  user,
+  onLogout,
+  onSignIn,
+  language,
+  onLanguageChange,
+  currentProject,
+  onOpenCommandPalette,
+}) {
   const { theme, setTheme } = useTheme();
   const inApp = view === "editor" || view === "visualizer";
-  const currentView = VIEW_OPTIONS.find(o => o.value === view);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   return (
@@ -60,8 +65,11 @@ export default function Header({ view, onSwitchView, user, onLogout, onSignIn, l
       {/* ── Left: brand + breadcrumb ── */}
       <div className="header-left">
         <div className="header-brand" onClick={() => onSwitchView("landing")}>
-          <span className="material-symbols-outlined header-brand-icon">terminal</span>
-          <span className="brand-text">Traceon</span>
+          <div className="brand-logo-icon">
+            <span className="material-symbols-outlined header-brand-icon">auto_awesome</span>
+          </div>
+          <span className="brand-text">TRACEON</span>
+          <span className="brand-pill-badge">2.0</span>
         </div>
 
         {currentProject && (
@@ -77,11 +85,11 @@ export default function Header({ view, onSwitchView, user, onLogout, onSignIn, l
           </div>
         )}
 
-        {/* Pages dropdown — only in app view */}
+        {/* Pages dropdown — in app view */}
         {inApp && (
           <Dropdown
             trigger={(open) => (
-              <button className="hdr-pages-trigger" aria-expanded={open}>
+              <button className="hdr-pages-trigger" aria-expanded={open} title="More Views">
                 <span className="material-symbols-outlined">apps</span>
                 <span className={`material-symbols-outlined hdr-chevron ${open ? "open" : ""}`}>expand_more</span>
               </button>
@@ -112,7 +120,7 @@ export default function Header({ view, onSwitchView, user, onLogout, onSignIn, l
         )}
       </div>
 
-      {/* Mobile hamburger — only visible on small screens via CSS */}
+      {/* Mobile hamburger */}
       {!inApp && (
         <button
           className="header-mobile-menu-btn"
@@ -123,9 +131,38 @@ export default function Header({ view, onSwitchView, user, onLogout, onSignIn, l
         </button>
       )}
 
-      {/* ── Center col: nav links (non-app views only) ── */}
+      {/* ── Center col: Floating Liquid Glass Dock ── */}
       <div className="header-center">
-        {!inApp && (
+        {inApp ? (
+          <div className="hdr-app-dock" role="navigation" aria-label="IDE View Switcher">
+            <button
+              className={`hdr-dock-btn ${view === "editor" ? "active" : ""}`}
+              onClick={() => onSwitchView("editor")}
+              title="Code Editor"
+            >
+              <span className="material-symbols-outlined">code</span>
+              <span>Editor</span>
+            </button>
+            <button
+              className={`hdr-dock-btn ${view === "visualizer" ? "active" : ""}`}
+              onClick={() => onSwitchView("visualizer")}
+              title="Execution Flow Visualizer"
+            >
+              <span className="material-symbols-outlined">bug_report</span>
+              <span>Debugger</span>
+            </button>
+            {user && user.role !== "guest" && (
+              <button
+                className="hdr-dock-btn"
+                onClick={() => onSwitchView("dashboard")}
+                title="Projects Dashboard"
+              >
+                <span className="material-symbols-outlined">dashboard</span>
+                <span>Dashboard</span>
+              </button>
+            )}
+          </div>
+        ) : (
           <nav className="header-nav" aria-label="Main navigation">
             <a className={`nav-link ${view === "landing"   ? "active" : ""}`} href="?v=landing"   onClick={(e) => { e.preventDefault(); onSwitchView("landing"); }}>Home</a>
             <a className={`nav-link ${view === "docs"      ? "active" : ""}`} href="?v=docs"      onClick={(e) => { e.preventDefault(); onSwitchView("docs"); }}>Docs</a>
@@ -137,34 +174,22 @@ export default function Header({ view, onSwitchView, user, onLogout, onSignIn, l
         )}
       </div>
 
-      {/* ── Right: app controls + theme + user ── */}
+      {/* ── Right: ⌘K + theme + user ── */}
       <div className="header-right">
 
-        {/* View switcher dropdown */}
-        {inApp && currentView && (
-          <Dropdown
-            trigger={(open) => (
-              <button className="view-dropdown-trigger" aria-expanded={open}>
-                <span className="material-symbols-outlined">{currentView.icon}</span>
-                <span>{currentView.label}</span>
-                <span className={`material-symbols-outlined hdr-chevron ${open ? "open" : ""}`}>expand_more</span>
-              </button>
-            )}
-          >
-            {(close) => VIEW_OPTIONS.map(opt => (
-              <li key={opt.value}
-                className={`hdr-dropdown-item ${opt.value === view ? "active" : ""}`}
-                role="menuitem"
-                onClick={() => { onSwitchView(opt.value); close(); }}>
-                <span className="material-symbols-outlined">{opt.icon}</span>
-                {opt.label}
-                {opt.value === view && <span className="material-symbols-outlined hdr-check">check</span>}
-              </li>
-            ))}
-          </Dropdown>
-        )}
+        {/* ⌘K Command Palette Quick Launcher */}
+        <button
+          className="hdr-cmd-trigger"
+          onClick={onOpenCommandPalette}
+          title="Open Command Palette (⌘K)"
+          aria-label="Open Command Palette"
+        >
+          <span className="material-symbols-outlined hdr-cmd-icon">search</span>
+          <span className="hdr-cmd-label">Commands</span>
+          <kbd className="hdr-cmd-kbd">⌘K</kbd>
+        </button>
 
-        {/* Theme picker — available in all views */}
+        {/* Theme picker */}
         <Dropdown
           align="right"
           trigger={(open) => (

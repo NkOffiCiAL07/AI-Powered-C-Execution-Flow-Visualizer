@@ -3,6 +3,7 @@ import Header from "./components/Header";
 import LangDropdown from "./components/LangDropdown";
 import LoginModal from "./components/LoginModal";
 import KeyboardShortcutsModal from "./components/KeyboardShortcutsModal";
+import CommandPalette from "./components/CommandPalette";
 import { FILE_NAMES } from "./components/NewProjectModal";
 import {
   analyzeCode, runCode, stepAnalyzeSession, explainCode, generateCode, optimizeCode,
@@ -111,6 +112,7 @@ function App() {
   const [serverChecking, setServerChecking] = useState(false);
   const [currentProject, setCurrentProject] = useState(null);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [showGenBanner, setShowGenBanner] = useState(false); // "Understand with AI" toast after generation
   const genBannerTimerRef = useRef(null);
   // Persist breakpoints across page refreshes
@@ -786,6 +788,12 @@ function App() {
 
   useEffect(() => {
     const handler = (e) => {
+      // Universal ⌘K / Ctrl+K command palette shortcut
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setShowCommandPalette(s => !s);
+        return;
+      }
       const tag = e.target.tagName;
       const inInput = tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable;
       if (!inInput && !e.ctrlKey && !e.metaKey && e.key === '?') { setShowShortcuts(s => !s); return; }
@@ -1092,6 +1100,11 @@ function App() {
               {/* Left panel header */}
               <div className="section-header debugger-code-header">
                 <div className="section-header-title">
+                  <div className="editor-window-dots" style={{ marginRight: 8 }}>
+                    <span className="dot dot-close" />
+                    <span className="dot dot-min" />
+                    <span className="dot dot-max" />
+                  </div>
                   <span className="material-symbols-outlined section-header-icon">code</span>
                   <h2>{debugLangLabel} · Source</h2>
                 </div>
@@ -1355,6 +1368,7 @@ function App() {
           user={user}
           onLogout={handleLogout}
           onSignIn={() => setShowLoginModal(true)}
+          onOpenCommandPalette={() => setShowCommandPalette(true)}
         />
       )}
       {serverDown && (view === "editor" || view === "visualizer" || view === "dashboard") && (
@@ -1384,8 +1398,8 @@ function App() {
           </div>
           <button className="server-retry-btn" style={{ color: "var(--accent-red)", borderColor: "rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)" }}
             onClick={() => { setSessionExpiredBanner(false); setShowLoginModal(true); }}>
-            <span className="material-symbols-outlined">login</span>
-            Sign in
+              <span className="material-symbols-outlined">login</span>
+              Sign in
           </button>
         </div>
       )}
@@ -1396,6 +1410,20 @@ function App() {
       </div>
       <LoginModal isOpen={showLoginModal} onLogin={handleLogin} onClose={() => setShowLoginModal(false)} />
       <KeyboardShortcutsModal isOpen={showShortcuts} onClose={() => setShowShortcuts(false)} />
+      <CommandPalette
+        isOpen={showCommandPalette}
+        onClose={() => setShowCommandPalette(false)}
+        onRun={handleRun}
+        onDebug={handleAnalyze}
+        onStepOver={() => handleStep("next", "over")}
+        onStepBack={() => handleStep("back")}
+        onStepIn={() => handleStep("next", "in")}
+        onStepOut={() => handleStep("next", "out")}
+        onExplain={handleExplain}
+        onSwitchView={setView}
+        onOpenShortcuts={() => setShowShortcuts(true)}
+        currentView={view}
+      />
 
       {/* ── Feature 9: First-run onboarding tour ── */}
       <Suspense fallback={null}>

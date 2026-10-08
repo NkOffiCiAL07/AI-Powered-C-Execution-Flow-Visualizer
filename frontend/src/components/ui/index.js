@@ -6,3 +6,4 @@ export { Skeleton, SkeletonText } from './Skeleton';
 export { default as EmptyState } from './EmptyState';
 export { default as Modal } from './Modal';
 export { default as Tabs } from './Tabs';
+export { default as GlassPanel } from './GlassPanel';

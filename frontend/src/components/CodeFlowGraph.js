@@ -429,11 +429,16 @@ const CodeFlowGraph = memo(function CodeFlowGraph({ result, currentStep, code, l
 
                 return (
                   <g key={node.id} onClick={(e) => onNodeClick(node.id, e)} style={{ cursor: 'pointer' }}>
-                    {/* Glow outline for active node */}
+                    {/* Glow outline and visionOS pulse ring for active node */}
                     {isActive && (
-                      <rect x={p.x - 4} y={p.y - 4} width={NW + 8} height={NH + 8}
-                        rx={13} fill="none" stroke={accent} strokeWidth={2} opacity={0.22}
-                        filter="url(#cfg-glow)" />
+                      <>
+                        <rect x={p.x - 7} y={p.y - 7} width={NW + 14} height={NH + 14}
+                          rx={16} fill="none" stroke={accent} strokeWidth={1.5}
+                          className="cfg-pulse-ring" />
+                        <rect x={p.x - 4} y={p.y - 4} width={NW + 8} height={NH + 8}
+                          rx={13} fill="none" stroke={accent} strokeWidth={2} opacity={0.5}
+                          filter="url(#cfg-glow)" />
+                      </>
                     )}
 
                     {/* Card background */}

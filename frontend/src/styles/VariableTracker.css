@@ -15,42 +15,47 @@
 }
 
 .variable-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 10px 11px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
   position: relative;
-  transition: border-color 0.18s ease;
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+  transition: border-color 0.18s ease, transform 0.15s ease, box-shadow 0.18s ease;
 }
 
 .variable-card:hover {
-  border-color: var(--border-strong);
+  border-color: rgba(99, 102, 241, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 var(--glass-highlight);
 }
 
 .variable-card.changed {
-  border-color: var(--primary);
-  background: linear-gradient(135deg, rgba(217, 119, 87, 0.05), rgba(217, 119, 87, 0.08));
-  box-shadow: 0 0 0 1px rgba(217, 119, 87, 0.15), var(--shadow-sm);
+  border-color: #6366f1;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.14), rgba(6, 182, 212, 0.1));
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .var-name {
-  font-size: 9px;
+  font-size: 9.5px;
   font-weight: 700;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 5px;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
 }
 
 .var-value code {
   font-family: var(--font-mono);
   font-size: 13px;
   color: var(--text-primary);
-  background: var(--bg-secondary);
-  padding: 3px 7px;
+  background: var(--glass-bg-subtle, rgba(255, 255, 255, 0.06));
+  padding: 4px 8px;
   border-radius: var(--radius-sm);
   display: block;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
 }
 
 .var-change {
@@ -65,15 +70,16 @@
 /* ── "CHANGED" badge ── */
 .change-badge {
   position: absolute;
-  top: 6px;
-  right: 6px;
-  background: var(--primary);
+  top: 8px;
+  right: 8px;
+  background: linear-gradient(135deg, #6366f1, #06b6d4);
   color: #fff;
   font-size: 8px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  padding: 1px 5px;
-  border-radius: 3px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.6);
 }
 
 .bubble-container { display: none; }
@@ -99,19 +105,11 @@
 }
 
 @keyframes var-flash-glow {
-  0%   { box-shadow: 0 0 0 0 rgba(217, 119, 87, 0.55), var(--shadow-sm); }
-  40%  { box-shadow: 0 0 0 5px rgba(217, 119, 87, 0.22), var(--shadow-sm); }
-  100% { box-shadow: 0 0 0 1px rgba(217, 119, 87, 0.15), var(--shadow-sm); }
-}
-
-/* ── Subtle hover lift on grid cells ── */
-.variable-card:hover {
-  border-color: var(--border-strong);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
-  transition: border-color 0.18s ease, transform 0.15s var(--ease-out), box-shadow 0.18s ease;
+  0%   { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7), 0 0 20px rgba(99, 102, 241, 0.5); }
+  40%  { box-shadow: 0 0 0 6px rgba(99, 102, 241, 0.3), 0 0 25px rgba(99, 102, 241, 0.6); }
+  100% { box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.2), 0 0 16px rgba(99, 102, 241, 0.35); }
 }
 
 .variable-card.changed:hover {
-  box-shadow: 0 0 0 1px rgba(217, 119, 87, 0.25), var(--shadow-md);
+  box-shadow: 0 0 24px rgba(99, 102, 241, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
