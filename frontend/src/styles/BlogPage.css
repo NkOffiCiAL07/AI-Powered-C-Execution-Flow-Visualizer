@@ -627,7 +627,7 @@
   font-weight: 700;
   cursor: pointer;
   font-family: var(--font-sans);
-  box-shadow: 0 3px 12px rgba(201,106,72,0.35);
+  box-shadow: var(--primary-glow, 0 4px 14px rgba(99,102,241,0.35));
   transition:
     opacity var(--t-fast) ease,
     transform var(--t-fast) var(--ease-spring),
@@ -642,7 +642,7 @@
 .blog-cta-btn:hover {
   opacity: 0.9;
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(201,106,72,0.45);
+  box-shadow: 0 6px 20px rgba(99,102,241,0.4);
 }
 
 .blog-cta-btn:active { transform: scale(0.97); }

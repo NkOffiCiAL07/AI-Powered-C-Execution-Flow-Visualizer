@@ -24,7 +24,7 @@
   border: 1px solid var(--border-strong);
   padding: 36px 36px 28px;
   position: relative;
-  box-shadow: var(--shadow-xl), 0 0 48px rgba(201, 106, 72, 0.12);
+  box-shadow: var(--shadow-xl), 0 0 48px var(--primary-glow);
   overflow: hidden;
 }
 

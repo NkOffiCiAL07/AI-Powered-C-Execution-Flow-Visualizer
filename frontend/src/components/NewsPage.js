@@ -7,7 +7,7 @@ const CATEGORIES = ['All', 'Agentic AI', 'Machine Learning', 'Companies', 'Codin
 const CATEGORY_META = {
   'Agentic AI':      { color: '#7C3AED', bg: 'rgba(124,58,237,0.10)', icon: 'smart_toy' },
   'Machine Learning':{ color: '#0891B2', bg: 'rgba(8,145,178,0.10)',  icon: 'model_training' },
-  'Companies':       { color: '#C96A48', bg: 'rgba(201,106,72,0.10)', icon: 'business' },
+  'Companies':       { color: '#D97706', bg: 'rgba(217,119,6,0.10)', icon: 'business' },
   'Coding':          { color: '#059669', bg: 'rgba(5,150,105,0.10)',  icon: 'code' },
 };
 

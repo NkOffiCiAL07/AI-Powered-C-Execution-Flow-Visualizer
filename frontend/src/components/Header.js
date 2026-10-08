@@ -3,8 +3,8 @@ import "../styles/Header.css";
 import { useTheme } from "../theme";
 
 const THEME_OPTIONS = [
-  { value: "light",    label: "Light",    swatch: "#C96A48" },
-  { value: "dark",     label: "Dark",     swatch: "#D97757" },
+  { value: "light",    label: "Light",    swatch: "#4F46E5" },
+  { value: "dark",     label: "Dark",     swatch: "#6366F1" },
   { value: "ocean",    label: "Ocean",    swatch: "#58A6FF" },
   { value: "forest",   label: "Forest",   swatch: "#57C87A" },
   { value: "midnight", label: "Midnight", swatch: "#A855F7" },

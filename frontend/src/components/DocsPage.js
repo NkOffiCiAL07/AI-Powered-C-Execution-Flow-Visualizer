@@ -317,8 +317,8 @@ const DocsPage = () => {
                 padding: '12px 0', borderBottom: '1px solid var(--border)'
               }}>
                 <span style={{
-                  background: e.method === 'GET' ? '#d1fae5' : '#fff0eb',
-                  color: e.method === 'GET' ? '#065f46' : 'var(--primary)',
+                  background: e.method === 'GET' ? 'rgba(16,185,129,0.14)' : 'rgba(99,102,241,0.14)',
+                  color: e.method === 'GET' ? '#10B981' : 'var(--primary)',
                   fontSize: '10px', fontWeight: '800', padding: '2px 8px', borderRadius: '4px',
                   letterSpacing: '0.06em', flexShrink: 0, marginTop: '2px'
                 }}>{e.method}</span>

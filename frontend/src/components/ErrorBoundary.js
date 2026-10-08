@@ -78,9 +78,9 @@ export default class ErrorBoundary extends React.Component {
             style={{
               padding: "9px 20px",
               borderRadius: 8,
-              border: "1px solid rgba(100,70,40,0.2)",
+              border: "1px solid var(--border)",
               background: "transparent",
-              color: "var(--text-secondary, #5A4A3C)",
+              color: "var(--text-secondary)",
               fontWeight: 600,
               fontSize: 13,
               cursor: "pointer",
@@ -95,13 +95,13 @@ export default class ErrorBoundary extends React.Component {
               padding: "9px 20px",
               borderRadius: 8,
               border: "none",
-              background: "linear-gradient(135deg, #C96A48, #8B3E24)",
+              background: "var(--primary)",
               color: "#fff",
               fontWeight: 700,
               fontSize: 13,
               cursor: "pointer",
               fontFamily: "inherit",
-              boxShadow: "0 4px 14px rgba(201,106,72,0.35)",
+              boxShadow: "var(--primary-glow)",
             }}
           >
             Reload Page

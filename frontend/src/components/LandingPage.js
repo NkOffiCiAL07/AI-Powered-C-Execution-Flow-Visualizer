@@ -91,7 +91,7 @@ function StatsSection({ dark, border09, textMuted38 }) {
     <section ref={sectionRef} className="max-w-7xl mx-auto px-6 py-20 border-t" style={{ borderColor: border09 }}>
       <div className="text-center mb-14">
         <span className="inline-block text-xs font-bold uppercase tracking-widest mb-4 px-3 py-1 rounded-full border"
-          style={{ color: '#C96A48', borderColor: 'rgba(201,106,72,0.28)', background: 'rgba(201,106,72,0.07)' }}>
+          style={{ color: '#6366F1', borderColor: 'rgba(99,102,241,0.28)', background: 'rgba(99,102,241,0.07)' }}>
           By The Numbers
         </span>
         <h2 className="font-extrabold leading-tight"
@@ -102,13 +102,13 @@ function StatsSection({ dark, border09, textMuted38 }) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
         {STATS.map((s, i) => (
           <div key={i} className="stat-card rounded-2xl p-8 text-center border"
-            style={{ background: dark ? 'rgba(255,255,255,0.03)' : 'rgba(201,106,72,0.03)', borderColor: dark ? 'rgba(232,226,217,0.09)' : 'rgba(201,106,72,0.1)' }}>
+            style={{ background: dark ? 'rgba(255,255,255,0.03)' : 'rgba(99,102,241,0.03)', borderColor: dark ? 'rgba(232,226,217,0.09)' : 'rgba(99,102,241,0.1)' }}>
             <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-5"
-              style={{ background: 'linear-gradient(135deg,rgba(201,106,72,0.18),rgba(139,62,36,0.08))' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: 22, color: '#C96A48' }}>{s.icon}</span>
+              style={{ background: 'linear-gradient(135deg,rgba(99,102,241,0.18),rgba(139,62,36,0.08))' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 22, color: '#6366F1' }}>{s.icon}</span>
             </div>
             <div className="text-4xl font-extrabold mb-2 stat-number"
-              style={{ fontFamily: 'Space Grotesk, monospace', color: '#C96A48', lineHeight: 1 }}>
+              style={{ fontFamily: 'Space Grotesk, monospace', color: '#6366F1', lineHeight: 1 }}>
               {formatStat(vals[i], s)}
             </div>
             <div className="text-xs uppercase tracking-widest font-bold" style={{ color: textMuted38 }}>{s.label}</div>
@@ -153,35 +153,35 @@ const FEATURE_TABS = [
 
 function FeaturePreview({ type, dark, border12, textMuted38, textMuted55 }) {
   const bg = dark ? '#141210' : '#F7F3EE';
-  const lineColor = dark ? 'rgba(232,226,217,0.08)' : 'rgba(201,106,72,0.08)';
+  const lineColor = dark ? 'rgba(232,226,217,0.08)' : 'rgba(99,102,241,0.08)';
 
   if (type === 'flow') return (
-    <div className="rounded-xl overflow-hidden border mt-6" style={{ borderColor: 'rgba(201,106,72,0.18)', background: bg, padding: '20px' }}>
+    <div className="rounded-xl overflow-hidden border mt-6" style={{ borderColor: 'rgba(99,102,241,0.18)', background: bg, padding: '20px' }}>
       <svg width="100%" height="160" viewBox="0 0 400 160">
         <defs>
           <marker id="ft-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-            <path d="M0,0 L6,3 L0,6 z" fill="rgba(201,106,72,0.6)" />
+            <path d="M0,0 L6,3 L0,6 z" fill="rgba(99,102,241,0.6)" />
           </marker>
         </defs>
-        {[['main()', 200, 20, '#C96A48'], ['fetch_nodes()', 90, 70, '#8B3E24'], ['for_loop()', 200, 70, '#B85A38'], ['process(n)', 200, 120, '#8B3E24'], ['return 0', 310, 120, '#22c55e']].map(([label, x, y, color], i) => (
+        {[['main()', 200, 20, '#6366F1'], ['fetch_nodes()', 90, 70, '#4F46E5'], ['for_loop()', 200, 70, '#B85A38'], ['process(n)', 200, 120, '#4F46E5'], ['return 0', 310, 120, '#22c55e']].map(([label, x, y, color], i) => (
           <g key={i}>
             <rect x={x - 52} y={y - 13} width={104} height={26} rx={6} fill={`${color}18`} stroke={`${color}55`} strokeWidth={1.5} />
             <text x={x} y={y + 4} textAnchor="middle" fontSize={10} fontWeight={600} fontFamily="Space Grotesk, monospace" fill={color}>{label}</text>
           </g>
         ))}
         {[[200,33,90,57],[200,33,200,57],[90,83,200,107],[200,83,200,107],[200,133,310,107]].map(([x1,y1,x2,y2], i) => (
-          <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(201,106,72,0.4)" strokeWidth={1.5} markerEnd="url(#ft-arr)" strokeDasharray="4 2" />
+          <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(99,102,241,0.4)" strokeWidth={1.5} markerEnd="url(#ft-arr)" strokeDasharray="4 2" />
         ))}
       </svg>
     </div>
   );
 
   if (type === 'ai') return (
-    <div className="rounded-xl border mt-6 overflow-hidden" style={{ borderColor: 'rgba(201,106,72,0.18)', background: bg }}>
+    <div className="rounded-xl border mt-6 overflow-hidden" style={{ borderColor: 'rgba(99,102,241,0.18)', background: bg }}>
       <div style={{ padding: '14px 18px', borderBottom: `1px solid ${lineColor}` }}>
         <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined" style={{ fontSize: 15, color: '#C96A48' }}>psychology</span>
-          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#C96A48' }}>AI Analysis</span>
+          <span className="material-symbols-outlined" style={{ fontSize: 15, color: '#6366F1' }}>psychology</span>
+          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#6366F1' }}>AI Analysis</span>
           <span style={{ marginLeft: 'auto', fontSize: '0.65rem', color: textMuted38, fontFamily: 'JetBrains Mono, monospace' }}>O(n log n)</span>
         </div>
       </div>
@@ -191,7 +191,7 @@ function FeaturePreview({ type, dark, border12, textMuted38, textMuted55 }) {
         'No memory leaks detected in this execution path.',
       ].map((line, i) => (
         <div key={i} style={{ padding: '10px 18px', borderBottom: i < 2 ? `1px solid ${lineColor}` : 'none', fontSize: '0.78rem', color: textMuted55, lineHeight: 1.6, display: 'flex', gap: 10 }}>
-          <span className="material-symbols-outlined shrink-0" style={{ fontSize: 14, color: i === 1 ? '#22c55e' : '#C96A48', marginTop: 1 }}>{i === 1 ? 'lightbulb' : i === 2 ? 'check_circle' : 'info'}</span>
+          <span className="material-symbols-outlined shrink-0" style={{ fontSize: 14, color: i === 1 ? '#22c55e' : '#6366F1', marginTop: 1 }}>{i === 1 ? 'lightbulb' : i === 2 ? 'check_circle' : 'info'}</span>
           {line}
         </div>
       ))}
@@ -199,18 +199,18 @@ function FeaturePreview({ type, dark, border12, textMuted38, textMuted55 }) {
   );
 
   if (type === 'memory') return (
-    <div className="rounded-xl border mt-6 overflow-hidden" style={{ borderColor: 'rgba(201,106,72,0.18)', background: bg, padding: '18px' }}>
+    <div className="rounded-xl border mt-6 overflow-hidden" style={{ borderColor: 'rgba(99,102,241,0.18)', background: bg, padding: '18px' }}>
       <div style={{ fontSize: '0.72rem', fontWeight: 700, color: textMuted38, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Heap Allocation Map</div>
       <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
         {Array.from({ length: 32 }, (_, i) => {
           const intensity = i < 8 ? 0.9 : i < 16 ? 0.45 : i < 24 ? 0.2 : 0.06;
-          return <div key={i} style={{ width: 20, height: 20, borderRadius: 3, background: `rgba(201,106,72,${intensity})` }} />;
+          return <div key={i} style={{ width: 20, height: 20, borderRadius: 3, background: `rgba(99,102,241,${intensity})` }} />;
         })}
       </div>
       <div style={{ display: 'flex', gap: 16, marginTop: 12 }}>
-        {[['Active', '#C96A48', 0.9], ['Fragmented', '#C96A48', 0.45], ['Free', '#C96A48', 0.12]].map(([lbl, c, a]) => (
+        {[['Active', '#6366F1', 0.9], ['Fragmented', '#6366F1', 0.45], ['Free', '#6366F1', 0.12]].map(([lbl, c, a]) => (
           <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.7rem', color: textMuted38 }}>
-            <div style={{ width: 10, height: 10, borderRadius: 2, background: `rgba(201,106,72,${a})` }} />{lbl}
+            <div style={{ width: 10, height: 10, borderRadius: 2, background: `rgba(99,102,241,${a})` }} />{lbl}
           </div>
         ))}
       </div>
@@ -218,19 +218,19 @@ function FeaturePreview({ type, dark, border12, textMuted38, textMuted55 }) {
   );
 
   if (type === 'debug') return (
-    <div className="rounded-xl border mt-6 overflow-hidden" style={{ borderColor: 'rgba(201,106,72,0.18)', background: bg }}>
+    <div className="rounded-xl border mt-6 overflow-hidden" style={{ borderColor: 'rgba(99,102,241,0.18)', background: bg }}>
       {[
         { line: 3, active: true,  vars: { data: '[1,3,5]', i: '0' } },
         { line: 4, active: false, vars: {} },
         { line: 5, active: false, vars: {} },
         { line: 6, active: false, vars: {} },
       ].map((row, i) => (
-        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 16px', background: row.active ? 'rgba(201,106,72,0.08)' : 'transparent', borderBottom: `1px solid ${lineColor}` }}>
-          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.7rem', color: row.active ? '#C96A48' : textMuted38, width: 14, textAlign: 'right' }}>{row.line}</span>
-          {row.active && <span className="material-symbols-outlined" style={{ fontSize: 12, color: '#C96A48' }}>arrow_right</span>}
+        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 16px', background: row.active ? 'rgba(99,102,241,0.08)' : 'transparent', borderBottom: `1px solid ${lineColor}` }}>
+          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.7rem', color: row.active ? '#6366F1' : textMuted38, width: 14, textAlign: 'right' }}>{row.line}</span>
+          {row.active && <span className="material-symbols-outlined" style={{ fontSize: 12, color: '#6366F1' }}>arrow_right</span>}
           {!row.active && <span style={{ width: 12 }} />}
           {row.active && Object.entries(row.vars).map(([k, v]) => (
-            <span key={k} style={{ fontSize: '0.7rem', fontFamily: 'JetBrains Mono, monospace', padding: '2px 8px', borderRadius: 4, background: 'rgba(201,106,72,0.12)', color: '#C96A48' }}>
+            <span key={k} style={{ fontSize: '0.7rem', fontFamily: 'JetBrains Mono, monospace', padding: '2px 8px', borderRadius: 4, background: 'rgba(99,102,241,0.12)', color: '#6366F1' }}>
               {k} = {v}
             </span>
           ))}
@@ -274,13 +274,13 @@ const FAQ_ITEMS = [
 
 function FAQSection({ dark, border09, textMuted55 }) {
   const [open, setOpen] = useState(null);
-  const T = 'rgba(201,106,72,';
+  const T = 'rgba(99,102,241,';
   const borderColor = dark ? 'rgba(232,226,217,0.09)' : 'rgba(100,70,40,0.09)';
   return (
     <section className="max-w-3xl mx-auto px-6 py-24 border-t" style={{ borderColor: border09 }}>
       <div className="text-center mb-14">
         <span className="inline-block text-xs font-bold uppercase tracking-widest mb-4 px-3 py-1 rounded-full border"
-          style={{ color: '#C96A48', borderColor: `${T}0.28)`, background: `${T}0.07)` }}>
+          style={{ color: '#6366F1', borderColor: `${T}0.28)`, background: `${T}0.07)` }}>
           FAQ
         </span>
         <h2 className="font-extrabold"
@@ -297,7 +297,7 @@ function FAQSection({ dark, border09, textMuted55 }) {
               style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
               <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)', fontFamily: 'Space Grotesk, sans-serif' }}>{item.q}</span>
               <span className="material-symbols-outlined shrink-0"
-                style={{ color: '#C96A48', fontSize: 20, transition: 'transform 0.25s ease', transform: open === i ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                style={{ color: '#6366F1', fontSize: 20, transition: 'transform 0.25s ease', transform: open === i ? 'rotate(180deg)' : 'rotate(0deg)' }}>
                 expand_more
               </span>
             </button>
@@ -322,15 +322,15 @@ const TESTIMONIALS = [
 ];
 
 function TestimonialsSection({ dark, border09 }) {
-  const T = 'rgba(201,106,72,';
+  const T = 'rgba(99,102,241,';
   const bgCard = dark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.7)';
-  const borderCard = dark ? 'rgba(232,226,217,0.1)' : 'rgba(201,106,72,0.12)';
+  const borderCard = dark ? 'rgba(232,226,217,0.1)' : 'rgba(99,102,241,0.12)';
   const textMuted = dark ? 'rgba(232,226,217,0.5)' : 'rgba(26,19,16,0.5)';
   return (
     <section className="max-w-7xl mx-auto px-6 py-20 border-t" style={{ borderColor: border09 }}>
       <div className="text-center mb-14">
         <span className="inline-block text-xs font-bold uppercase tracking-widest mb-4 px-3 py-1 rounded-full border"
-          style={{ color: '#C96A48', borderColor: `${T}0.28)`, background: `${T}0.07)` }}>
+          style={{ color: '#6366F1', borderColor: `${T}0.28)`, background: `${T}0.07)` }}>
           Loved by Developers
         </span>
         <h2 className="font-extrabold"
@@ -346,13 +346,13 @@ function TestimonialsSection({ dark, border09 }) {
             onMouseLeave={e => { e.currentTarget.style.borderColor = borderCard; e.currentTarget.style.boxShadow = 'none'; }}>
             <div className="flex gap-0.5">
               {Array.from({ length: t.stars }, (_, j) => (
-                <span key={j} className="material-symbols-outlined" style={{ fontSize: 14, color: '#C96A48' }}>star</span>
+                <span key={j} className="material-symbols-outlined" style={{ fontSize: 14, color: '#6366F1' }}>star</span>
               ))}
             </div>
             <p style={{ fontSize: '0.88rem', lineHeight: 1.7, color: 'var(--text-primary)', fontStyle: 'italic', flex: 1 }}>"{t.text}"</p>
-            <div className="flex items-center gap-3 pt-2 border-t" style={{ borderColor: dark ? 'rgba(232,226,217,0.08)' : 'rgba(201,106,72,0.1)' }}>
+            <div className="flex items-center gap-3 pt-2 border-t" style={{ borderColor: dark ? 'rgba(232,226,217,0.08)' : 'rgba(99,102,241,0.1)' }}>
               <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-xs shrink-0"
-                style={{ background: 'linear-gradient(135deg,#C96A48,#8B3E24)' }}>{t.avatar}</div>
+                style={{ background: 'linear-gradient(135deg,#6366F1,#4F46E5)' }}>{t.avatar}</div>
               <div>
                 <div style={{ fontWeight: 700, fontSize: '0.82rem', color: 'var(--text-primary)' }}>{t.name}</div>
                 <div style={{ fontSize: '0.72rem', color: textMuted }}>{t.role}</div>
@@ -376,19 +376,19 @@ const STEPS = [
 const CODE_LINES = [
   { n: 1,  parts: [{ t: '#include', c: '#7C3AED' }, { t: ' <iostream>', c: '#2D6A4F' }] },
   { n: 2,  parts: [] },
-  { n: 3,  parts: [{ t: 'int ', c: '#7C3AED' }, { t: 'main', c: '#C96A48' }, { t: '() {', c: '#1A1310' }], active: true },
-  { n: 4,  parts: [{ t: '  auto ', c: '#7C3AED' }, { t: 'data', c: '#1A1310' }, { t: ' = ', c: '#888' }, { t: 'fetch_nodes', c: '#C96A48' }, { t: '();', c: '#1A1310' }] },
+  { n: 3,  parts: [{ t: 'int ', c: '#7C3AED' }, { t: 'main', c: '#6366F1' }, { t: '() {', c: '#1A1310' }], active: true },
+  { n: 4,  parts: [{ t: '  auto ', c: '#7C3AED' }, { t: 'data', c: '#1A1310' }, { t: ' = ', c: '#888' }, { t: 'fetch_nodes', c: '#6366F1' }, { t: '();', c: '#1A1310' }] },
   { n: 5,  parts: [{ t: '  ', c: '' }, { t: 'for', c: '#7C3AED' }, { t: '(auto& n : data) {', c: '#1A1310' }] },
-  { n: 6,  parts: [{ t: '    process', c: '#C96A48' }, { t: '(n);', c: '#1A1310' }] },
+  { n: 6,  parts: [{ t: '    process', c: '#6366F1' }, { t: '(n);', c: '#1A1310' }] },
   { n: 7,  parts: [{ t: '  }', c: '#888' }] },
-  { n: 8,  parts: [{ t: '  return ', c: '#7C3AED' }, { t: '0', c: '#C96A48' }, { t: ';', c: '#1A1310' }] },
+  { n: 8,  parts: [{ t: '  return ', c: '#7C3AED' }, { t: '0', c: '#6366F1' }, { t: ';', c: '#1A1310' }] },
   { n: 9,  parts: [{ t: '}', c: '#888' }] },
 ];
 const GRAPH_NODES = [
-  { id: 'main',    label: 'main()',       type: 'ENTRY', x: 50, y: 14, color: '#C96A48', rgb: '201,106,72' },
-  { id: 'fetch',   label: 'fetch_nodes()',type: 'CALL',  x: 24, y: 40, color: '#8B3E24', rgb: '139,62,36' },
-  { id: 'loop',    label: 'for(…)',       type: 'LOOP',  x: 74, y: 40, color: '#B85A38', rgb: '184,90,56' },
-  { id: 'process', label: 'process(n)',   type: 'CALL',  x: 74, y: 66, color: '#8B3E24', rgb: '139,62,36' },
+  { id: 'main',    label: 'main()',       type: 'ENTRY', x: 50, y: 14, color: '#6366F1', rgb: '99,102,241' },
+  { id: 'fetch',   label: 'fetch_nodes()',type: 'CALL',  x: 24, y: 40, color: '#4F46E5', rgb: '79,70,229' },
+  { id: 'loop',    label: 'for(…)',       type: 'LOOP',  x: 74, y: 40, color: '#8B5CF6', rgb: '139,92,246' },
+  { id: 'process', label: 'process(n)',   type: 'CALL',  x: 74, y: 66, color: '#4F46E5', rgb: '79,70,229' },
   { id: 'ret',     label: 'return 0',     type: 'EXIT',  x: 50, y: 86, color: '#22c55e', rgb: '34,197,94' },
 ];
 const GRAPH_EDGES = [
@@ -403,14 +403,14 @@ const GRAPH_EDGES = [
 const MOCKUP_CODE = [
   [{ t: '#include ', c: '#7C3AED' }, { t: '<iostream>', c: '#2D6A4F' }],
   [],
-  [{ t: 'int ', c: '#7C3AED' }, { t: 'fibonacci', c: '#C96A48' }, { t: '(int n) {', c: 'rgba(232,226,217,0.75)' }],
-  [{ t: '  if ', c: '#7C3AED' }, { t: '(n <= 1) ', c: 'rgba(232,226,217,0.7)' }, { t: 'return ', c: '#7C3AED' }, { t: 'n', c: '#C96A48' }, { t: ';', c: 'rgba(232,226,217,0.4)' }],
-  [{ t: '  return ', c: '#7C3AED' }, { t: 'fibonacci', c: '#C96A48' }, { t: '(n-1)', c: 'rgba(232,226,217,0.7)' }, { t: ' + ', c: '#C96A48' }],
-  [{ t: '         fibonacci', c: '#C96A48' }, { t: '(n-2);', c: 'rgba(232,226,217,0.5)' }],
+  [{ t: 'int ', c: '#7C3AED' }, { t: 'fibonacci', c: '#6366F1' }, { t: '(int n) {', c: 'rgba(232,226,217,0.75)' }],
+  [{ t: '  if ', c: '#7C3AED' }, { t: '(n <= 1) ', c: 'rgba(232,226,217,0.7)' }, { t: 'return ', c: '#7C3AED' }, { t: 'n', c: '#6366F1' }, { t: ';', c: 'rgba(232,226,217,0.4)' }],
+  [{ t: '  return ', c: '#7C3AED' }, { t: 'fibonacci', c: '#6366F1' }, { t: '(n-1)', c: 'rgba(232,226,217,0.7)' }, { t: ' + ', c: '#6366F1' }],
+  [{ t: '         fibonacci', c: '#6366F1' }, { t: '(n-2);', c: 'rgba(232,226,217,0.5)' }],
   [{ t: '}', c: 'rgba(232,226,217,0.35)' }],
   [],
-  [{ t: 'int ', c: '#7C3AED' }, { t: 'main', c: '#C96A48' }, { t: '() {', c: 'rgba(232,226,217,0.75)' }],
-  [{ t: '  cout', c: '#C96A48' }, { t: ' << ', c: 'rgba(232,226,217,0.5)' }, { t: 'fibonacci', c: '#C96A48' }, { t: '(8);', c: 'rgba(232,226,217,0.5)' }],
+  [{ t: 'int ', c: '#7C3AED' }, { t: 'main', c: '#6366F1' }, { t: '() {', c: 'rgba(232,226,217,0.75)' }],
+  [{ t: '  cout', c: '#6366F1' }, { t: ' << ', c: 'rgba(232,226,217,0.5)' }, { t: 'fibonacci', c: '#6366F1' }, { t: '(8);', c: 'rgba(232,226,217,0.5)' }],
 ];
 
 function HeroMockup() {
@@ -421,17 +421,17 @@ function HeroMockup() {
   }, []);
 
   const NODES = [
-    { label: 'fibonacci(8)', type: 'ENTRY', cx: 50,  cy: 18, color: '#C96A48', rgb: '201,106,72' },
-    { label: 'fib(7)',        type: 'CALL',  cx: 28,  cy: 42, color: '#B85A38', rgb: '184,90,56' },
-    { label: 'fib(6)',        type: 'CALL',  cx: 72,  cy: 42, color: '#B85A38', rgb: '184,90,56' },
-    { label: 'fib(5)',        type: 'CALL',  cx: 28,  cy: 67, color: '#9B4A2C', rgb: '155,74,44' },
+    { label: 'fibonacci(8)', type: 'ENTRY', cx: 50,  cy: 18, color: '#6366F1', rgb: '99,102,241' },
+    { label: 'fib(7)',        type: 'CALL',  cx: 28,  cy: 42, color: '#8B5CF6', rgb: '139,92,246' },
+    { label: 'fib(6)',        type: 'CALL',  cx: 72,  cy: 42, color: '#8B5CF6', rgb: '139,92,246' },
+    { label: 'fib(5)',        type: 'CALL',  cx: 28,  cy: 67, color: '#4F46E5', rgb: '79,70,229' },
     { label: 'return 1',      type: 'BASE',  cx: 72,  cy: 67, color: '#22c55e', rgb: '34,197,94' },
   ];
   const EDGES = [[0,1],[0,2],[1,3],[2,4]];
 
   return (
     <div className="hero-mockup w-full max-w-5xl mx-auto mt-14 rounded-2xl overflow-hidden"
-      style={{ border: '1px solid rgba(201,106,72,0.2)', boxShadow: '0 48px 120px rgba(0,0,0,0.18), 0 0 0 1px rgba(201,106,72,0.06), inset 0 1px 0 rgba(255,255,255,0.04)', background: '#1C1917' }}>
+      style={{ border: '1px solid rgba(99,102,241,0.2)', boxShadow: '0 48px 120px rgba(0,0,0,0.18), 0 0 0 1px rgba(99,102,241,0.06), inset 0 1px 0 rgba(255,255,255,0.04)', background: '#1C1917' }}>
 
       {/* Browser chrome */}
       <div style={{ background: '#231F1C', borderBottom: '1px solid rgba(232,226,217,0.06)', padding: '9px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -455,8 +455,8 @@ function HeroMockup() {
         {/* Icon sidebar */}
         <div style={{ width: 46, background: '#1A1614', borderRight: '1px solid rgba(232,226,217,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 14, gap: 10, flexShrink: 0 }}>
           {[['folder_open',false],['code',true],['hub',false],['memory',false],['psychology',false]].map(([icon, active], i) => (
-            <div key={i} style={{ width: 30, height: 30, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', background: active ? 'rgba(201,106,72,0.15)' : 'transparent', border: active ? '1px solid rgba(201,106,72,0.28)' : 'none' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: 15, color: active ? '#C96A48' : 'rgba(232,226,217,0.2)' }}>{icon}</span>
+            <div key={i} style={{ width: 30, height: 30, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', background: active ? 'rgba(99,102,241,0.15)' : 'transparent', border: active ? '1px solid rgba(99,102,241,0.28)' : 'none' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 15, color: active ? '#6366F1' : 'rgba(232,226,217,0.2)' }}>{icon}</span>
             </div>
           ))}
         </div>
@@ -465,8 +465,8 @@ function HeroMockup() {
         <div style={{ width: 148, background: '#1E1A17', borderRight: '1px solid rgba(232,226,217,0.05)', paddingTop: 10, flexShrink: 0, overflow: 'hidden' }}>
           <div style={{ padding: '2px 10px 8px', fontSize: 8, fontWeight: 800, color: 'rgba(232,226,217,0.2)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Explorer</div>
           {[{ n: 'src/', indent: 0, folder: true },{ n: 'main.cpp', indent: 1, active: true },{ n: 'fibonacci.h', indent: 1 },{ n: 'utils.cpp', indent: 1 },{ n: 'tests/', indent: 0, folder: true },{ n: 'test_fib.cpp', indent: 1 }].map((f, i) => (
-            <div key={i} style={{ padding: `3px 10px 3px ${10 + f.indent * 12}px`, display: 'flex', alignItems: 'center', gap: 5, background: f.active ? 'rgba(201,106,72,0.12)' : 'transparent', borderLeft: f.active ? '2px solid #C96A48' : '2px solid transparent' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: 11, color: f.active ? '#C96A48' : f.folder ? 'rgba(232,226,217,0.3)' : 'rgba(232,226,217,0.2)', flexShrink: 0 }}>{f.folder ? 'folder' : 'description'}</span>
+            <div key={i} style={{ padding: `3px 10px 3px ${10 + f.indent * 12}px`, display: 'flex', alignItems: 'center', gap: 5, background: f.active ? 'rgba(99,102,241,0.12)' : 'transparent', borderLeft: f.active ? '2px solid #6366F1' : '2px solid transparent' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 11, color: f.active ? '#6366F1' : f.folder ? 'rgba(232,226,217,0.3)' : 'rgba(232,226,217,0.2)', flexShrink: 0 }}>{f.folder ? 'folder' : 'description'}</span>
               <span style={{ fontSize: 10, color: f.active ? '#E8E2D9' : 'rgba(232,226,217,0.35)', whiteSpace: 'nowrap', fontFamily: 'JetBrains Mono, monospace' }}>{f.n}</span>
             </div>
           ))}
@@ -475,16 +475,16 @@ function HeroMockup() {
         {/* Code editor */}
         <div style={{ width: '36%', borderRight: '1px solid rgba(232,226,217,0.05)', display: 'flex', flexDirection: 'column', background: '#1C1917', flexShrink: 0 }}>
           <div style={{ padding: '6px 12px', borderBottom: '1px solid rgba(232,226,217,0.05)', display: 'flex', gap: 5, alignItems: 'center' }}>
-            <div style={{ padding: '2px 8px', borderRadius: 4, background: 'rgba(201,106,72,0.12)', border: '1px solid rgba(201,106,72,0.22)', fontSize: 9, color: '#C96A48', fontFamily: 'JetBrains Mono, monospace' }}>main.cpp</div>
+            <div style={{ padding: '2px 8px', borderRadius: 4, background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.22)', fontSize: 9, color: '#6366F1', fontFamily: 'JetBrains Mono, monospace' }}>main.cpp</div>
             <div style={{ padding: '2px 8px', borderRadius: 4, fontSize: 9, color: 'rgba(232,226,217,0.22)', fontFamily: 'JetBrains Mono, monospace' }}>fibonacci.h</div>
-            <button style={{ marginLeft: 'auto', padding: '3px 10px', borderRadius: 5, background: 'linear-gradient(135deg,#C96A48,#8B3E24)', fontSize: 9, color: '#fff', fontWeight: 700, border: 'none', cursor: 'default', display: 'flex', alignItems: 'center', gap: 3 }}>
+            <button style={{ marginLeft: 'auto', padding: '3px 10px', borderRadius: 5, background: 'linear-gradient(135deg,#6366F1,#4F46E5)', fontSize: 9, color: '#fff', fontWeight: 700, border: 'none', cursor: 'default', display: 'flex', alignItems: 'center', gap: 3 }}>
               <span className="material-symbols-outlined" style={{ fontSize: 10 }}>play_arrow</span>Run
             </button>
           </div>
           <div style={{ flex: 1, padding: '8px 4px', fontFamily: 'JetBrains Mono, monospace', fontSize: '10.5px', lineHeight: 1.75, overflow: 'hidden' }}>
             {MOCKUP_CODE.map((line, li) => (
-              <div key={li} style={{ display: 'flex', gap: 8, padding: '0 4px', borderRadius: 3, background: li === 4 ? 'rgba(201,106,72,0.1)' : 'transparent', borderLeft: li === 4 ? '2px solid rgba(201,106,72,0.55)' : '2px solid transparent' }}>
-                <span style={{ width: 14, textAlign: 'right', color: li === 4 ? 'rgba(201,106,72,0.6)' : 'rgba(232,226,217,0.18)', userSelect: 'none', fontSize: 9, paddingTop: 1 }}>{li + 1}</span>
+              <div key={li} style={{ display: 'flex', gap: 8, padding: '0 4px', borderRadius: 3, background: li === 4 ? 'rgba(99,102,241,0.1)' : 'transparent', borderLeft: li === 4 ? '2px solid rgba(99,102,241,0.55)' : '2px solid transparent' }}>
+                <span style={{ width: 14, textAlign: 'right', color: li === 4 ? 'rgba(99,102,241,0.6)' : 'rgba(232,226,217,0.18)', userSelect: 'none', fontSize: 9, paddingTop: 1 }}>{li + 1}</span>
                 <span>{line.length === 0 ? <span> </span> : line.map((p, pi) => <span key={pi} style={{ color: p.c }}>{p.t}</span>)}</span>
               </div>
             ))}
@@ -494,21 +494,21 @@ function HeroMockup() {
         {/* Flow graph panel */}
         <div style={{ flex: 1, background: '#141210', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
           <div style={{ padding: '6px 14px', borderBottom: '1px solid rgba(232,226,217,0.05)', display: 'flex', alignItems: 'center', gap: 7 }}>
-            <span className="material-symbols-outlined" style={{ fontSize: 12, color: '#C96A48' }}>hub</span>
+            <span className="material-symbols-outlined" style={{ fontSize: 12, color: '#6366F1' }}>hub</span>
             <span style={{ fontSize: 9, fontWeight: 800, color: 'rgba(232,226,217,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Execution Flow</span>
             <div style={{ marginLeft: 'auto', display: 'flex', gap: 5 }}>
               <span style={{ fontSize: 9, color: 'rgba(232,226,217,0.3)', fontFamily: 'JetBrains Mono, monospace' }}>5 nodes</span>
-              <span style={{ fontSize: 9, color: 'rgba(201,106,72,0.7)', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700 }}>· O(2ⁿ)</span>
+              <span style={{ fontSize: 9, color: 'rgba(99,102,241,0.7)', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700 }}>· O(2ⁿ)</span>
             </div>
           </div>
 
           {/* Graph SVG */}
           <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle, rgba(201,106,72,0.12) 1px, transparent 1px)', backgroundSize: '22px 22px', opacity: 0.55 }} />
+            <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle, rgba(99,102,241,0.12) 1px, transparent 1px)', backgroundSize: '22px 22px', opacity: 0.55 }} />
             <svg width="100%" height="100%" style={{ position: 'absolute', inset: 0 }}>
               <defs>
                 <marker id="mk-arr" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
-                  <path d="M0,0 L5,2.5 L0,5 z" fill="rgba(201,106,72,0.45)" />
+                  <path d="M0,0 L5,2.5 L0,5 z" fill="rgba(99,102,241,0.45)" />
                 </marker>
                 <marker id="mk-arr-g" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
                   <path d="M0,0 L5,2.5 L0,5 z" fill="rgba(34,197,94,0.45)" />
@@ -521,7 +521,7 @@ function HeroMockup() {
                   <line key={ei}
                     x1={`${f.cx}%`} y1={`${f.cy + 5}%`}
                     x2={`${t2.cx}%`} y2={`${t2.cy - 5}%`}
-                    stroke={isGreen ? 'rgba(34,197,94,0.35)' : 'rgba(201,106,72,0.38)'}
+                    stroke={isGreen ? 'rgba(34,197,94,0.35)' : 'rgba(99,102,241,0.38)'}
                     strokeWidth="1.3"
                     strokeDasharray="4 3"
                     markerEnd={isGreen ? 'url(#mk-arr-g)' : 'url(#mk-arr)'}
@@ -566,13 +566,13 @@ function HeroMockup() {
           {/* AI insight strip */}
           <div style={{ borderTop: '1px solid rgba(232,226,217,0.06)', background: 'rgba(16,14,12,0.95)', padding: '8px 14px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-              <span className="material-symbols-outlined" style={{ fontSize: 11, color: '#C96A48' }}>psychology</span>
-              <span style={{ fontSize: 9, fontWeight: 800, color: '#C96A48', textTransform: 'uppercase', letterSpacing: '0.08em' }}>AI Analysis</span>
+              <span className="material-symbols-outlined" style={{ fontSize: 11, color: '#6366F1' }}>psychology</span>
+              <span style={{ fontSize: 9, fontWeight: 800, color: '#6366F1', textTransform: 'uppercase', letterSpacing: '0.08em' }}>AI Analysis</span>
               <span style={{ marginLeft: 'auto', padding: '1px 7px', borderRadius: 3, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', fontSize: 8, color: '#f59e0b', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700 }}>O(2ⁿ) — Exponential</span>
             </div>
             <p style={{ fontSize: 9, color: 'rgba(232,226,217,0.45)', lineHeight: 1.6, margin: 0 }}>
               Recursive tree overlapping subproblems detected.{' '}
-              <span style={{ color: '#C96A48' }}>Tip: memoize results to reduce to O(n).</span>
+              <span style={{ color: '#6366F1' }}>Tip: memoize results to reduce to O(n).</span>
             </p>
           </div>
         </div>
@@ -601,14 +601,14 @@ function MarqueeStrip({ dark }) {
   const doubled = [...MARQUEE_ITEMS, ...MARQUEE_ITEMS];
   const sep = dark ? 'rgba(232,226,217,0.12)' : 'rgba(100,70,40,0.12)';
   return (
-    <div style={{ borderTop: `1px solid ${sep}`, borderBottom: `1px solid ${sep}`, padding: '13px 0', overflow: 'hidden', background: dark ? 'rgba(255,255,255,0.015)' : 'rgba(201,106,72,0.02)' }}>
+    <div style={{ borderTop: `1px solid ${sep}`, borderBottom: `1px solid ${sep}`, padding: '13px 0', overflow: 'hidden', background: dark ? 'rgba(255,255,255,0.015)' : 'rgba(99,102,241,0.02)' }}>
       <div className="marquee-wrap">
         <div className="marquee-track">
           {doubled.map((item, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 32px', whiteSpace: 'nowrap' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: 15, color: '#C96A48', flexShrink: 0 }}>{item.icon}</span>
+              <span className="material-symbols-outlined" style={{ fontSize: 15, color: '#6366F1', flexShrink: 0 }}>{item.icon}</span>
               <span style={{ fontSize: '0.82rem', fontWeight: 600, color: dark ? 'rgba(232,226,217,0.55)' : 'rgba(26,19,16,0.5)', fontFamily: 'Space Grotesk, sans-serif' }}>{item.text}</span>
-              <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'rgba(201,106,72,0.35)', flexShrink: 0, marginLeft: 8 }} />
+              <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'rgba(99,102,241,0.35)', flexShrink: 0, marginLeft: 8 }} />
             </div>
           ))}
         </div>
@@ -623,7 +623,7 @@ const FOOTER_COLS = [
   { title: 'Company',   links: ['About', 'Community', 'Contact'] },
 ];
 
-const T = 'rgba(201,106,72,';
+const T = 'rgba(99,102,241,';
 
 const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDown }) => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -646,23 +646,23 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
   const { theme } = useTheme();
   const dark = isDarkTheme(theme);
 
-  const textMuted55 = dark ? 'rgba(232,226,217,0.55)' : 'rgba(26,19,16,0.55)';
-  const textMuted50 = dark ? 'rgba(232,226,217,0.50)' : 'rgba(26,19,16,0.5)';
-  const textMuted40 = dark ? 'rgba(232,226,217,0.40)' : 'rgba(26,19,16,0.4)';
-  const textMuted38 = dark ? 'rgba(232,226,217,0.38)' : 'rgba(26,19,16,0.38)';
-  const textMuted35 = dark ? 'rgba(232,226,217,0.35)' : 'rgba(26,19,16,0.35)';
-  const textMuted30 = dark ? 'rgba(232,226,217,0.30)' : 'rgba(26,19,16,0.3)';
-  const textMuted25 = dark ? 'rgba(232,226,217,0.25)' : 'rgba(26,19,16,0.25)';
-  const demoCodeText = dark ? '#E8E2D9' : '#1A1310';
-  const demoEditorBg = dark ? '#1C1917' : '#F7F3EE';
-  const demoGraphBg  = dark ? '#141210' : '#F2EDE7';
-  const navBg        = dark ? 'rgba(35,31,28,0.94)'  : 'rgba(250,249,247,0.92)';
-  const border09 = dark ? 'rgba(232,226,217,0.09)' : 'rgba(100,70,40,0.09)';
-  const border10 = dark ? 'rgba(232,226,217,0.10)' : 'rgba(100,70,40,0.1)';
-  const border12 = dark ? 'rgba(232,226,217,0.12)' : 'rgba(100,70,40,0.12)';
-  const border14 = dark ? 'rgba(232,226,217,0.14)' : 'rgba(100,70,40,0.14)';
-  const border25 = dark ? 'rgba(232,226,217,0.25)' : 'rgba(100,70,40,0.25)';
-  const border08 = dark ? 'rgba(232,226,217,0.08)' : 'rgba(100,70,40,0.08)';
+  const textMuted55 = dark ? '#a1a1aa' : '#64748b';
+  const textMuted50 = dark ? '#9ca3af' : '#64748b';
+  const textMuted40 = dark ? '#71717a' : '#94a3b8';
+  const textMuted38 = dark ? '#71717a' : '#94a3b8';
+  const textMuted35 = dark ? '#52525b' : '#94a3b8';
+  const textMuted30 = dark ? '#52525b' : '#cbd5e1';
+  const textMuted25 = dark ? '#3f3f46' : '#e2e8f0';
+  const demoCodeText = dark ? '#f4f4f5' : '#0f172a';
+  const demoEditorBg = dark ? '#121215' : '#f8fafc';
+  const demoGraphBg  = dark ? '#09090b' : '#f1f5f9';
+  const navBg        = dark ? 'rgba(9,9,11,0.85)' : 'rgba(255,255,255,0.85)';
+  const border09 = 'var(--border)';
+  const border10 = 'var(--border)';
+  const border12 = 'var(--border)';
+  const border14 = 'var(--border-strong)';
+  const border25 = 'var(--border-strong)';
+  const border08 = 'var(--border)';
 
   const activeTabData = FEATURE_TABS.find(f => f.id === activeTab);
 
@@ -735,7 +735,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
         <div className="flex justify-between items-center px-6 md:px-12 h-16 w-full max-w-7xl mx-auto">
           <button className="flex items-center gap-3" onClick={() => onSwitchView('landing')}>
             <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-              style={{ background: 'linear-gradient(135deg,#C96A48,#8B3E24)', boxShadow: '0 0 18px rgba(201,106,72,0.35)' }}>
+              style={{ background: 'linear-gradient(135deg,#6366F1,#4F46E5)', boxShadow: '0 0 18px rgba(99,102,241,0.35)' }}>
               <span className="material-symbols-outlined text-white" style={{ fontSize: '16px' }}>terminal</span>
             </div>
             <span className="text-lg font-bold tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--text-primary)' }}>Traceon</span>
@@ -791,8 +791,8 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
             <div className="max-w-4xl mx-auto">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border mb-8 cursor-default select-none"
                 style={{ background: `${T}0.08)`, borderColor: `${T}0.28)` }}>
-                <span className="w-2 h-2 rounded-full animate-pulse-ring" style={{ background: '#C96A48', flexShrink: 0 }} />
-                <span className="text-xs font-bold tracking-widest uppercase" style={{ color: '#C96A48' }}>Alpha Release — Early Access</span>
+                <span className="w-2 h-2 rounded-full animate-pulse-ring" style={{ background: '#6366F1', flexShrink: 0 }} />
+                <span className="text-xs font-bold tracking-widest uppercase" style={{ color: '#6366F1' }}>Alpha Release — Early Access</span>
               </div>
 
               <h1 className="font-extrabold mb-6 leading-tight"
@@ -805,7 +805,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
                 style={{ fontSize: 'clamp(1rem,2.2vw,1.2rem)', color: textMuted55 }}>
                 Transform complex C, C++, Python, and Java execution paths into intuitive, high-fidelity visual graphs.
                 Debug with precision using{' '}
-                <span style={{ color: '#C96A48', fontWeight: 600 }}>AI-driven flow analysis</span>.
+                <span style={{ color: '#6366F1', fontWeight: 600 }}>AI-driven flow analysis</span>.
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -839,10 +839,10 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
                     <input type="email" placeholder="you@example.com" value={waitlistEmail}
                       onChange={e => setWaitlistEmail(e.target.value)} required
                       style={{ flex: 1, padding: '10px 14px', borderRadius: '10px', border: `1px solid ${border25}`, background: dark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.8)', color: 'var(--text-primary)', fontSize: '0.875rem', outline: 'none', fontFamily: 'Inter, sans-serif', transition: 'border-color 0.15s' }}
-                      onFocus={e => e.target.style.borderColor = 'rgba(201,106,72,0.55)'}
+                      onFocus={e => e.target.style.borderColor = 'rgba(99,102,241,0.55)'}
                       onBlur={e => e.target.style.borderColor = border25} />
                     <button type="submit" disabled={waitlistState === 'loading'}
-                      style={{ padding: '10px 18px', borderRadius: '10px', border: 'none', background: '#C96A48', color: '#fff', fontWeight: '700', fontSize: '0.8rem', cursor: waitlistState === 'loading' ? 'wait' : 'pointer', fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap', opacity: waitlistState === 'loading' ? 0.7 : 1, transition: 'opacity 0.15s' }}>
+                      style={{ padding: '10px 18px', borderRadius: '10px', border: 'none', background: '#6366F1', color: '#fff', fontWeight: '700', fontSize: '0.8rem', cursor: waitlistState === 'loading' ? 'wait' : 'pointer', fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap', opacity: waitlistState === 'loading' ? 0.7 : 1, transition: 'opacity 0.15s' }}>
                       {waitlistState === 'loading' ? '…' : 'Notify Me'}
                     </button>
                   </div>
@@ -860,7 +860,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
 
               {/* Social proof micro-line */}
               <p style={{ marginTop: '24px', fontSize: '0.78rem', color: textMuted35 }}>
-                Trusted by <span style={{ color: '#C96A48', fontWeight: 700 }}>2,000+</span> engineers, students & researchers
+                Trusted by <span style={{ color: '#6366F1', fontWeight: 700 }}>2,000+</span> engineers, students & researchers
               </p>
             </div>
           </div>
@@ -880,7 +880,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
                 { value: '99.9%',   label: 'Uptime SLA' },
               ].map((s, i) => (
                 <div key={i} className="flex flex-col items-center">
-                  <span className="text-xl font-extrabold" style={{ color: '#C96A48', fontFamily: 'Space Grotesk, sans-serif', lineHeight: 1.1 }}>{s.value}</span>
+                  <span className="text-xl font-extrabold" style={{ color: '#6366F1', fontFamily: 'Space Grotesk, sans-serif', lineHeight: 1.1 }}>{s.value}</span>
                   <span className="text-xs font-bold uppercase tracking-widest mt-1" style={{ color: textMuted38 }}>{s.label}</span>
                 </div>
               ))}
@@ -888,7 +888,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
             <div className="flex flex-col items-center pb-5 gap-1.5 opacity-35 select-none">
               <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: textMuted50 }}>Scroll</span>
               <div className="w-5 h-7 rounded-full border flex items-start justify-center pt-1.5" style={{ borderColor: border25 }}>
-                <div className="w-1 h-2 rounded-full animate-scroll-bounce" style={{ background: '#C96A48' }} />
+                <div className="w-1 h-2 rounded-full animate-scroll-bounce" style={{ background: '#6366F1' }} />
               </div>
             </div>
           </div>
@@ -920,7 +920,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
                   style={{ opacity: 0.45, transition: 'opacity 0.2s', cursor: 'default' }}
                   onMouseEnter={e => e.currentTarget.style.opacity = 0.9}
                   onMouseLeave={e => e.currentTarget.style.opacity = 0.45}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '17px', color: '#C96A48' }}>{item.icon}</span>
+                  <span className="material-symbols-outlined" style={{ fontSize: '17px', color: '#6366F1' }}>{item.icon}</span>
                   <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>{item.label}</span>
                 </div>
               ))}
@@ -932,7 +932,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
         <section ref={revealFeatureTabs} className="scroll-reveal max-w-7xl mx-auto px-6 py-28">
           <div className="text-center mb-14">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-widest mb-4"
-              style={{ borderColor: `${T}0.28)`, color: '#C96A48', background: `${T}0.07)` }}>
+              style={{ borderColor: `${T}0.28)`, color: '#6366F1', background: `${T}0.07)` }}>
               <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>auto_awesome</span>
               Feature Deep-Dive
             </div>
@@ -955,7 +955,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
                   <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                     className="feature-tab-btn flex items-center gap-3 px-4 py-3.5 rounded-xl text-left shrink-0"
                     style={{ background: isActive ? `${T}0.1)` : 'transparent', border: `1px solid ${isActive ? `${T}0.32)` : 'transparent'}`, minWidth: 148 }}>
-                    <span className="material-symbols-outlined" style={{ color: isActive ? '#C96A48' : textMuted50, fontSize: '20px', flexShrink: 0 }}>{tab.icon}</span>
+                    <span className="material-symbols-outlined" style={{ color: isActive ? '#6366F1' : textMuted50, fontSize: '20px', flexShrink: 0 }}>{tab.icon}</span>
                     <span style={{ fontWeight: isActive ? 700 : 500, color: isActive ? 'var(--text-primary)' : textMuted55, fontSize: '0.88rem', whiteSpace: 'nowrap' }}>{tab.label}</span>
                   </button>
                 );
@@ -989,7 +989,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
                 <div className="flex flex-wrap gap-2 mt-5">
                   {activeTabData?.tags.map(tag => (
                     <span key={tag} className="px-3 py-1 rounded-full text-xs font-bold border"
-                      style={{ color: '#C96A48', borderColor: `${T}0.28)`, background: `${T}0.08)` }}>{tag}</span>
+                      style={{ color: '#6366F1', borderColor: `${T}0.28)`, background: `${T}0.08)` }}>{tag}</span>
                   ))}
                 </div>
                 <FeaturePreview
@@ -1008,7 +1008,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
         <section ref={revealBento} className="scroll-reveal max-w-7xl mx-auto px-6 py-20 border-t" style={{ borderColor: border09 }}>
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-widest mb-4"
-              style={{ borderColor: `${T}0.28)`, color: '#C96A48', background: `${T}0.07)` }}>
+              style={{ borderColor: `${T}0.28)`, color: '#6366F1', background: `${T}0.07)` }}>
               Core Capabilities
             </div>
             <h2 className="font-extrabold mb-4" style={{ fontSize: 'clamp(2rem,5vw,3.25rem)', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
@@ -1023,13 +1023,13 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-2 p-8 rounded-2xl border relative overflow-hidden landing-card"
               style={{ background: `${T}0.04)`, borderColor: `${T}0.14)` }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = `${T}0.38)`; e.currentTarget.style.background = `${T}0.08)`; e.currentTarget.style.boxShadow = dark ? '0 24px 64px rgba(232,226,217,0.07), 0 0 32px rgba(201,106,72,0.08)' : '0 24px 64px rgba(100,70,40,0.10), 0 0 32px rgba(201,106,72,0.08)'; }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = `${T}0.38)`; e.currentTarget.style.background = `${T}0.08)`; e.currentTarget.style.boxShadow = dark ? '0 24px 64px rgba(232,226,217,0.07), 0 0 32px rgba(99,102,241,0.08)' : '0 24px 64px rgba(100,70,40,0.10), 0 0 32px rgba(99,102,241,0.08)'; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = `${T}0.14)`; e.currentTarget.style.background = `${T}0.04)`; e.currentTarget.style.boxShadow = 'none'; }}>
               <div className="absolute top-0 right-0 w-56 h-56 rounded-full blur-[90px] pointer-events-none" style={{ background: `${T}0.10)` }} />
               <div className="relative z-10">
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-6"
                   style={{ background: `${T}0.12)`, border: `1px solid ${T}0.28)` }}>
-                  <span className="material-symbols-outlined" style={{ color: '#C96A48', fontSize: '24px' }}>troubleshoot</span>
+                  <span className="material-symbols-outlined" style={{ color: '#6366F1', fontSize: '24px' }}>troubleshoot</span>
                 </div>
                 <h3 className="text-2xl font-bold mb-3" style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--text-primary)' }}>Predictive Path Analysis</h3>
                 <p className="text-base leading-relaxed mb-6" style={{ color: textMuted55 }}>
@@ -1038,7 +1038,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
                 <div className="flex flex-wrap gap-2">
                   {['Race Conditions', 'Memory Leaks', 'Deadlock Detection'].map(tag => (
                     <span key={tag} className="px-3 py-1 rounded-full text-xs font-bold border"
-                      style={{ color: '#C96A48', borderColor: `${T}0.28)`, background: `${T}0.08)` }}>{tag}</span>
+                      style={{ color: '#6366F1', borderColor: `${T}0.28)`, background: `${T}0.08)` }}>{tag}</span>
                   ))}
                 </div>
               </div>
@@ -1058,7 +1058,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
                 <div className="relative z-10">
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
                     style={{ background: `${T}0.12)`, border: `1px solid ${T}0.25)` }}>
-                    <span className="material-symbols-outlined" style={{ color: '#C96A48', fontSize: '20px' }}>{card.icon}</span>
+                    <span className="material-symbols-outlined" style={{ color: '#6366F1', fontSize: '20px' }}>{card.icon}</span>
                   </div>
                   <h3 className="text-lg font-bold mb-2" style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--text-primary)' }}>{card.title}</h3>
                   <p className="text-sm leading-relaxed" style={{ color: textMuted55 }}>{card.desc}</p>
@@ -1074,7 +1074,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
               <div className="relative z-10">
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-6"
                   style={{ background: `${T}0.12)`, border: `1px solid ${T}0.28)` }}>
-                  <span className="material-symbols-outlined" style={{ color: '#C96A48', fontSize: '24px' }}>psychology</span>
+                  <span className="material-symbols-outlined" style={{ color: '#6366F1', fontSize: '24px' }}>psychology</span>
                 </div>
                 <h3 className="text-2xl font-bold mb-3" style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--text-primary)' }}>AI Code Explanation</h3>
                 <p className="text-base leading-relaxed mb-6" style={{ color: textMuted55 }}>
@@ -1083,7 +1083,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
                 <div className="flex flex-wrap gap-2">
                   {['Big-O Analysis', 'Optimization Tips', 'Code Summaries'].map(tag => (
                     <span key={tag} className="px-3 py-1 rounded-full text-xs font-bold border"
-                      style={{ color: '#C96A48', borderColor: `${T}0.28)`, background: `${T}0.08)` }}>{tag}</span>
+                      style={{ color: '#6366F1', borderColor: `${T}0.28)`, background: `${T}0.08)` }}>{tag}</span>
                   ))}
                 </div>
               </div>
@@ -1095,7 +1095,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
         <section ref={revealComparison} className="scroll-reveal max-w-5xl mx-auto px-6 py-24 border-t" style={{ borderColor: border09 }}>
           <div className="text-center mb-14">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-widest mb-4"
-              style={{ borderColor: `${T}0.28)`, color: '#C96A48', background: `${T}0.07)` }}>
+              style={{ borderColor: `${T}0.28)`, color: '#6366F1', background: `${T}0.07)` }}>
               Why Traceon
             </div>
             <h2 className="font-extrabold mb-4"
@@ -1121,7 +1121,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
                 <div key={col.label} style={{
                   padding: '16px 20px', textAlign: col.align, fontWeight: 800, fontSize: '0.82rem',
                   fontFamily: 'Space Grotesk, sans-serif', textTransform: 'uppercase', letterSpacing: '0.06em',
-                  color: col.accent ? '#C96A48' : textMuted38,
+                  color: col.accent ? '#6366F1' : textMuted38,
                   background: col.accent ? `${T}0.07)` : 'transparent',
                   borderLeft: col.accent ? `1px solid ${T}0.18)` : 'none',
                   borderRight: col.accent ? `1px solid ${T}0.18)` : 'none',
@@ -1162,7 +1162,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
         <section ref={revealHowItWorks} className="scroll-reveal max-w-6xl mx-auto px-6 py-28 border-t" style={{ borderColor: border09 }}>
           <div className="text-center mb-20">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-widest mb-4"
-              style={{ borderColor: `${T}0.28)`, color: '#C96A48', background: `${T}0.07)` }}>
+              style={{ borderColor: `${T}0.28)`, color: '#6366F1', background: `${T}0.07)` }}>
               Simple Workflow
             </div>
             <h2 className="font-extrabold mb-4"
@@ -1177,16 +1177,16 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 relative" style={{ alignItems: 'start' }}>
             <div className="hidden md:block absolute"
-              style={{ top: 40, left: '20%', right: '20%', height: 1, background: 'linear-gradient(90deg,transparent,rgba(201,106,72,0.35),rgba(139,62,36,0.3),transparent)' }} />
+              style={{ top: 40, left: '20%', right: '20%', height: 1, background: 'linear-gradient(90deg,transparent,rgba(99,102,241,0.35),rgba(139,62,36,0.3),transparent)' }} />
             {STEPS.map((step, i) => (
               <div key={i} className="flex flex-col items-center text-center">
                 <div className="relative mb-8">
                   <div className="w-20 h-20 rounded-2xl flex items-center justify-center step-icon"
                     style={{ background: `${T}0.06)`, border: `1px solid ${T}0.18)` }}>
-                    <span className="material-symbols-outlined" style={{ color: '#C96A48', fontSize: '32px' }}>{step.icon}</span>
+                    <span className="material-symbols-outlined" style={{ color: '#6366F1', fontSize: '32px' }}>{step.icon}</span>
                   </div>
                   <div className="absolute -top-3 -right-3 w-7 h-7 rounded-full flex items-center justify-center text-xs font-black"
-                    style={{ background: 'linear-gradient(135deg,#C96A48,#8B3E24)', color: '#fff', fontFamily: 'Space Grotesk, sans-serif' }}>
+                    style={{ background: 'linear-gradient(135deg,#6366F1,#4F46E5)', color: '#fff', fontFamily: 'Space Grotesk, sans-serif' }}>
                     {i + 1}
                   </div>
                 </div>
@@ -1195,16 +1195,16 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
 
                 {i === 2 && (() => {
                   const MN = [
-                    { id: 'main',    label: 'main()',    type: 'ENTRY', cx: 120, cy: 28,  hw: 36, hh: 11, color: '#C96A48', rgb: '201,106,72' },
-                    { id: 'fetch',   label: 'fetch()',   type: 'CALL',  cx: 58,  cy: 82,  hw: 30, hh: 11, color: '#8B3E24', rgb: '139,62,36' },
-                    { id: 'loop',    label: 'for(…)',    type: 'LOOP',  cx: 182, cy: 82,  hw: 30, hh: 11, color: '#B85A38', rgb: '184,90,56' },
-                    { id: 'process', label: 'process()', type: 'CALL',  cx: 182, cy: 136, hw: 30, hh: 11, color: '#8B3E24', rgb: '139,62,36' },
+                    { id: 'main',    label: 'main()',    type: 'ENTRY', cx: 120, cy: 28,  hw: 36, hh: 11, color: '#6366F1', rgb: '99,102,241' },
+                    { id: 'fetch',   label: 'fetch()',   type: 'CALL',  cx: 58,  cy: 82,  hw: 30, hh: 11, color: '#4F46E5', rgb: '79,70,229' },
+                    { id: 'loop',    label: 'for(…)',    type: 'LOOP',  cx: 182, cy: 82,  hw: 30, hh: 11, color: '#8B5CF6', rgb: '139,92,246' },
+                    { id: 'process', label: 'process()', type: 'CALL',  cx: 182, cy: 136, hw: 30, hh: 11, color: '#4F46E5', rgb: '79,70,229' },
                     { id: 'ret',     label: 'return 0',  type: 'EXIT',  cx: 120, cy: 170, hw: 36, hh: 11, color: '#22c55e', rgb: '34,197,94' },
                   ];
                   const ME = [[0,1],[0,2],[1,4],[2,3],[3,4]];
                   const ec = dark ? 'rgba(232,226,217,0.16)' : 'rgba(100,70,40,0.18)';
                   const nb = dark ? '#1E1A17' : '#FFFAF6';
-                  const nb2 = dark ? 'rgba(232,226,217,0.14)' : 'rgba(201,106,72,0.22)';
+                  const nb2 = dark ? 'rgba(232,226,217,0.14)' : 'rgba(99,102,241,0.22)';
                   const tc = dark ? '#E8E2D9' : '#1A1310';
                   return (
                     <div style={{ margin: '20px auto 0', width: '100%', maxWidth: '240px', borderRadius: '14px', overflow: 'hidden', border: `1px solid ${T}0.18)`, background: dark ? 'rgba(20,18,16,0.75)' : 'rgba(242,237,231,0.85)', boxShadow: dark ? '0 8px 32px rgba(0,0,0,0.35)' : '0 8px 28px rgba(100,70,40,0.10)' }}>
@@ -1215,13 +1215,13 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
                       <svg width="100%" viewBox="0 0 240 188" style={{ display: 'block' }}>
                         <defs>
                           <marker id="lp-arr" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 z" fill={ec} /></marker>
-                          <marker id="lp-arr-a" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 z" fill="rgba(201,106,72,0.75)" /></marker>
+                          <marker id="lp-arr-a" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 z" fill="rgba(99,102,241,0.75)" /></marker>
                         </defs>
                         {ME.map(([fi, ti], ei) => {
                           const f = MN[fi], t2 = MN[ti];
                           const active = fi === activeNodeIdx || ti === activeNodeIdx;
                           const x1 = f.cx, y1 = f.cy + f.hh + 1, x2 = t2.cx, y2 = t2.cy - t2.hh - 5, my = (y1 + y2) / 2;
-                          return <path key={ei} d={`M${x1},${y1} C${x1},${my} ${x2},${my} ${x2},${y2}`} fill="none" stroke={active ? 'rgba(201,106,72,0.72)' : ec} strokeWidth={active ? 1.6 : 1} strokeDasharray={active ? 'none' : '5 3'} markerEnd={active ? 'url(#lp-arr-a)' : 'url(#lp-arr)'} style={{ transition: 'stroke 0.4s, stroke-width 0.4s' }} />;
+                          return <path key={ei} d={`M${x1},${y1} C${x1},${my} ${x2},${my} ${x2},${y2}`} fill="none" stroke={active ? 'rgba(99,102,241,0.72)' : ec} strokeWidth={active ? 1.6 : 1} strokeDasharray={active ? 'none' : '5 3'} markerEnd={active ? 'url(#lp-arr-a)' : 'url(#lp-arr)'} style={{ transition: 'stroke 0.4s, stroke-width 0.4s' }} />;
                         })}
                         {MN.map((node, ni) => {
                           const active = ni === activeNodeIdx;
@@ -1236,7 +1236,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
                         })}
                       </svg>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '6px 10px', borderTop: `1px solid ${T}0.10)` }}>
-                        {MN.map((_, ni) => <div key={ni} style={{ width: ni === activeNodeIdx ? 14 : 5, height: 5, borderRadius: 3, background: ni === activeNodeIdx ? '#C96A48' : (dark ? 'rgba(232,226,217,0.18)' : 'rgba(100,70,40,0.18)'), transition: 'all 0.35s ease' }} />)}
+                        {MN.map((_, ni) => <div key={ni} style={{ width: ni === activeNodeIdx ? 14 : 5, height: 5, borderRadius: 3, background: ni === activeNodeIdx ? '#6366F1' : (dark ? 'rgba(232,226,217,0.18)' : 'rgba(100,70,40,0.18)'), transition: 'all 0.35s ease' }} />)}
                       </div>
                     </div>
                   );
@@ -1286,17 +1286,17 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
                 style={{ background: demoEditorBg, borderColor: border10 }}>
                 <div className="flex items-center gap-2 px-4 py-2.5 border-b text-xs font-bold"
                   style={{ borderColor: border08, color: textMuted40 }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#C96A48' }}>code</span>
+                  <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#6366F1' }}>code</span>
                   main.cpp
                   <span className="ml-auto px-2 py-0.5 rounded text-[10px]"
-                    style={{ background: 'rgba(201,106,72,0.1)', color: '#C96A48', border: '1px solid rgba(201,106,72,0.2)' }}>C++17</span>
+                    style={{ background: 'rgba(99,102,241,0.1)', color: '#6366F1', border: '1px solid rgba(99,102,241,0.2)' }}>C++17</span>
                 </div>
                 <div className="flex-1 p-4 overflow-hidden" style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', lineHeight: '1.7' }}>
                   {CODE_LINES.map((line, i) => (
                     <div key={i} className="flex gap-3 px-2 rounded transition-all duration-300"
-                      style={{ background: line.active ? 'rgba(201,106,72,0.1)' : 'transparent' }}>
+                      style={{ background: line.active ? 'rgba(99,102,241,0.1)' : 'transparent' }}>
                       <span className="w-5 text-right select-none shrink-0 text-xs"
-                        style={{ color: line.active ? '#C96A48' : textMuted25, paddingTop: '1px' }}>{line.n}</span>
+                        style={{ color: line.active ? '#6366F1' : textMuted25, paddingTop: '1px' }}>{line.n}</span>
                       <span>
                         {line.parts.length === 0
                           ? <span>&nbsp;</span>
@@ -1309,15 +1309,15 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
 
               <div className="flex-1 relative overflow-hidden" style={{ background: demoGraphBg }}>
                 <div className="absolute inset-0 pointer-events-none"
-                  style={{ backgroundImage: `radial-gradient(circle, rgba(201,106,72,0.15) 1px, transparent 1px)`, backgroundSize: '28px 28px', opacity: 0.6 }} />
+                  style={{ backgroundImage: `radial-gradient(circle, rgba(99,102,241,0.15) 1px, transparent 1px)`, backgroundSize: '28px 28px', opacity: 0.6 }} />
                 <svg className="absolute inset-0 w-full h-full" style={{ overflow: 'visible' }}>
                   <defs>
                     <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-                      <polygon points="0 0,8 3,0 6" fill="rgba(201,106,72,0.55)" />
+                      <polygon points="0 0,8 3,0 6" fill="rgba(99,102,241,0.55)" />
                     </marker>
                     <linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#C96A48" stopOpacity="0.6" />
-                      <stop offset="100%" stopColor="#8B3E24" stopOpacity="0.3" />
+                      <stop offset="0%" stopColor="#6366F1" stopOpacity="0.6" />
+                      <stop offset="100%" stopColor="#4F46E5" stopOpacity="0.3" />
                     </linearGradient>
                   </defs>
                   {GRAPH_EDGES.map((e, i) => (
@@ -1367,8 +1367,8 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
 
             <div className="relative z-10">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-widest mb-6"
-                style={{ borderColor: `${T}0.28)`, color: '#C96A48', background: `${T}0.08)` }}>
-                <span className="w-2 h-2 rounded-full animate-pulse-ring" style={{ background: '#C96A48', flexShrink: 0 }} />
+                style={{ borderColor: `${T}0.28)`, color: '#6366F1', background: `${T}0.08)` }}>
+                <span className="w-2 h-2 rounded-full animate-pulse-ring" style={{ background: '#6366F1', flexShrink: 0 }} />
                 Ready to Ship
               </div>
               <h2 className="font-extrabold mb-6"
@@ -1384,7 +1384,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
                 <button className="ghost-btn flex items-center gap-3 px-8 py-4 rounded-xl font-bold text-sm"
                   onClick={() => onSwitchView('pricing')}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#C96A48' }}>local_offer</span>
+                  <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#6366F1' }}>local_offer</span>
                   View Pricing
                 </button>
                 <button className="cta-primary flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm"
@@ -1405,7 +1405,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
                   { icon: 'groups', text: '2,000+ engineers trust Traceon' },
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-2" style={{ fontSize: '0.82rem', color: textMuted50 }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: 15, color: '#C96A48' }}>{item.icon}</span>
+                    <span className="material-symbols-outlined" style={{ fontSize: 15, color: '#6366F1' }}>{item.icon}</span>
                     {item.text}
                   </div>
                 ))}
@@ -1423,7 +1423,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
             <div className="col-span-2">
               <button className="flex items-center gap-3 mb-4" onClick={() => onSwitchView('landing')}>
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                  style={{ background: 'linear-gradient(135deg,#C96A48,#8B3E24)' }}>
+                  style={{ background: 'linear-gradient(135deg,#6366F1,#4F46E5)' }}>
                   <span className="material-symbols-outlined text-white" style={{ fontSize: '16px' }}>terminal</span>
                 </div>
                 <span className="text-lg font-bold" style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--text-primary)' }}>Traceon</span>
@@ -1480,7 +1480,7 @@ const LandingPage = ({ onStart, onSwitchView, onLogin, onSignIn, user, serverDow
               {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map(link => (
                 <button key={link} type="button" className="text-xs transition-colors"
                   style={{ color: textMuted35, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
-                  onMouseEnter={e => e.currentTarget.style.color = '#C96A48'}
+                  onMouseEnter={e => e.currentTarget.style.color = '#6366F1'}
                   onMouseLeave={e => e.currentTarget.style.color = textMuted35}
                   onClick={() => alert(`${link} — Coming Soon`)}>
                   {link}

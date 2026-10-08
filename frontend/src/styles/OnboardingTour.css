@@ -51,7 +51,7 @@
 }
 
 .tour-dot.active {
-  background: var(--primary, #C96A48);
+  background: var(--primary);
   transform: scale(1.3);
 }
 
@@ -59,14 +59,14 @@
   margin: 0 0 7px;
   font-size: 15px;
   font-weight: 700;
-  color: var(--text-primary, #1A1310);
-  font-family: 'Space Grotesk', sans-serif;
+  color: var(--text-primary);
+  font-family: var(--font-sans, inherit);
 }
 
 .tour-body {
   margin: 0 0 16px;
   font-size: 13px;
-  color: var(--text-secondary, #555);
+  color: var(--text-secondary);
   line-height: 1.55;
 }
 
@@ -79,7 +79,7 @@
 .tour-skip {
   background: none;
   border: none;
-  color: var(--text-muted, #999);
+  color: var(--text-muted);
   font-size: 12px;
   cursor: pointer;
   padding: 4px 6px;
@@ -90,7 +90,8 @@
 .tour-skip:hover { color: var(--text-primary); background: var(--bg-hover); }
 
 .tour-next {
-  background: linear-gradient(135deg, #C96A48, #8B3E24);
+  background: var(--primary);
+  box-shadow: var(--primary-glow);
   color: #fff;
   border: none;
   padding: 8px 18px;

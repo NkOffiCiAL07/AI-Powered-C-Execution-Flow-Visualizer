@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createProject, createFile } from '../services/api';
+import Modal from './ui/Modal';
+import Button from './ui/Button';
 
 const LANG_OPTIONS = [
   { value: 'cpp',    label: 'C++',    icon: 'code' },
@@ -243,40 +245,58 @@ const NewProjectModal = ({ isOpen, onClose, onCreate }) => {
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !loading) handleCreate();
-    if (e.key === 'Escape') onClose();
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="npm-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="npm-modal animate-zoom-in" onKeyDown={handleKeyDown}>
-        <div className="npm-header">
-          <h2>New Project</h2>
-          <button className="npm-close" onClick={onClose} aria-label="Close">
-            <span className="material-symbols-outlined">close</span>
-          </button>
-        </div>
-
-        <div className="npm-body">
-          {/* Name */}
-          <label className="npm-label">Project name</label>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Create New Project"
+      subtitle="Set up a new workspace for code execution and debugging."
+      maxWidth="500px"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose} disabled={loading}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            icon="add"
+            loading={loading}
+            disabled={!name.trim()}
+            onClick={handleCreate}
+          >
+            Create Project
+          </Button>
+        </>
+      }
+    >
+      <div onKeyDown={handleKeyDown} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {/* Name */}
+        <div>
+          <label className="npm-label" style={{ marginTop: 0 }}>Project Name</label>
           <input
             ref={nameRef}
             className="npm-input"
             type="text"
-            placeholder="My Awesome Project"
+            placeholder="e.g. Binary Search Tree"
             value={name}
             onChange={(e) => { setName(e.target.value); setError(null); }}
             maxLength={60}
+            autoFocus
           />
+        </div>
 
-          {/* Language */}
+        {/* Language */}
+        <div>
           <label className="npm-label">Language</label>
           <div className="npm-lang-tabs">
             {LANG_OPTIONS.map(opt => (
               <button
                 key={opt.value}
+                type="button"
                 className={`npm-lang-tab ${language === opt.value ? 'active' : ''} lang-tab-${opt.value}`}
                 onClick={() => setLanguage(opt.value)}
               >
@@ -284,13 +304,16 @@ const NewProjectModal = ({ isOpen, onClose, onCreate }) => {
               </button>
             ))}
           </div>
+        </div>
 
-          {/* Template */}
-          <label className="npm-label">Template</label>
+        {/* Template */}
+        <div>
+          <label className="npm-label">Starter Template</label>
           <div className="npm-templates">
             {Object.entries(TEMPLATES).map(([key, tmpl]) => (
               <button
                 key={key}
+                type="button"
                 className={`npm-template-card ${template === key ? 'active' : ''}`}
                 onClick={() => setTemplate(key)}
               >
@@ -300,27 +323,19 @@ const NewProjectModal = ({ isOpen, onClose, onCreate }) => {
               </button>
             ))}
           </div>
-
-          {error && (
-            <div className="npm-error">
-              <span className="material-symbols-outlined">error</span>
-              {error}
-            </div>
-          )}
         </div>
 
-        <div className="npm-footer">
-          <button className="npm-btn-cancel" onClick={onClose} disabled={loading}>Cancel</button>
-          <button className="npm-btn-create" onClick={handleCreate} disabled={loading || !name.trim()}>
-            {loading ? <><div className="npm-spinner" />Creating…</> : <>
-              <span className="material-symbols-outlined">add</span>Create Project
-            </>}
-          </button>
-        </div>
+        {error && (
+          <div className="npm-error">
+            <span className="material-symbols-outlined">error</span>
+            {error}
+          </div>
+        )}
       </div>
-    </div>
+    </Modal>
   );
 };
 
 export default NewProjectModal;
 export { TEMPLATES, FILE_NAMES };
+

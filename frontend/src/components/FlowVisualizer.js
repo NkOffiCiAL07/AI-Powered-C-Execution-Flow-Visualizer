@@ -75,9 +75,9 @@ function CallGraphPanel({ snapshots, currentStep, dark }) {
 
   if (graph.nodes.length === 0) return null;
 
-  const accent = '#C96A48';
-  const nodeBg = dark ? '#1E1A17' : '#FFF8F4';
-  const nodeBorder = dark ? 'rgba(232,226,217,0.14)' : 'rgba(201,106,72,0.22)';
+  const accent = dark ? '#818CF8' : '#4F46E5';
+  const nodeBg = dark ? '#18181B' : '#F8FAFC';
+  const nodeBorder = dark ? 'rgba(255,255,255,0.12)' : 'rgba(79,70,229,0.25)';
   const edgeColor = dark ? 'rgba(232,226,217,0.18)' : 'rgba(100,70,40,0.2)';
   const textColor = dark ? '#E8E2D9' : '#1A1310';
   const mutedText = dark ? 'rgba(232,226,217,0.45)' : 'rgba(26,19,16,0.45)';

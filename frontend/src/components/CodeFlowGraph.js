@@ -282,7 +282,7 @@ const CodeFlowGraph = memo(function CodeFlowGraph({ result, currentStep, code, l
   const expandedNode = nodes.find(n => n.id === expandedId) || null;
 
   // Theme colours
-  const accent   = '#C96A48';
+  const accent   = dark ? '#6366F1' : '#4F46E5';
   const textMain = dark ? '#E8E2D9' : '#1A1310';
   const textDim  = dark ? 'rgba(232,226,217,0.38)' : 'rgba(26,19,16,0.38)';
   const nodeBg   = dark ? '#1C1917' : '#FEFCFA';
@@ -417,7 +417,7 @@ const CodeFlowGraph = memo(function CodeFlowGraph({ result, currentStep, code, l
                 const isExpanded = node.id === expandedId;
                 const tc     = isActive ? accent : typeColor(node.type, dark);
                 const bg     = isActive
-                  ? (dark ? 'rgba(201,106,72,0.20)' : 'rgba(201,106,72,0.10)')
+                  ? (dark ? 'rgba(99,102,241,0.22)' : 'rgba(99,102,241,0.12)')
                   : nodeBg;
                 const bdr    = isActive ? accent
                   : isExpanded ? tc

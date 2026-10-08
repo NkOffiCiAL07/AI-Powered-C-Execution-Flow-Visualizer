@@ -533,55 +533,55 @@
 
 /* ── Run — primary CTA ── */
 .action-btn--run {
-  background: linear-gradient(135deg, #D97757, #B85A3A);
+  background: var(--primary);
   color: #fff;
-  border-color: transparent;
-  box-shadow: 0 2px 10px rgba(201, 106, 72, 0.35);
-  padding-right: 10px;
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), 0 2px 10px var(--primary-glow);
+  padding-right: 12px;
   min-width: 96px;
   height: 36px;
   font-size: 13px;
 }
 
 .action-btn--run:hover:not(:disabled) {
-  opacity: 0.92;
+  filter: brightness(1.08);
   transform: translateY(-1px);
-  box-shadow: 0 5px 18px rgba(201, 106, 72, 0.48);
+  box-shadow: 0 4px 16px var(--primary-glow);
 }
 
 .action-btn--run:active:not(:disabled) {
-  transform: scale(0.97);
-  box-shadow: 0 1px 6px rgba(201, 106, 72, 0.28);
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 1px 4px var(--primary-glow);
 }
 
 /* Keyboard shortcut badge on Run */
 .action-btn-kbd {
   font-size: 9px;
   font-family: var(--font-mono);
-  opacity: 0.65;
+  opacity: 0.75;
   padding: 1px 5px;
   border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: 3px;
-  margin-left: 2px;
+  border-radius: 4px;
+  margin-left: 4px;
   line-height: 1.4;
   font-style: normal;
 }
 
-/* ── Debug — secondary, accent-orange ── */
+/* ── Debug — secondary, accent ── */
 .action-btn--debug {
-  background: rgba(217, 119, 87, 0.07);
+  background: var(--primary-glow);
   color: var(--primary);
-  border-color: rgba(217, 119, 87, 0.28);
+  border-color: var(--border-accent);
 }
 
 .action-btn--debug:hover:not(:disabled) {
-  background: rgba(217, 119, 87, 0.15);
+  background: var(--bg-hover);
   border-color: var(--primary);
   transform: translateY(-1px);
-  box-shadow: 0 3px 10px rgba(217, 119, 87, 0.18);
+  box-shadow: 0 2px 8px var(--primary-glow);
 }
 
-.action-btn--debug:active:not(:disabled) { transform: scale(0.97); }
+.action-btn--debug:active:not(:disabled) { transform: scale(0.98); }
 
 /* ── AI Explain — accent blue ── */
 .action-btn--ai {
@@ -1347,8 +1347,8 @@
   align-items: center;
   gap: 10px;
   padding: 7px 14px;
-  background: linear-gradient(90deg, rgba(201,106,72,0.10), rgba(217,119,87,0.06));
-  border-bottom: 1px solid rgba(201, 106, 72, 0.22);
+  background: linear-gradient(90deg, rgba(99,102,241,0.10), rgba(124,58,237,0.06));
+  border-bottom: 1px solid rgba(99,102,241,0.22);
   flex-shrink: 0;
   animation: bannerSlideIn 0.22s var(--ease-out) both;
 }

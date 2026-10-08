@@ -84,7 +84,7 @@ const CommunityPage = () => {
             style={{
               padding: '11px 28px', borderRadius: '10px', fontWeight: '700', fontSize: '0.875rem',
               cursor: 'pointer', background: 'transparent', color: 'var(--text-primary)',
-              border: '1.5px solid rgba(100,70,40,0.25)', transition: 'opacity 0.15s', width: '100%',
+              border: '1px solid var(--border)', transition: 'opacity 0.15s', width: '100%',
               fontFamily: 'inherit',
             }}
             onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}

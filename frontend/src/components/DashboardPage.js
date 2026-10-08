@@ -3,6 +3,7 @@ import NewProjectModal from './NewProjectModal';
 import NewsPage from './NewsPage';
 import { fetchProjects, deleteProject, fetchFiles } from '../services/api';
 import { useTheme } from '../theme';
+import { EmptyState, Skeleton } from './ui';
 import '../styles/DashboardPage.css';
 
 // ── Activity helpers ──────────────────────────────────────────────────────────
@@ -102,8 +103,8 @@ function LangDonut({ counts, total }) {
 }
 
 const THEME_OPTIONS = [
-  { value: 'light',    label: 'Light',    swatch: '#C96A48' },
-  { value: 'dark',     label: 'Dark',     swatch: '#D97757' },
+  { value: 'light',    label: 'Light',    swatch: '#4F46E5' },
+  { value: 'dark',     label: 'Dark',     swatch: '#6366F1' },
   { value: 'ocean',    label: 'Ocean',    swatch: '#58A6FF' },
   { value: 'forest',   label: 'Forest',   swatch: '#57C87A' },
   { value: 'midnight', label: 'Midnight', swatch: '#A855F7' },
@@ -461,43 +462,43 @@ const DashboardPage = ({ user, onLogout, onOpenProject, onOpenPlayground, onSwit
             )}
 
             {loadingProjects ? (
-              <div className="dash-loading">
-                <div className="dash-spinner" />
-                <span>Loading projects…</span>
+              <div className="proj-grid" style={{ padding: '8px 0' }}>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Skeleton key={i} height="124px" borderRadius="12px" />
+                ))}
               </div>
             ) : fetchError ? (
-              <div className="dash-error-state">
-                <span className="material-symbols-outlined">cloud_off</span>
-                <p>{fetchError}</p>
-                <button className="dash-retry-btn" onClick={loadProjects}>Retry</button>
-              </div>
+              <EmptyState
+                icon="cloud_off"
+                title="Could not load projects"
+                description={fetchError}
+                actionLabel="Retry"
+                actionIcon="sync"
+                onAction={loadProjects}
+              />
             ) : (
               <div className="dash-content-layout">
                 <div className="dash-main-col">
                   {projects.length === 0 ? (
-                    <div className="dash-empty-state">
-                      <div className="dash-empty-illustration">
-                        <span className="material-symbols-outlined">code_blocks</span>
-                      </div>
-                      <h3>No projects yet</h3>
-                      <p>Create a project to organise and save your code across sessions.</p>
-                      <div className="dash-empty-actions">
-                        <button className="dash-new-btn" onClick={() => setShowNewModal(true)}>
-                          <span className="material-symbols-outlined">add</span>
-                          Create first project
-                        </button>
-                        <button className="dash-qa-btn" onClick={onOpenPlayground}>
-                          <span className="material-symbols-outlined">play_circle</span>
-                          Try Playground
-                        </button>
-                      </div>
-                    </div>
+                    <EmptyState
+                      icon="folder_open"
+                      title="No projects yet"
+                      description="Create a project to organise, write, and trace your code across sessions."
+                      actionLabel="Create First Project"
+                      actionIcon="add"
+                      onAction={() => setShowNewModal(true)}
+                      secondaryActionLabel="Open Playground"
+                      onSecondaryAction={onOpenPlayground}
+                    />
                   ) : filteredProjects.length === 0 ? (
-                    <div className="dash-empty-state">
-                      <span className="material-symbols-outlined dash-empty-icon">search_off</span>
-                      <h3>No projects match</h3>
-                      <p>Try adjusting the search or filter.</p>
-                    </div>
+                    <EmptyState
+                      icon="search_off"
+                      title="No projects match your filter"
+                      description="Try adjusting your search terms or language filter."
+                      actionLabel="Clear Filters"
+                      actionIcon="close"
+                      onAction={() => { setSearchQuery(''); setLangFilter('all'); }}
+                    />
                   ) : (
                     <div className="proj-grid">
                       {filteredProjects.map((proj, idx) => (

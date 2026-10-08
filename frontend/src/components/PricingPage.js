@@ -122,8 +122,8 @@ export default function PricingPage({ onStart, onSignIn, user }) {
               flexDirection: 'column',
               position: 'relative',
               boxShadow: tier.popular
-                ? '0 8px 40px rgba(201,106,72,0.14)'
-                : '0 2px 10px rgba(100,70,40,0.05)',
+                ? 'var(--primary-glow, 0 10px 30px rgba(99,102,241,0.2))'
+                : '0 2px 10px rgba(0,0,0,0.04)',
             }}>
 
               {/* Most Popular badge */}
@@ -198,7 +198,7 @@ export default function PricingPage({ onStart, onSignIn, user }) {
                   transition: 'opacity 0.15s, transform 0.1s',
                   background: tier.popular ? 'var(--primary)' : 'transparent',
                   color: tier.popular ? '#fff' : 'var(--text-primary)',
-                  border: tier.popular ? 'none' : '1.5px solid var(--border-strong, rgba(100,70,40,0.25))',
+                  border: tier.popular ? 'none' : '1px solid var(--border)',
                 };
                 return ctaHref ? (
                   <a href={ctaHref} target="_blank" rel="noopener noreferrer"
