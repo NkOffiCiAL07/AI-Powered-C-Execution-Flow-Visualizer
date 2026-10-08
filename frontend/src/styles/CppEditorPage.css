@@ -1823,3 +1823,255 @@
   background: var(--primary);
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   WORKSPACE LAYOUT MODES (Split, Dock, Zen) & BOTTOM CONSOLE DRAWER
+   ══════════════════════════════════════════════════════════════════ */
+
+.editor-layout-selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2px 4px;
+  border-radius: 9px;
+  margin-right: 6px;
+}
+
+.editor-layout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  color: #94A3B8;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: var(--font-sans);
+}
+
+.editor-layout-btn .material-symbols-outlined {
+  font-size: 14px;
+}
+
+.editor-layout-btn:hover {
+  color: #F8FAFC;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.editor-layout-btn.active {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(6, 182, 212, 0.25) 100%);
+  color: #FFFFFF;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+/* ── Layout: Bottom Dock ── */
+.editor-content-wrap.layout--dock {
+  flex-direction: column !important;
+}
+
+.editor-content-wrap.layout--dock .editor-page-left {
+  width: 100% !important;
+  flex: 1;
+  min-height: 0;
+}
+
+.resize-divider-h {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: row-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.18s;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.resize-divider-h:hover {
+  background: rgba(99, 102, 241, 0.2);
+}
+
+.resize-handle-line {
+  width: 32px;
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Dockable Bottom Console */
+.editor-bottom-dock {
+  width: 100%;
+  background: rgba(10, 15, 30, 0.85);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: height 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.editor-bottom-dock.collapsed {
+  height: 38px !important;
+}
+
+.bottom-dock-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  height: 38px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.bottom-dock-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bottom-dock-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: none;
+  color: #94A3B8;
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: var(--font-sans);
+}
+
+.bottom-dock-tab .material-symbols-outlined {
+  font-size: 15px;
+}
+
+.bottom-dock-tab:hover {
+  color: #F8FAFC;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.bottom-dock-tab.active {
+  color: #22D3EE;
+  background: rgba(6, 182, 212, 0.12);
+  font-weight: 600;
+  border: 1px solid rgba(6, 182, 212, 0.25);
+}
+
+.bottom-dock-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.2);
+  color: #F87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.bottom-dock-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bottom-dock-action-btn {
+  background: transparent;
+  border: none;
+  color: #64748B;
+  padding: 4px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  font-size: 11px;
+}
+
+.bottom-dock-action-btn:hover {
+  color: #F8FAFC;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.bottom-dock-body {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Layout: Zen Focus ── */
+.editor-content-wrap.layout--zen .editor-page-left {
+  width: 100% !important;
+  flex: 1;
+  min-height: 0;
+}
+
+.zen-floating-action-hud {
+  position: absolute;
+  bottom: 34px;
+  right: 28px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(10, 15, 30, 0.82);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 16px rgba(99, 102, 241, 0.15);
+  animation: peekSlideIn 0.2s ease;
+}
+
+.zen-hud-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: none;
+  color: #CBD5E1;
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.zen-hud-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+}
+
+.zen-hud-btn.primary {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.4) 0%, rgba(6, 182, 212, 0.4) 100%);
+  color: #FFFFFF;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.zen-hud-btn.primary:hover {
+  box-shadow: 0 0 14px rgba(6, 182, 212, 0.4);
+}
+
+

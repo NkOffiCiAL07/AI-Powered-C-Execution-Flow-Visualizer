@@ -34,6 +34,7 @@ const MemorySpectrometer = lazy(() => import("./components/MemorySpectrometer"))
 const BreakpointsPanel   = lazy(() => import("./components/BreakpointsPanel"));
 const DebuggerRestricted = lazy(() => import("./components/DebuggerRestricted"));
 const OnboardingTour     = lazy(() => import("./components/OnboardingTour"));
+const FloatingTransportDock = lazy(() => import("./components/FloatingTransportDock"));
 
 // Captured once at module load — before React StrictMode double-mounts any
 // effects and before the URL-sync effect can overwrite window.location.search.
@@ -953,6 +954,49 @@ function App() {
     }
   }, [analysisResult]);
 
+  // ── Quantum Workspace: Visualizer Layout Modes & Auto-Stepping ──
+  const [visLayoutMode, setVisLayoutMode] = useState("split"); // "split" | "quad" | "canvas" | "zen"
+  const [dockPlaying, setDockPlaying] = useState(false);
+  const [dockSpeed, setDockSpeed] = useState(800);
+  const [showMiniPeek, setShowMiniPeek] = useState(true);
+  const dockTimerRef = useRef(null);
+
+  const handleDockTogglePlay = useCallback(() => {
+    setDockPlaying(p => !p);
+  }, []);
+
+  useEffect(() => {
+    if (!dockPlaying) {
+      if (dockTimerRef.current) clearTimeout(dockTimerRef.current);
+      return;
+    }
+    const total = analysisResult?.total_recorded_steps ?? analysisResult?.snapshots?.length ?? 0;
+    const cur = analysisResult?.cursor ?? 0;
+    if (!analysisResult?.session_id || (total > 0 && cur >= total - 1) || analysisResult?.status === "exited") {
+      setDockPlaying(false);
+      return;
+    }
+
+    dockTimerRef.current = setTimeout(() => {
+      handleStep("next", "over");
+    }, dockSpeed);
+
+    return () => {
+      if (dockTimerRef.current) clearTimeout(dockTimerRef.current);
+    };
+  }, [dockPlaying, analysisResult, dockSpeed, handleStep]);
+
+  useEffect(() => {
+    if (dockPlaying && analysisResult) {
+      const cur = analysisResult.cursor ?? 0;
+      const snap = analysisResult.snapshots?.[cur];
+      const line = snap?.location?.line;
+      if (line && breakpoints.has(line)) {
+        setDockPlaying(false);
+      }
+    }
+  }, [dockPlaying, analysisResult, breakpoints]);
+
   const renderView = () => {
     switch (view) {
       case "landing":
@@ -1048,311 +1092,534 @@ function App() {
         const noProject = !currentProject;
         const debugLangLabel = language === "c" ? "C" : language === "python" ? "Python" : language === "java" ? "Java" : "C++";
 
-        return (
-          <main className="app-main" ref={debugContainerRef}>
-
-            {/* ══════════ LEFT — Code editor panel ══════════ */}
-            <section className="editor-section" style={{ width: `${debugLeftPct}%`, flex: "none", position: "relative" }}>
-
-              {/* ── AI Generate overlay (debugger mode) ── */}
-              {showDebugGenPrompt && (
-                <div className="ai-prompt-overlay" onClick={() => setShowDebugGenPrompt(false)}>
-                  <div className="ai-prompt-modal" onClick={(e) => e.stopPropagation()}>
-                    <span className="material-symbols-outlined ai-prompt-modal-icon">auto_awesome</span>
-                    <input
-                      ref={debugGenInputRef}
-                      className="ai-prompt-modal-input"
-                      type="text"
-                      value={debugGenPrompt}
-                      onChange={(e) => setDebugGenPrompt(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && debugGenPrompt.trim()) {
-                          handleGenerate(debugGenPrompt);
-                          setDebugGenPrompt("");
-                          setShowDebugGenPrompt(false);
-                        }
-                        if (e.key === "Escape") setShowDebugGenPrompt(false);
-                      }}
-                      placeholder={`Describe what you want to build in ${debugLangLabel}…`}
-                      disabled={generateLoading}
-                      spellCheck="false"
-                      autoFocus
-                    />
-                    <button
-                      className="ai-prompt-modal-btn"
-                      onClick={() => {
-                        if (debugGenPrompt.trim()) {
-                          handleGenerate(debugGenPrompt);
-                          setDebugGenPrompt("");
-                          setShowDebugGenPrompt(false);
-                        }
-                      }}
-                      disabled={generateLoading || !debugGenPrompt.trim()}
-                    >
-                      {generateLoading
-                        ? <span className="material-symbols-outlined spin">sync</span>
-                        : <span className="material-symbols-outlined">send</span>}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Left panel header */}
-              <div className="section-header debugger-code-header">
-                <div className="section-header-title">
-                  <div className="editor-window-dots" style={{ marginRight: 8 }}>
-                    <span className="dot dot-close" />
-                    <span className="dot dot-min" />
-                    <span className="dot dot-max" />
-                  </div>
-                  <span className="material-symbols-outlined section-header-icon">code</span>
-                  <h2>{debugLangLabel} · Source</h2>
-                </div>
-                <div className="examples-selector-container">
-                  <button
-                    className="ai-gen-trigger"
-                    onClick={() => {
-                      setShowDebugGenPrompt(true);
-                      setTimeout(() => debugGenInputRef.current?.focus(), 30);
-                    }}
-                    disabled={generateLoading}
-                    title="Generate code with AI"
-                  >
-                    <span className={`material-symbols-outlined${generateLoading ? " spin" : ""}`}>
-                      {generateLoading ? "sync" : "auto_awesome"}
-                    </span>
-                    Generate
-                  </button>
-                  <LangDropdown language={language} onChange={handleLanguageChange} />
-                </div>
-              </div>
-
-              <CodeEditor
-                code={code}
-                onChange={(newCode) => { setCode(newCode); setCurrentLine(null); setAnalysisResult(null); setError(null); }}
-                currentLine={currentLine}
-                onEditRequest={() => { setCurrentLine(null); setAnalysisResult(null); }}
-                language={language}
-                compact
-                compileError={error}
-                performance={performanceMetrics}
-                breakpoints={breakpoints}
-                onBreakpointsChange={setBreakpoints}
+        if (isGuest) {
+          return (
+            <main className="app-main">
+              <DebuggerRestricted
+                reason="Authentication is required to access high-fidelity execution visualization and interactive memory mapping."
+                actionLabel="Sign in with Google"
+                onAction={() => setShowLoginModal(true)}
               />
+            </main>
+          );
+        }
 
-              {/* Stdin */}
-              <div className="stdin-panel">
-                <div className="stdin-header">
-                  <div className="stdin-header-left">
-                    <span className="material-symbols-outlined stdin-icon">input</span>
-                    <h3>Program Input</h3>
+        if (noProject) {
+          return (
+            <main className="app-main">
+              <DebuggerRestricted
+                reason="To use the advanced debugger, you must first create or open a project from your dashboard."
+                actionLabel="Open Dashboard"
+                onAction={() => setView("dashboard")}
+                secondaryActionLabel="Return to Editor"
+                onSecondaryAction={() => setView("editor")}
+              />
+            </main>
+          );
+        }
+
+        const codeLines = (code || "").split("\n");
+        const curLineNum = currentLine || analysisResult?.snapshots?.[analysisResult?.cursor ?? 0]?.location?.line || 1;
+        const startIdx = Math.max(0, curLineNum - 2);
+        const endIdx = Math.min(codeLines.length, curLineNum + 1);
+        const peekLines = codeLines.slice(startIdx, endIdx).map((text, i) => ({
+          ln: startIdx + i + 1,
+          text,
+          isCurrent: startIdx + i + 1 === curLineNum,
+        }));
+
+        return (
+          <main className="app-main" style={{ display: "flex", flexDirection: "column", position: "relative" }} ref={debugContainerRef}>
+            {/* Top Workspace Bar */}
+            <div className="debugger-action-bar">
+              <div className="action-bar-group action-bar-primary">
+                <button
+                  className="action-btn action-btn--run"
+                  onClick={() => handleAnalyze()}
+                  disabled={loading || aiLoading}
+                  title="Analyze code & start step-through debugger"
+                  data-tour="analyze"
+                >
+                  <span className={`material-symbols-outlined${loading ? " spin" : ""}`}>
+                    {loading ? "sync" : "play_arrow"}
+                  </span>
+                  {loading ? "Analyzing…" : "Analyze & Debug"}
+                </button>
+
+                {breakpoints.size > 0 && (
+                  <button
+                    className="action-btn action-btn--bp-badge"
+                    onClick={() => { setActiveTab("breakpoints"); if (visLayoutMode !== "split") setVisLayoutMode("split"); }}
+                    title={`${breakpoints.size} breakpoint${breakpoints.size !== 1 ? 's' : ''} set — view hits`}
+                  >
+                    <span className="bp-badge-dot" />
+                    {breakpoints.size} BP
+                  </button>
+                )}
+
+                {analysisResult && (
+                  <div className="debugger-step-badge">
+                    <span className="material-symbols-outlined">stacks</span>
+                    Step {(analysisResult.cursor ?? 0) + 1} / {analysisResult.total_recorded_steps ?? "?"}
                   </div>
-                  <span className="stdin-badge">stdin</span>
-                </div>
-                <textarea
-                  className="stdin-textarea"
-                  value={programInput}
-                  onChange={(event) => {
-                    setProgramInput(event.target.value);
-                    setCurrentLine(null);
-                    setAnalysisResult(null);
-                    setStepLoading(false);
-                  }}
-                  placeholder={"Example:\n5\n10\nhello"}
-                  spellCheck="false"
-                />
+                )}
               </div>
-            </section>
 
-            <div className="resize-divider" onMouseDown={onDebugDividerMouseDown}>
-              <div className="resize-handle-dots" />
+              <div className="action-bar-group action-bar-secondary">
+                <button
+                  className="action-btn action-btn--optimize"
+                  onClick={handleOptimizePerformance}
+                  disabled={aiLoading || loading || !performanceMetrics}
+                  title={!performanceMetrics ? "Run the debugger first to collect performance data" : "AI performance optimization"}
+                >
+                  <span className="material-symbols-outlined">speed</span>
+                  Optimize
+                  {!performanceMetrics && <span className="material-symbols-outlined action-lock-icon">lock</span>}
+                </button>
+
+                {/* Workspace Layout Selector */}
+                <div className="vis-layout-selector-bar">
+                  <button
+                    className={`vis-layout-tab-btn ${visLayoutMode === "split" ? "active" : ""}`}
+                    onClick={() => setVisLayoutMode("split")}
+                    title="Studio Split (2-Column)"
+                  >
+                    <span className="material-symbols-outlined">view_column</span>
+                    Split
+                  </button>
+                  <button
+                    className={`vis-layout-tab-btn ${visLayoutMode === "quad" ? "active" : ""}`}
+                    onClick={() => setVisLayoutMode("quad")}
+                    title="Quad Quantum Studio (4-Pane Multi-Grid)"
+                  >
+                    <span className="material-symbols-outlined">grid_view</span>
+                    Quad
+                  </button>
+                  <button
+                    className={`vis-layout-tab-btn ${visLayoutMode === "canvas" ? "active" : ""}`}
+                    onClick={() => setVisLayoutMode("canvas")}
+                    title="Flow Cinema (Full Canvas)"
+                  >
+                    <span className="material-symbols-outlined">fullscreen</span>
+                    Cinema
+                  </button>
+                  <button
+                    className={`vis-layout-tab-btn ${visLayoutMode === "zen" ? "active" : ""}`}
+                    onClick={() => setVisLayoutMode("zen")}
+                    title="Zen Focus (Maximized Code)"
+                  >
+                    <span className="material-symbols-outlined">code</span>
+                    Zen
+                  </button>
+                </div>
+              </div>
             </div>
 
-            {/* ══════════ RIGHT — Visualizer panel ══════════ */}
-            <section className="visualizer-section" style={{ flex: 1, minWidth: 0 }}>
-              {isGuest ? (
-                <DebuggerRestricted
-                  reason="Authentication is required to access high-fidelity execution visualization and interactive memory mapping."
-                  actionLabel="Sign in with Google"
-                  onAction={() => setShowLoginModal(true)}
-                />
-              ) : noProject ? (
-                <DebuggerRestricted
-                  reason="To use the advanced debugger, you must first create or open a project from your dashboard."
-                  actionLabel="Open Dashboard"
-                  onAction={() => setView("dashboard")}
-                  secondaryActionLabel="Return to Editor"
-                  onSecondaryAction={() => setView("editor")}
-                />
-              ) : (
-                <>
-                  {/* ═══ PRIMARY ACTION BAR ═══ */}
-                  <div className="debugger-action-bar">
-                    <div className="action-bar-group action-bar-primary">
-                      <button
-                        className="action-btn action-btn--run"
-                        onClick={() => handleAnalyze()}
-                        disabled={loading || aiLoading}
-                        title="Analyze code & start step-through debugger"
-                        data-tour="analyze"
-                      >
-                        <span className={`material-symbols-outlined${loading ? " spin" : ""}`}>
-                          {loading ? "sync" : "play_arrow"}
-                        </span>
-                        {loading ? "Analyzing…" : "Analyze & Debug"}
-                      </button>
-
-                      {/* Breakpoint count badge */}
-                      {breakpoints.size > 0 && (
-                        <button
-                          className="action-btn action-btn--bp-badge"
-                          onClick={() => setActiveTab("breakpoints")}
-                          title={`${breakpoints.size} breakpoint${breakpoints.size !== 1 ? 's' : ''} set — view hits`}
-                        >
-                          <span className="bp-badge-dot" />
-                          {breakpoints.size} BP
+            {/* Layout Mode Content */}
+            <div style={{ flex: 1, display: "flex", minHeight: 0, overflow: "hidden", position: "relative" }}>
+              {visLayoutMode === "quad" ? (
+                <div className="debugger-quad-studio">
+                  {/* Quad 1: Code Editor */}
+                  <div className="quad-pane quad-pane--editor">
+                    <div className="quad-pane-header">
+                      <div className="quad-pane-title">
+                        <span className="material-symbols-outlined">code</span>
+                        <span>Source ({debugLangLabel})</span>
+                        {currentLine && <span className="quad-line-tag">Line {currentLine}</span>}
+                      </div>
+                      <div className="quad-pane-actions">
+                        <button className="quad-max-btn" onClick={() => setVisLayoutMode("zen")} title="Maximize Code">
+                          <span className="material-symbols-outlined">open_in_full</span>
                         </button>
-                      )}
+                      </div>
                     </div>
-
-                    <div className="action-bar-group action-bar-secondary">
-                      <button
-                        className="action-btn action-btn--optimize"
-                        onClick={handleOptimizePerformance}
-                        disabled={aiLoading || loading || !performanceMetrics}
-                        title={!performanceMetrics ? "Run the debugger first to collect performance data" : "AI performance optimization"}
-                      >
-                        <span className="material-symbols-outlined">speed</span>
-                        Optimize
-                        {!performanceMetrics && <span className="material-symbols-outlined action-lock-icon">lock</span>}
-                      </button>
+                    <div className="quad-pane-body">
+                      <CodeEditor
+                        code={code}
+                        onChange={(newCode) => { setCode(newCode); setCurrentLine(null); setAnalysisResult(null); setError(null); }}
+                        currentLine={currentLine}
+                        onEditRequest={() => { setCurrentLine(null); setAnalysisResult(null); }}
+                        language={language}
+                        compact
+                        compileError={error}
+                        performance={performanceMetrics}
+                        breakpoints={breakpoints}
+                        onBreakpointsChange={setBreakpoints}
+                      />
                     </div>
                   </div>
 
-                  {/* ═══ Generate → Understand banner (debugger view) ═══ */}
-                  {showGenBanner && (
-                    <div className="gen-understand-banner">
-                      <span className="gen-banner-check">
-                        <span className="material-symbols-outlined" style={{ fontSize: 14 }}>check_circle</span>
-                        Code generated
-                      </span>
-                      <button
-                        className="gen-banner-cta"
-                        onClick={() => {
-                          setShowGenBanner(false);
-                          clearTimeout(genBannerTimerRef.current);
-                          handleExplain();
-                        }}
-                      >
-                        <span className="material-symbols-outlined" style={{ fontSize: 14 }}>auto_awesome</span>
-                        Understand with AI
-                      </button>
-                      <button className="gen-banner-dismiss" onClick={() => { setShowGenBanner(false); clearTimeout(genBannerTimerRef.current); }} aria-label="Dismiss">
-                        <span className="material-symbols-outlined" style={{ fontSize: 13 }}>close</span>
-                      </button>
+                  {/* Quad 2: Execution Flow Visualizer */}
+                  <div className="quad-pane quad-pane--flow">
+                    <div className="quad-pane-header">
+                      <div className="quad-pane-title">
+                        <span className="material-symbols-outlined">account_tree</span>
+                        <span>Execution Flow & Call Stack</span>
+                      </div>
+                      <div className="quad-pane-actions">
+                        <button className="quad-max-btn" onClick={() => { setActiveTab("flow"); setVisLayoutMode("canvas"); }} title="Cinema Canvas">
+                          <span className="material-symbols-outlined">open_in_full</span>
+                        </button>
+                      </div>
+                    </div>
+                    <div className="quad-pane-body">
+                      <FlowVisualizer
+                        result={analysisResult}
+                        loading={loading}
+                        stepLoading={stepLoading}
+                        onLineChange={setCurrentLine}
+                        code={code}
+                        onNext={(stepType) => handleStep("next", stepType)}
+                        onBack={() => handleStep("back")}
+                        onExplainStep={handleExplainStep}
+                        breakpoints={breakpoints}
+                        jumpTarget={bpJumpTarget}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Quad 3: Silicon Memory Spectrometer */}
+                  <div className="quad-pane quad-pane--memory">
+                    <div className="quad-pane-header">
+                      <div className="quad-pane-title">
+                        <span className="material-symbols-outlined">memory_alt</span>
+                        <span>Silicon Memory Spectrometer</span>
+                      </div>
+                      <div className="quad-pane-actions">
+                        <button className="quad-max-btn" onClick={() => { setActiveTab("memory"); setVisLayoutMode("split"); }} title="Focus Memory">
+                          <span className="material-symbols-outlined">open_in_full</span>
+                        </button>
+                      </div>
+                    </div>
+                    <div className="quad-pane-body">
+                      <MemorySpectrometer result={analysisResult} currentStep={analysisResult?.cursor ?? 0} />
+                    </div>
+                  </div>
+
+                  {/* Quad 4: Output & Breakpoints */}
+                  <div className="quad-pane quad-pane--output">
+                    <div className="quad-pane-header">
+                      <div className="quad-pane-title">
+                        <span className="material-symbols-outlined">terminal</span>
+                        <span>Live Output & Breakpoints</span>
+                      </div>
+                      <div className="quad-pane-actions">
+                        <button className="quad-max-btn" onClick={() => { setActiveTab("output"); setVisLayoutMode("split"); }} title="Focus Output">
+                          <span className="material-symbols-outlined">open_in_full</span>
+                        </button>
+                      </div>
+                    </div>
+                    <div className="quad-pane-body">
+                      <OutputPanel result={analysisResult} loading={loading} />
+                    </div>
+                  </div>
+                </div>
+              ) : visLayoutMode === "canvas" ? (
+                <div className="debugger-cinema-canvas">
+                  {showMiniPeek && (
+                    <div className="canvas-floating-peek">
+                      <div className="canvas-peek-head">
+                        <div className="canvas-peek-title">
+                          <span className="material-symbols-outlined" style={{ fontSize: 14 }}>code</span>
+                          <span>Line {curLineNum} · {analysisResult?.snapshots?.[analysisResult?.cursor ?? 0]?.location?.function || "main()"}</span>
+                        </div>
+                        <button className="canvas-peek-close" onClick={() => setShowMiniPeek(false)} title="Hide Peek HUD">
+                          <span className="material-symbols-outlined" style={{ fontSize: 14 }}>close</span>
+                        </button>
+                      </div>
+                      <div className="canvas-peek-lines">
+                        {peekLines.map(({ ln, text, isCurrent }) => (
+                          <div key={ln} className={`canvas-peek-line ${isCurrent ? "active" : ""}`}>
+                            <span className="canvas-peek-ln">{ln}</span>
+                            <span className="canvas-peek-code">{text || " "}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
-
-                  {/* ═══ TAB NAVIGATION ═══ */}
-                  <div className="section-header debugger-tab-header">
-                    <div className="tab-bar" role="tablist" aria-label="Debugger view tabs">
-                      {[
-                        { id: "flow",        label: "Execution Flow",  icon: "account_tree", tourAttr: "flow-tab" },
-                        { id: "graph",       label: "Flow Graph",      icon: "schema",        hidden: !analysisResult },
-                        { id: "breakpoints", label: "Breakpoints",     icon: "adjust",        hidden: breakpoints.size === 0 },
-                        { id: "memory",      label: "Memory Map",      icon: "memory_alt" },
-                        { id: "ai",          label: "AI Insights",     icon: "auto_awesome",  hidden: !aiExplanation && !aiLoading },
-                        { id: "output",      label: "Output",          icon: "terminal" },
-                      ].filter(t => !t.hidden).map(({ id, label, icon, tourAttr }) => (
-                        <button
-                          key={id}
-                          className={`tab ${activeTab === id ? "active" : ""}`}
-                          onClick={() => setActiveTab(id)}
-                          role="tab"
-                          {...(tourAttr ? { 'data-tour': tourAttr } : {})}
-                        >
-                          <span className="material-symbols-outlined tab-icon">{icon}</span>
-                          {label}
-                          {id === "ai" && aiLoading && <span className="editor-tab-spinner" style={{ marginLeft: 4 }} />}
-                          {id === "breakpoints" && breakpoints.size > 0 && (
-                            <span className="bp-tab-dot" />
-                          )}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Step counter badge */}
-                    {analysisResult && (
-                      <div className="debugger-step-badge">
-                        <span className="material-symbols-outlined">stacks</span>
-                        Step {(analysisResult.cursor ?? 0) + 1} / {analysisResult.total_recorded_steps ?? "?"}
-                      </div>
+                  <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+                    {activeTab === "graph" ? (
+                      <CodeFlowGraph
+                        result={analysisResult}
+                        currentStep={analysisResult?.cursor ?? 0}
+                        code={code}
+                        language={language}
+                        onJumpToStep={handleJumpToSnapshot}
+                      />
+                    ) : (
+                      <FlowVisualizer
+                        result={analysisResult}
+                        loading={loading}
+                        stepLoading={stepLoading}
+                        onLineChange={setCurrentLine}
+                        code={code}
+                        onNext={(stepType) => handleStep("next", stepType)}
+                        onBack={() => handleStep("back")}
+                        onExplainStep={handleExplainStep}
+                        breakpoints={breakpoints}
+                        jumpTarget={bpJumpTarget}
+                      />
                     )}
                   </div>
+                </div>
+              ) : visLayoutMode === "zen" ? (
+                <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", padding: 12 }}>
+                  <CodeEditor
+                    code={code}
+                    onChange={(newCode) => { setCode(newCode); setCurrentLine(null); setAnalysisResult(null); setError(null); }}
+                    currentLine={currentLine}
+                    onEditRequest={() => { setCurrentLine(null); setAnalysisResult(null); }}
+                    language={language}
+                    compileError={error}
+                    performance={performanceMetrics}
+                    breakpoints={breakpoints}
+                    onBreakpointsChange={setBreakpoints}
+                  />
+                </div>
+              ) : (
+                /* Studio Split Mode */
+                <>
+                  <section className="editor-section" style={{ width: `${debugLeftPct}%`, flex: "none", position: "relative" }}>
+                    {/* ── AI Generate overlay (debugger mode) ── */}
+                    {showDebugGenPrompt && (
+                      <div className="ai-prompt-overlay" onClick={() => setShowDebugGenPrompt(false)}>
+                        <div className="ai-prompt-modal" onClick={(e) => e.stopPropagation()}>
+                          <span className="material-symbols-outlined ai-prompt-modal-icon">auto_awesome</span>
+                          <input
+                            ref={debugGenInputRef}
+                            className="ai-prompt-modal-input"
+                            type="text"
+                            value={debugGenPrompt}
+                            onChange={(e) => setDebugGenPrompt(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && debugGenPrompt.trim()) {
+                                handleGenerate(debugGenPrompt);
+                                setDebugGenPrompt("");
+                                setShowDebugGenPrompt(false);
+                              }
+                              if (e.key === "Escape") setShowDebugGenPrompt(false);
+                            }}
+                            placeholder={`Describe what you want to build in ${debugLangLabel}…`}
+                            disabled={generateLoading}
+                            spellCheck="false"
+                            autoFocus
+                          />
+                          <button
+                            className="ai-prompt-modal-btn"
+                            onClick={() => {
+                              if (debugGenPrompt.trim()) {
+                                handleGenerate(debugGenPrompt);
+                                setDebugGenPrompt("");
+                                setShowDebugGenPrompt(false);
+                              }
+                            }}
+                            disabled={generateLoading || !debugGenPrompt.trim()}
+                          >
+                            {generateLoading
+                              ? <span className="material-symbols-outlined spin">sync</span>
+                              : <span className="material-symbols-outlined">send</span>}
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
-                  {/* ═══ Error banner ═══ */}
-                  {error && (
-                    <div className="error-banner">
-                      <span><strong>Error:</strong> {error}</span>
-                      <button className="error-dismiss" onClick={() => setError(null)}>✕</button>
+                    {/* Left panel header */}
+                    <div className="section-header debugger-code-header">
+                      <div className="section-header-title">
+                        <div className="editor-window-dots" style={{ marginRight: 8 }}>
+                          <span className="dot dot-close" />
+                          <span className="dot dot-min" />
+                          <span className="dot dot-max" />
+                        </div>
+                        <span className="material-symbols-outlined section-header-icon">code</span>
+                        <h2>{debugLangLabel} · Source</h2>
+                      </div>
+                      <div className="examples-selector-container">
+                        <button
+                          className="ai-gen-trigger"
+                          onClick={() => {
+                            setShowDebugGenPrompt(true);
+                            setTimeout(() => debugGenInputRef.current?.focus(), 30);
+                          }}
+                          disabled={generateLoading}
+                          title="Generate code with AI"
+                        >
+                          <span className={`material-symbols-outlined${generateLoading ? " spin" : ""}`}>
+                            {generateLoading ? "sync" : "auto_awesome"}
+                          </span>
+                          Generate
+                        </button>
+                        <LangDropdown language={language} onChange={handleLanguageChange} />
+                      </div>
                     </div>
-                  )}
 
-                  {/* ═══ Tab content ═══ */}
-                  <div key={activeTab} className="tab-panel-enter" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
-                  {activeTab === "flow" ? (
-                    <FlowVisualizer
-                      result={analysisResult}
-                      loading={loading}
-                      stepLoading={stepLoading}
-                      onLineChange={setCurrentLine}
+                    <CodeEditor
                       code={code}
-                      onNext={(stepType) => handleStep("next", stepType)}
-                      onBack={() => handleStep("back")}
-                      onExplainStep={handleExplainStep}
-                      breakpoints={breakpoints}
-                      jumpTarget={bpJumpTarget}
-                    />
-                  ) : activeTab === "graph" ? (
-                    <CodeFlowGraph
-                      result={analysisResult}
-                      currentStep={analysisResult?.cursor ?? 0}
-                      code={code}
+                      onChange={(newCode) => { setCode(newCode); setCurrentLine(null); setAnalysisResult(null); setError(null); }}
+                      currentLine={currentLine}
+                      onEditRequest={() => { setCurrentLine(null); setAnalysisResult(null); }}
                       language={language}
-                      onJumpToStep={handleJumpToSnapshot}
-                    />
-                  ) : activeTab === "breakpoints" ? (
-                    <BreakpointsPanel
-                      snapshots={analysisResult?.snapshots || []}
+                      compact
+                      compileError={error}
+                      performance={performanceMetrics}
                       breakpoints={breakpoints}
-                      currentStep={analysisResult?.cursor ?? 0}
-                      gdbHits={bpDebugResult?.hits || null}
-                      onJumpToStep={(stepIdx) => {
-                        setBpJumpTarget({ step: stepIdx, version: Date.now() });
-                        setActiveTab("flow");
-                      }}
-                      onGdbDebug={
-                        (language === "c" || language === "cpp") && breakpoints.size > 0
-                          ? handleGdbDebug
-                          : null
-                      }
-                      gdbLoading={loading && bpDebugResult === null && activeTab === "breakpoints"}
+                      onBreakpointsChange={setBreakpoints}
                     />
-                  ) : activeTab === "memory" ? (
-                    <MemorySpectrometer result={analysisResult} currentStep={analysisResult?.cursor ?? 0} />
-                  ) : activeTab === "ai" ? (
-                    <AiExplanation data={aiExplanation} loading={aiLoading} />
-                  ) : (
-                    <OutputPanel result={analysisResult} loading={loading} />
-                  )}
+
+                    {/* Stdin */}
+                    <div className="stdin-panel">
+                      <div className="stdin-header">
+                        <div className="stdin-header-left">
+                          <span className="material-symbols-outlined stdin-icon">input</span>
+                          <h3>Program Input</h3>
+                        </div>
+                        <span className="stdin-badge">stdin</span>
+                      </div>
+                      <textarea
+                        className="stdin-textarea"
+                        value={programInput}
+                        onChange={(event) => {
+                          setProgramInput(event.target.value);
+                          setCurrentLine(null);
+                          setAnalysisResult(null);
+                          setStepLoading(false);
+                        }}
+                        placeholder={"Example:\n5\n10\nhello"}
+                        spellCheck="false"
+                      />
+                    </div>
+                  </section>
+
+                  <div className="resize-divider" onMouseDown={onDebugDividerMouseDown}>
+                    <div className="resize-handle-dots" />
                   </div>
+
+                  {/* Right: Visualizer section */}
+                  <section className="visualizer-section" style={{ flex: 1, minWidth: 0 }}>
+                    {/* Tabs header */}
+                    <div className="section-header debugger-tab-header">
+                      <div className="tab-bar" role="tablist" aria-label="Debugger view tabs">
+                        {[
+                          { id: "flow",        label: "Execution Flow",  icon: "account_tree", tourAttr: "flow-tab" },
+                          { id: "graph",       label: "Flow Graph",      icon: "schema",        hidden: !analysisResult },
+                          { id: "breakpoints", label: "Breakpoints",     icon: "adjust",        hidden: breakpoints.size === 0 },
+                          { id: "memory",      label: "Memory Map",      icon: "memory_alt" },
+                          { id: "ai",          label: "AI Insights",     icon: "auto_awesome",  hidden: !aiExplanation && !aiLoading },
+                          { id: "output",      label: "Output",          icon: "terminal" },
+                        ].filter(t => !t.hidden).map(({ id, label, icon, tourAttr }) => (
+                          <button
+                            key={id}
+                            className={`tab ${activeTab === id ? "active" : ""}`}
+                            onClick={() => setActiveTab(id)}
+                            role="tab"
+                            {...(tourAttr ? { 'data-tour': tourAttr } : {})}
+                          >
+                            <span className="material-symbols-outlined tab-icon">{icon}</span>
+                            {label}
+                            {id === "ai" && aiLoading && <span className="editor-tab-spinner" style={{ marginLeft: 4 }} />}
+                            {id === "breakpoints" && breakpoints.size > 0 && (
+                              <span className="bp-tab-dot" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {error && (
+                      <div className="error-banner">
+                        <span><strong>Error:</strong> {error}</span>
+                        <button className="error-dismiss" onClick={() => setError(null)}>✕</button>
+                      </div>
+                    )}
+
+                    <div key={activeTab} className="tab-panel-enter" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+                      {activeTab === "flow" ? (
+                        <FlowVisualizer
+                          result={analysisResult}
+                          loading={loading}
+                          stepLoading={stepLoading}
+                          onLineChange={setCurrentLine}
+                          code={code}
+                          onNext={(stepType) => handleStep("next", stepType)}
+                          onBack={() => handleStep("back")}
+                          onExplainStep={handleExplainStep}
+                          breakpoints={breakpoints}
+                          jumpTarget={bpJumpTarget}
+                        />
+                      ) : activeTab === "graph" ? (
+                        <CodeFlowGraph
+                          result={analysisResult}
+                          currentStep={analysisResult?.cursor ?? 0}
+                          code={code}
+                          language={language}
+                          onJumpToStep={handleJumpToSnapshot}
+                        />
+                      ) : activeTab === "breakpoints" ? (
+                        <BreakpointsPanel
+                          snapshots={analysisResult?.snapshots || []}
+                          breakpoints={breakpoints}
+                          currentStep={analysisResult?.cursor ?? 0}
+                          gdbHits={bpDebugResult?.hits || null}
+                          onJumpToStep={(stepIdx) => {
+                            setBpJumpTarget({ step: stepIdx, version: Date.now() });
+                            setActiveTab("flow");
+                          }}
+                          onGdbDebug={
+                            (language === "c" || language === "cpp") && breakpoints.size > 0
+                              ? handleGdbDebug
+                              : null
+                          }
+                          gdbLoading={loading && bpDebugResult === null && activeTab === "breakpoints"}
+                        />
+                      ) : activeTab === "memory" ? (
+                        <MemorySpectrometer result={analysisResult} currentStep={analysisResult?.cursor ?? 0} />
+                      ) : activeTab === "ai" ? (
+                        <AiExplanation data={aiExplanation} loading={aiLoading} />
+                      ) : (
+                        <OutputPanel result={analysisResult} loading={loading} />
+                      )}
+                    </div>
+                  </section>
                 </>
               )}
-            </section>
-          </main>
-                );
+            </div>
 
-      } // end case "visualizer"
+            {/* Universal Floating Quantum Transport Dock */}
+            <Suspense fallback={null}>
+              {analysisResult && (
+                <FloatingTransportDock
+                  currentStep={analysisResult.cursor ?? 0}
+                  totalSteps={analysisResult.total_recorded_steps ?? analysisResult.snapshots?.length ?? 0}
+                  onStepOver={() => handleStep("next", "over")}
+                  onStepBack={() => handleStep("back")}
+                  onStepIn={() => handleStep("next", "in")}
+                  onStepOut={() => handleStep("next", "out")}
+                  onJumpToStep={handleJumpToSnapshot}
+                  isPlaying={dockPlaying}
+                  onTogglePlay={handleDockTogglePlay}
+                  speed={dockSpeed}
+                  onSpeedChange={setDockSpeed}
+                  stepLoading={stepLoading}
+                  atEnd={
+                    analysisResult.status === "exited" ||
+                    (analysisResult.total_recorded_steps != null &&
+                      (analysisResult.cursor ?? 0) >= analysisResult.total_recorded_steps - 1)
+                  }
+                  pausedAtBp={
+                    Boolean(
+                      breakpoints.size > 0 &&
+                      analysisResult.snapshots?.[analysisResult.cursor ?? 0]?.location?.line &&
+                      breakpoints.has(analysisResult.snapshots[analysisResult.cursor ?? 0].location.line)
+                    )
+                  }
+                  layoutMode={visLayoutMode}
+                  onLayoutModeChange={setVisLayoutMode}
+                />
+              )}
+            </Suspense>
+          </main>
+        );
+      }
 
       default:
         return <LandingPage onStart={() => setView("editor")} onSwitchView={setView} />;

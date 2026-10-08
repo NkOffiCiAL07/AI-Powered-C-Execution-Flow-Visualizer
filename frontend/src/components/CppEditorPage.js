@@ -185,11 +185,19 @@ export default function CppEditorPage({
   const [tab, setTab] = useState("output");
   const [leftPct, setLeftPct] = useState(58);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [editorLayout, setEditorLayout] = useState("split"); // "split" | "dock" | "zen"
+  const [bottomDockTab, setBottomDockTab] = useState("output"); // "output" | "stdin" | "diagnostics" | "ai"
+  const [bottomDockCollapsed, setBottomDockCollapsed] = useState(false);
+  const [bottomHeightPct, setBottomHeightPct] = useState(36);
   const dragging = useRef(false);
+  const hDragging = useRef(false);
   const containerRef = useRef(null);
 
   React.useEffect(() => {
-    if (aiExplanation) setTab("ai");
+    if (aiExplanation) {
+      setTab("ai");
+      setBottomDockTab("ai");
+    }
   }, [aiExplanation]);
 
   const onDividerMouseDown = useCallback((e) => {
@@ -213,6 +221,45 @@ export default function CppEditorPage({
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
   }, []);
+
+  const onHorizontalDividerMouseDown = useCallback((e) => {
+    e.preventDefault();
+    hDragging.current = true;
+    document.body.style.cursor = "row-resize";
+    document.body.style.userSelect = "none";
+    const onMove = (ev) => {
+      if (!hDragging.current || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const pct = ((rect.bottom - ev.clientY) / rect.height) * 100;
+      setBottomHeightPct(Math.min(Math.max(pct, 15), 75));
+    };
+    const onUp = () => {
+      hDragging.current = false;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }, []);
+
+  // ⌘J shortcut to toggle bottom console dock
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'j') {
+        e.preventDefault();
+        if (editorLayout !== "dock") {
+          setEditorLayout("dock");
+          setBottomDockCollapsed(false);
+        } else {
+          setBottomDockCollapsed(c => !c);
+        }
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [editorLayout]);
 
   const langLabel = language === "python" ? "Python" : language === "c" ? "C" : language === "java" ? "Java" : "C++";
   const isDebugLocked = !user || user.role === "guest" || !currentProject;
@@ -314,10 +361,16 @@ export default function CppEditorPage({
       )}
 
       {/* ── Content area: editor + divider + right ── */}
-      <div className="editor-content-wrap" ref={containerRef}>
+      <div className={`editor-content-wrap layout--${editorLayout}`} ref={containerRef}>
 
         {/* ── Left: code editor ── */}
-        <section className="editor-page-left" style={{ width: `${leftPct}%`, position: "relative" }}>
+        <section
+          className="editor-page-left"
+          style={{
+            width: editorLayout === "split" ? `${leftPct}%` : "100%",
+            position: "relative",
+          }}
+        >
 
           {/* ── AI Generate overlay ── */}
           {showPrompt && (
@@ -410,6 +463,33 @@ export default function CppEditorPage({
                   {isGuest && <span className="material-symbols-outlined ai-gen-lock-icon">lock</span>}
                 </button>
 
+                <div className="editor-layout-selector">
+                  <button
+                    className={`editor-layout-btn ${editorLayout === "split" ? "active" : ""}`}
+                    onClick={() => setEditorLayout("split")}
+                    title="Side-by-Side Split"
+                  >
+                    <span className="material-symbols-outlined">view_column</span>
+                    Split
+                  </button>
+                  <button
+                    className={`editor-layout-btn ${editorLayout === "dock" ? "active" : ""}`}
+                    onClick={() => setEditorLayout("dock")}
+                    title="Dockable Console (⌘J)"
+                  >
+                    <span className="material-symbols-outlined">bottom_panel_open</span>
+                    Dock
+                  </button>
+                  <button
+                    className={`editor-layout-btn ${editorLayout === "zen" ? "active" : ""}`}
+                    onClick={() => setEditorLayout("zen")}
+                    title="Zen Focus"
+                  >
+                    <span className="material-symbols-outlined">crop_free</span>
+                    Zen
+                  </button>
+                </div>
+
                 <LangDropdown language={language} onChange={onLanguageChange} />
               </div>
             </div>
@@ -463,15 +543,289 @@ export default function CppEditorPage({
               </span>
             </div>
           </div>
+
+          {/* Floating Zen Action HUD */}
+          {editorLayout === "zen" && (
+            <div className="zen-floating-action-hud">
+              <button
+                className="zen-hud-btn primary"
+                onClick={onRun}
+                disabled={loading || aiLoading}
+                title="Compile & Run (⌘↵)"
+              >
+                <span className={`material-symbols-outlined${loading ? " spin" : ""}`} style={{ fontSize: 15 }}>
+                  {loading ? "sync" : "play_arrow"}
+                </span>
+                Run
+              </button>
+
+              <button
+                className={`zen-hud-btn${isDebugLocked ? " locked" : ""}`}
+                onClick={isDebugLocked ? (isGuest ? onSignIn : null) : onAnalyze}
+                disabled={!isDebugLocked && (loading || aiLoading)}
+                title="Debug"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 15 }}>bug_report</span>
+                Debug
+              </button>
+
+              <button
+                className="zen-hud-btn"
+                onClick={handleFormat}
+                disabled={formatLoading || loading}
+                title="Format Code (⌘⇧F)"
+              >
+                <span className={`material-symbols-outlined${formatLoading ? " spin" : ""}`} style={{ fontSize: 15 }}>
+                  {formatLoading ? "sync" : "auto_fix_high"}
+                </span>
+                Format
+              </button>
+
+              <button
+                className="zen-hud-btn"
+                onClick={isGuest ? onSignIn : onExplain}
+                disabled={!isGuest && (aiLoading || loading)}
+                title="AI Explain (⌘⇧E)"
+              >
+                <span className={`material-symbols-outlined${aiLoading ? " spin" : ""}`} style={{ fontSize: 15 }}>
+                  {aiLoading ? "sync" : "auto_awesome"}
+                </span>
+                Explain
+              </button>
+
+              <button
+                className="zen-hud-btn"
+                onClick={() => setEditorLayout("split")}
+                title="Exit Zen Mode"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 15 }}>view_column</span>
+                Split
+              </button>
+            </div>
+          )}
         </section>
 
-        {/* ── Drag divider ── */}
-        <div className="resize-divider" onMouseDown={onDividerMouseDown}>
-          <div className="resize-handle-dots" />
-        </div>
+        {/* ── Dock mode: Bottom Console Drawer ── */}
+        {editorLayout === "dock" && (
+          <>
+            <div className="resize-divider-h" onMouseDown={onHorizontalDividerMouseDown}>
+              <div className="resize-handle-line" />
+            </div>
 
-        {/* ── Right panel ── */}
-        <section className="editor-page-right" style={{ flex: 1 }}>
+            <div
+              className={`editor-bottom-dock${bottomDockCollapsed ? " collapsed" : ""}`}
+              style={{ height: bottomDockCollapsed ? undefined : `${bottomHeightPct}%` }}
+            >
+              <div className="bottom-dock-head">
+                <div className="bottom-dock-tabs">
+                  <button
+                    className={`bottom-dock-tab ${bottomDockTab === "output" ? "active" : ""}`}
+                    onClick={() => { setBottomDockTab("output"); setBottomDockCollapsed(false); }}
+                  >
+                    <span className="material-symbols-outlined">terminal</span>
+                    Terminal Output
+                    {result && (
+                      <span className={`tab-result-dot ${result.success ? "dot-success" : "dot-error"}`} />
+                    )}
+                  </button>
+
+                  <button
+                    className={`bottom-dock-tab ${bottomDockTab === "stdin" ? "active" : ""}`}
+                    onClick={() => { setBottomDockTab("stdin"); setBottomDockCollapsed(false); }}
+                  >
+                    <span className="material-symbols-outlined">input</span>
+                    Stdin Conduit
+                    {programInput && <span className="bottom-dock-badge" style={{ background: "rgba(6,182,212,0.2)", color: "#22D3EE", borderColor: "rgba(6,182,212,0.3)" }}>Set</span>}
+                  </button>
+
+                  <button
+                    className={`bottom-dock-tab ${bottomDockTab === "diagnostics" ? "active" : ""}`}
+                    onClick={() => { setBottomDockTab("diagnostics"); setBottomDockCollapsed(false); }}
+                  >
+                    <span className="material-symbols-outlined">error</span>
+                    Diagnostics
+                    {liveErrors > 0 && <span className="bottom-dock-badge">{liveErrors}</span>}
+                  </button>
+
+                  <button
+                    className={`bottom-dock-tab ${bottomDockTab === "ai" ? "active" : ""}`}
+                    onClick={() => { setBottomDockTab("ai"); setBottomDockCollapsed(false); }}
+                  >
+                    <span className="material-symbols-outlined">auto_awesome</span>
+                    AI Insights
+                    {aiLoading && <span className="editor-tab-spinner" />}
+                  </button>
+                </div>
+
+                <div className="bottom-dock-actions">
+                  <button
+                    className="action-btn action-btn--run"
+                    style={{ padding: "4px 10px", fontSize: 11, height: 26 }}
+                    onClick={onRun}
+                    disabled={loading || aiLoading}
+                    title="Run Code (⌘↵)"
+                  >
+                    <span className={`material-symbols-outlined${loading ? " spin" : ""}`} style={{ fontSize: 14 }}>
+                      {loading ? "sync" : "play_arrow"}
+                    </span>
+                    {loading ? "Running…" : "Run"}
+                  </button>
+
+                  <button
+                    className={`action-btn action-btn--debug${isDebugLocked ? " action-btn--locked" : ""}`}
+                    style={{ padding: "4px 10px", fontSize: 11, height: 26 }}
+                    onClick={isDebugLocked ? (isGuest ? onSignIn : null) : onAnalyze}
+                    disabled={!isDebugLocked && (loading || aiLoading)}
+                    title="Debug"
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: 14 }}>bug_report</span>
+                    Debug
+                  </button>
+
+                  {result && (
+                    <span className={`tab-bar-status ${result.success ? "status-ok" : "status-fail"}`} style={{ fontSize: 11 }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: 13 }}>
+                        {result.success ? "check_circle" : "cancel"}
+                      </span>
+                      Exit {exitCode}
+                      {runTimeMs != null && (
+                        <span className="run-time-badge" style={{ fontSize: 10 }}>{runTimeMs < 1000 ? `${runTimeMs}ms` : `${(runTimeMs / 1000).toFixed(2)}s`}</span>
+                      )}
+                    </span>
+                  )}
+
+                  <button
+                    className="bottom-dock-action-btn"
+                    onClick={() => setBottomDockCollapsed(c => !c)}
+                    title={bottomDockCollapsed ? "Expand Console (⌘J)" : "Collapse Console (⌘J)"}
+                  >
+                    <span className="material-symbols-outlined">
+                      {bottomDockCollapsed ? "expand_less" : "expand_more"}
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {!bottomDockCollapsed && (
+                <div className="bottom-dock-body">
+                  {bottomDockTab === "output" && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8, height: "100%" }}>
+                      {error && (
+                        <div className="editor-error-banner" style={{ margin: 0 }}>
+                          <span className="material-symbols-outlined">error</span>
+                          <span><strong>Error:</strong> {error}</span>
+                        </div>
+                      )}
+                      <div className="terminal-output" style={{ flex: 1, margin: 0 }}>
+                        <div className="terminal-titlebar">
+                          <div className="terminal-dots">
+                            <div className="terminal-dot terminal-dot-red" />
+                            <div className="terminal-dot terminal-dot-yellow" />
+                            <div className="terminal-dot terminal-dot-green" />
+                          </div>
+                          <div className="terminal-name">stdout — {langLabel}</div>
+                          {stdout && (
+                            <button className="terminal-copy-btn" onClick={() => copyBlock(stdout, 'stdout')} title="Copy output">
+                              <span className="material-symbols-outlined">
+                                {copiedBlock === 'stdout' ? 'check' : 'content_copy'}
+                              </span>
+                              {copiedBlock === 'stdout' ? 'Copied' : 'Copy'}
+                            </button>
+                          )}
+                        </div>
+                        <pre className={`terminal-body ${stdout ? "" : "terminal-empty"}`}>{loading ? "▋ Running…" : stdout || "(no output yet — press Run to execute)"}</pre>
+                      </div>
+                      {(stderr || (result && !success)) && (
+                        <div className="terminal-output terminal-output--stderr" style={{ flex: "none", margin: 0 }}>
+                          <div className="terminal-titlebar">
+                            <div className="terminal-dots">
+                              <div className="terminal-dot terminal-dot-red" />
+                              <div className="terminal-dot terminal-dot-red" />
+                              <div className="terminal-dot terminal-dot-red" />
+                            </div>
+                            <div className="terminal-name terminal-name--stderr">stderr</div>
+                            {stderr && (
+                              <button className="terminal-copy-btn" onClick={() => copyBlock(stderr, 'stderr')} title="Copy errors">
+                                <span className="material-symbols-outlined">
+                                  {copiedBlock === 'stderr' ? 'check' : 'content_copy'}
+                                </span>
+                                {copiedBlock === 'stderr' ? 'Copied' : 'Copy'}
+                              </button>
+                            )}
+                          </div>
+                          <pre className={`terminal-body terminal-stderr ${stderr ? "" : "terminal-empty"}`}>{stderr || "(empty)"}</pre>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {bottomDockTab === "stdin" && (
+                    <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: 6 }}>
+                      <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                        Provide runtime input values consumed by <code>std::cin</code> / <code>scanf</code> / <code>input()</code>:
+                      </div>
+                      <textarea
+                        className="editor-input-textarea"
+                        style={{ flex: 1, minHeight: 60, margin: 0 }}
+                        value={programInput}
+                        onChange={(e) => onProgramInputChange(e.target.value)}
+                        placeholder="Enter standard input values (one per line)…"
+                        spellCheck="false"
+                      />
+                    </div>
+                  )}
+
+                  {bottomDockTab === "diagnostics" && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      {liveCheckError ? (
+                        <div className="editor-error-banner" style={{ margin: 0 }}>
+                          <span className="material-symbols-outlined">warning</span>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                            <strong>Syntax & Compiler Diagnostics:</strong>
+                            <pre style={{ whiteSpace: "pre-wrap", margin: 0, fontFamily: "var(--font-mono)", fontSize: 11 }}>
+                              {typeof liveCheckError === "string" ? liveCheckError : JSON.stringify(liveCheckError, null, 2)}
+                            </pre>
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: 12, color: "#10B981", fontSize: 12 }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: 18 }}>check_circle</span>
+                          <span>Zero errors detected — source code syntax is verified for {langLabel}.</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {bottomDockTab === "ai" && (
+                    <div style={{ flex: 1, overflow: "auto" }}>
+                      {isGuest ? (
+                        <div className="editor-ai-gate" style={{ padding: 16 }}>
+                          <span className="material-symbols-outlined ai-gate-icon" style={{ fontSize: 28 }}>auto_awesome</span>
+                          <h3 className="ai-gate-title" style={{ fontSize: 14 }}>AI Insights</h3>
+                          <p className="ai-gate-desc" style={{ fontSize: 12 }}>Sign in to unlock AI explanations and optimization.</p>
+                          <button className="ai-gate-btn" onClick={onSignIn} style={{ padding: "6px 14px", fontSize: 12 }}>
+                            Sign In
+                          </button>
+                        </div>
+                      ) : (
+                        <AiExplanation data={aiExplanation} loading={aiLoading} />
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* ── Split mode: Drag divider & Right Panel ── */}
+        {editorLayout === "split" && (
+          <>
+            <div className="resize-divider" onMouseDown={onDividerMouseDown}>
+              <div className="resize-handle-dots" />
+            </div>
+
+            <section className="editor-page-right" style={{ flex: 1 }}>
 
           {/* Generate → Understand banner */}
           {showGenBanner && (
@@ -778,6 +1132,8 @@ export default function CppEditorPage({
           )}
           </div>
         </section>
+        </>
+      )}
       </div>
 
       {/* ── Floating AI Explain FAB ── */}
