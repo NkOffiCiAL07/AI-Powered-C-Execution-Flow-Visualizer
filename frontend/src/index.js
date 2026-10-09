@@ -9,6 +9,17 @@ import logger from "./utils/logger";
 
 logger.info("Traceon initializing", { env: process.env.NODE_ENV });
 
+// Suppress benign ResizeObserver loop errors triggered by Monaco and flex resizers
+window.addEventListener("error", (e) => {
+  if (
+    e?.message?.includes("ResizeObserver loop") ||
+    e?.message?.includes("ResizeObserver loop completed")
+  ) {
+    e.stopImmediatePropagation();
+    e.preventDefault();
+  }
+});
+
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>

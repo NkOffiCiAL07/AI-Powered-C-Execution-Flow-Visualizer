@@ -19,7 +19,7 @@ export function ThemeProvider({ children }) {
   const [theme, setThemeState] = useState(() => {
     const stored = localStorage.getItem("theme");
     if (stored && themes[stored]) return stored;
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? themes.dark : themes.light;
+    return themes.dark;
   });
 
   useEffect(() => {

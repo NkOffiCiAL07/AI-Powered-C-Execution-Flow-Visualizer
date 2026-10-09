@@ -5,10 +5,18 @@
 .app {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  min-height: 100vh;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   font-family: var(--font-sans);
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.app:has(.cpp-editor-page),
+.app:has(.app-main) {
+  height: 100vh;
+  overflow: hidden;
 }
 
 .app-main {

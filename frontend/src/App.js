@@ -96,7 +96,13 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [stepLoading, setStepLoading] = useState(false);
-  const [view, setView] = useState("landing");
+  const [view, setView] = useState(() => {
+    const v = _initialParams.get("v");
+    if (v === "editor" || v === "visualizer" || v === "docs" || v === "pricing" || v === "community" || v === "news" || v === "blog") {
+      return v;
+    }
+    return "landing";
+  });
   const [activeTab, setActiveTab] = useState("flow");
   const [aiExplanation, setAiExplanation] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
@@ -266,7 +272,7 @@ function App() {
     }
 
     // Public pages accessible without login
-    if (urlView === "blog" || urlView === "docs" || urlView === "pricing" || urlView === "community" || urlView === "news") {
+    if (urlView === "blog" || urlView === "docs" || urlView === "pricing" || urlView === "community" || urlView === "news" || urlView === "editor" || urlView === "visualizer") {
       setView(urlView);
     } else if (urlView === "view" && urlPid) {
       setView("editor");
