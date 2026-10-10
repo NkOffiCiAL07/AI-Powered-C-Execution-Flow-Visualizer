@@ -1,12 +1,17 @@
 /* ── Smooth global scroll & rendering ── */
-html,
-body {
+html {
   scroll-behavior: smooth;
   text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
-  overflow-x: hidden;
-  max-width: 100vw;
+  height: auto;
+  min-height: 100%;
+  overflow-x: clip;
+}
+
+body {
+  min-height: 100%;
   width: 100%;
+  overflow-x: clip;
 }
 
 *,
@@ -273,7 +278,6 @@ body {
     radial-gradient(ellipse 65% 45% at 85% 20%, rgba(6, 182, 212, 0.05) 0%, transparent 60%),
     radial-gradient(ellipse 70% 50% at 15% 85%, rgba(139, 92, 246, 0.05) 0%, transparent 60%);
   background-attachment: fixed;
-  overscroll-behavior-y: none;
 }
 
 .dark-theme body,

@@ -1676,7 +1676,7 @@ function App() {
           </button>
         </div>
       )}
-      <div key={view} className="view-enter" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: ['editor', 'visualizer', 'dashboard'].includes(view) ? 'hidden' : 'auto' }}>
+      <div key={view} className="view-enter" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: ['editor', 'visualizer', 'dashboard'].includes(view) ? 'hidden' : 'visible' }}>
         <Suspense fallback={<div className="view-loading"><span className="material-symbols-outlined spin">sync</span></div>}>
           {renderView()}
         </Suspense>
