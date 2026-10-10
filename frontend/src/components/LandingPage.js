@@ -393,6 +393,11 @@ export default function LandingPage({ onStart, onSwitchView, onLogin, onSignIn, 
       {/* Background Matrix Grid */}
       <div className="landing-grid-matrix" />
 
+      {/* Dynamic Spectral Aurora Mesh Orbs */}
+      <div className="ambient-aurora-glow aura-1" aria-hidden="true" />
+      <div className="ambient-aurora-glow aura-2" aria-hidden="true" />
+      <div className="ambient-aurora-glow aura-3" aria-hidden="true" />
+
       {/* ── Floating Liquid Glass Navbar ── */}
       <header className="landing-nav-container">
         <nav className="landing-nav-glass" aria-label="Main Navigation">
