@@ -3,6 +3,8 @@ FROM python:3.12-slim
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV HOST=0.0.0.0
+ENV PORT=8000
 
 # System compilers + debugger + Java
 RUN apt-get update && apt-get install -y --no-install-recommends \

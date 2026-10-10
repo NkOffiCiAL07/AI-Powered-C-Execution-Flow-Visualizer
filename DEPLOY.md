@@ -41,9 +41,34 @@ Use this if you are setting up a fresh deployment.
 
 ---
 
-### Part 1 — Backend on Railway
+### Part 1 — Backend on Render (100% Free Forever, Recommended)
 
-#### 1.1 Create a Railway account
+#### 1.1 Sign in to Render
+Go to [render.com](https://render.com) and sign in with GitHub (no credit card needed).
+
+#### 1.2 Create Web Service using Blueprint or Web Service
+* **Option A (One-click Blueprint):** Click **New +** → **Blueprint** → Select `AI-Powered-C-Execution-Flow-Visualizer` repo. Render reads `render.yaml` automatically.
+* **Option B (Manual Web Service):**
+  1. Click **New +** → **Web Service** → Connect your repository.
+  2. Language: **Docker** (detects `./Dockerfile`).
+  3. Instance Type: **Free** ($0/month).
+  4. Under **Environment Variables**, set:
+     * `HOST=0.0.0.0`
+     * `PORT=8000`
+     * `RELOAD=false`
+     * `GEMINI_API_KEY=your_key`
+     * `JWT_SECRET=your_random_secret`
+     * `GOOGLE_CLIENT_ID=your_google_client_id`
+     * `GOOGLE_CLIENT_SECRET=your_google_client_secret`
+     * `ALLOWED_ORIGINS=https://frontend-gamma-vert-20.vercel.app`
+     * `FRONTEND_ORIGIN=https://frontend-gamma-vert-20.vercel.app`
+     * `OAUTH_REDIRECT_URI=https://<your-render-app>.onrender.com/auth/google/callback`
+
+Render provides a free domain like `https://traceon-backend.onrender.com`.
+
+---
+
+### Part 1B — Backend on Railway (Trial)
 
 Go to [railway.com](https://railway.com) and sign up.
 
