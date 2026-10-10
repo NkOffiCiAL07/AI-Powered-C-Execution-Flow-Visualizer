@@ -338,6 +338,8 @@ export default function LandingPage({ onStart, onSwitchView, onLogin, onSignIn, 
   const [activeAlgoTab, setActiveAlgoTab] = useState("fib");
   const [openFaq, setOpenFaq] = useState(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [billingCycle, setBillingCycle] = useState("monthly");
+  const [discordToast, setDiscordToast] = useState(false);
   const playTimerRef = useRef(null);
 
   const activePreset = SIM_PRESETS[activePresetKey] || SIM_PRESETS.fibonacci;
@@ -415,9 +417,10 @@ export default function LandingPage({ onStart, onSwitchView, onLogin, onSignIn, 
             <a href="#features" className="nav-link-item">Capabilities</a>
             <a href="#comparison" className="nav-link-item">Comparison</a>
             <a href="#algorithms" className="nav-link-item">Playground</a>
+            <a href="#pricing" className="nav-link-item">Pricing</a>
+            <a href="#docs" className="nav-link-item">Docs</a>
+            <a href="#community" className="nav-link-item">Community</a>
             <a href="#faq" className="nav-link-item">FAQ</a>
-            <button className="nav-link-item" onClick={() => onSwitchView && onSwitchView("docs")}>Docs</button>
-            <button className="nav-link-item" onClick={() => onSwitchView && onSwitchView("pricing")}>Pricing</button>
           </div>
 
           <div className="nav-actions-group">
@@ -447,6 +450,9 @@ export default function LandingPage({ onStart, onSwitchView, onLogin, onSignIn, 
 
       {/* ── Hero Section ── */}
       <section className="landing-hero">
+        <div className="hero-stage-spotlight" aria-hidden="true" />
+        <div className="hero-stage-rays" aria-hidden="true" />
+
         <div className="hero-pill-badge">
           <span className="material-symbols-outlined hero-pill-sparkle">auto_awesome</span>
           <span className="hero-pill-desktop">Traceon 2.4 — Quantum Developer Studio · Apple visionOS & Linear Architecture</span>
@@ -1055,6 +1061,408 @@ export default function LandingPage({ onStart, onSwitchView, onLogin, onSignIn, 
             <div className="metric-label-sub">Native Execution Engines</div>
           </div>
         </div>
+      </section>
+
+      {/* ── Section: Unified Quantum Pricing Matrix ── */}
+      <section id="pricing" className="landing-pricing-section">
+        <div className="landing-section-header">
+          <span className="section-eyebrow">Transparent Cloud Subscriptions</span>
+          <h2 className="section-heading-lg">Predictable Pricing for Developers & Teams</h2>
+          <p className="section-subtext">
+            Start debugging code in seconds for free. Upgrade to unlock full bi-directional time-travel and silicon RAM spectrometer mapping.
+          </p>
+
+          {/* Billing Cycle Switcher */}
+          <div className="pricing-billing-toggle">
+            <button
+              className={`pricing-toggle-btn ${billingCycle === "monthly" ? "active" : ""}`}
+              onClick={() => setBillingCycle("monthly")}
+            >
+              Monthly Billing
+            </button>
+            <button
+              className={`pricing-toggle-btn ${billingCycle === "annual" ? "active" : ""}`}
+              onClick={() => setBillingCycle("annual")}
+            >
+              <span>Annual Billing</span>
+              <span className="pricing-save-badge">Save 20% · 2 Mo Free</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 3 Tier Cards */}
+        <div className="pricing-cards-grid">
+          {/* Tier 1: Free / Community Sandbox */}
+          <div className="pricing-card">
+            <div className="pricing-card-header">
+              <span className="pricing-tier-tag">Community Sandbox</span>
+              <h3 className="pricing-tier-title">Free</h3>
+              <div className="pricing-price-row">
+                <span className="pricing-currency">$</span>
+                <span className="pricing-amount">0</span>
+                <span className="pricing-period">/mo</span>
+              </div>
+              <p className="pricing-tier-desc">
+                Instant zero-install cloud compiler for rapid testing, student practice, and code experimentation.
+              </p>
+            </div>
+
+            <button className="pricing-cta-btn secondary" onClick={onStart}>
+              <span className="material-symbols-outlined" style={{ fontSize: 16 }}>play_arrow</span>
+              <span>Launch Free Studio</span>
+            </button>
+
+            <div className="pricing-divider" />
+
+            <div className="pricing-features-list">
+              <div className="pricing-feature-item included">
+                <span className="material-symbols-outlined check-icon">check_circle</span>
+                <span>C++20, C17, Python 3.12, Java 21 compilation</span>
+              </div>
+              <div className="pricing-feature-item included">
+                <span className="material-symbols-outlined check-icon">check_circle</span>
+                <span>Sub-200ms cloud container execution</span>
+              </div>
+              <div className="pricing-feature-item included">
+                <span className="material-symbols-outlined check-icon">check_circle</span>
+                <span>Synchronized stdin / stdout terminal</span>
+              </div>
+              <div className="pricing-feature-item included">
+                <span className="material-symbols-outlined check-icon">check_circle</span>
+                <span>Standard algorithm library & interactive presets</span>
+              </div>
+              <div className="pricing-feature-item excluded">
+                <span className="material-symbols-outlined close-icon">cancel</span>
+                <span>Multi-step time-travel debugger</span>
+              </div>
+              <div className="pricing-feature-item excluded">
+                <span className="material-symbols-outlined close-icon">cancel</span>
+                <span>Silicon Memory Spectrometer die map</span>
+              </div>
+              <div className="pricing-feature-item excluded">
+                <span className="material-symbols-outlined close-icon">cancel</span>
+                <span>AI algorithmic root-cause analysis</span>
+              </div>
+              <div className="pricing-feature-item excluded">
+                <span className="material-symbols-outlined close-icon">cancel</span>
+                <span>Cloud workspaces & project persistence</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Tier 2: Pro (Featured / Most Popular with Chromatic Foil) */}
+          <div className="pricing-card popular">
+            <div className="popular-chromatic-badge">
+              <span className="material-symbols-outlined" style={{ fontSize: 13 }}>bolt</span>
+              <span>MOST POPULAR · DEVELOPER CHOICE</span>
+            </div>
+
+            <div className="pricing-card-header">
+              <span className="pricing-tier-tag highlight">Pro Developer</span>
+              <h3 className="pricing-tier-title">Pro</h3>
+              <div className="pricing-price-row">
+                <span className="pricing-currency">$</span>
+                <span className="pricing-amount">{billingCycle === "annual" ? "1.60" : "2"}</span>
+                <span className="pricing-period">/mo</span>
+              </div>
+              <span className="pricing-billing-sub">
+                {billingCycle === "annual" ? "Billed $19 annually (Save 20%)" : "Billed monthly, cancel anytime"}
+              </span>
+              <p className="pricing-tier-desc">
+                Full deep-dive debugging power for engineers, researchers, and students who ship complex software.
+              </p>
+            </div>
+
+            <button
+              className="pricing-cta-btn primary"
+              onClick={user && user.role === "member" ? onStart : (onSignIn ? onSignIn : () => setShowLoginModal(true))}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
+                {user && user.role === "member" ? "rocket_launch" : "lock_open"}
+              </span>
+              <span>{user && user.role === "member" ? "Open Pro Studio" : "Upgrade to Pro"}</span>
+              <span className="material-symbols-outlined" style={{ fontSize: 15 }}>arrow_forward</span>
+            </button>
+
+            <div className="pricing-divider" />
+
+            <div className="pricing-features-list">
+              <div className="pricing-feature-item included highlight">
+                <span className="material-symbols-outlined check-icon">verified</span>
+                <strong>Everything in Community Sandbox, plus:</strong>
+              </div>
+              <div className="pricing-feature-item included">
+                <span className="material-symbols-outlined check-icon">check_circle</span>
+                <span>Time-travel step debugger (Step In, Over, Out, Back)</span>
+              </div>
+              <div className="pricing-feature-item included">
+                <span className="material-symbols-outlined check-icon">check_circle</span>
+                <span>Silicon RAM Spectrometer & real-time die map</span>
+              </div>
+              <div className="pricing-feature-item included">
+                <span className="material-symbols-outlined check-icon">check_circle</span>
+                <span>AI root-cause autopsy & Big-O complexity analyzer</span>
+              </div>
+              <div className="pricing-feature-item included">
+                <span className="material-symbols-outlined check-icon">check_circle</span>
+                <span>Interactive call-stack execution DAG graph</span>
+              </div>
+              <div className="pricing-feature-item included">
+                <span className="material-symbols-outlined check-icon">check_circle</span>
+                <span>AI code generation & AST performance optimizer</span>
+              </div>
+              <div className="pricing-feature-item included">
+                <span className="material-symbols-outlined check-icon">check_circle</span>
+                <span>Unlimited cloud projects & multi-file workspaces</span>
+              </div>
+              <div className="pricing-feature-item included">
+                <span className="material-symbols-outlined check-icon">check_circle</span>
+                <span>Breakpoint hits telemetry & shareable trace URLs</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Tier 3: Enterprise */}
+          <div className="pricing-card">
+            <div className="pricing-card-header">
+              <span className="pricing-tier-tag">Dedicated Clusters</span>
+              <h3 className="pricing-tier-title">Enterprise</h3>
+              <div className="pricing-price-row">
+                <span className="pricing-amount custom">Custom</span>
+              </div>
+              <span className="pricing-billing-sub">Tailored for teams and universities</span>
+              <p className="pricing-tier-desc">
+                High-scale isolated compute infrastructure and dedicated security for enterprise organizations.
+              </p>
+            </div>
+
+            <button
+              className="pricing-cta-btn secondary"
+              onClick={() => window.open("mailto:nishantkumar19041@gmail.com?subject=Traceon Enterprise Inquiry", "_blank")}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 16 }}>mail</span>
+              <span>Contact Enterprise Engineering</span>
+            </button>
+
+            <div className="pricing-divider" />
+
+            <div className="pricing-features-list">
+              <div className="pricing-feature-item included highlight">
+                <span className="material-symbols-outlined check-icon">verified</span>
+                <strong>Everything in Pro Developer, plus:</strong>
+              </div>
+              <div className="pricing-feature-item included">
+                <span className="material-symbols-outlined check-icon">check_circle</span>
+                <span>Dedicated on-premise execution nodes & VPC runners</span>
+              </div>
+              <div className="pricing-feature-item included">
+                <span className="material-symbols-outlined check-icon">check_circle</span>
+                <span>Organization workspaces & team RBAC permissions</span>
+              </div>
+              <div className="pricing-feature-item included">
+                <span className="material-symbols-outlined check-icon">check_circle</span>
+                <span>Custom private LLM & on-premise AI models</span>
+              </div>
+              <div className="pricing-feature-item included">
+                <span className="material-symbols-outlined check-icon">check_circle</span>
+                <span>99.99% enterprise SLA & priority execution queues</span>
+              </div>
+              <div className="pricing-feature-item included">
+                <span className="material-symbols-outlined check-icon">check_circle</span>
+                <span>SOC2 Type II compliance & custom security audits</span>
+              </div>
+              <div className="pricing-feature-item included">
+                <span className="material-symbols-outlined check-icon">check_circle</span>
+                <span>Dedicated solutions engineer & Slack connect channel</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Section: Unified Developer Quickstart & Docs Preview ── */}
+      <section id="docs" className="landing-docs-section">
+        <div className="landing-section-header">
+          <span className="section-eyebrow">Developer Quickstart</span>
+          <h2 className="section-heading-lg">Zero Config. Instant Silicon Visualization.</h2>
+          <p className="section-subtext">
+            Traceon eliminates hours of toolchain setup. From code ingestion to byte-level memory inspection in under 3 seconds.
+          </p>
+        </div>
+
+        {/* 3 Pipeline Steps */}
+        <div className="docs-pipeline-grid">
+          <div className="docs-pipeline-card">
+            <div className="docs-step-number">01</div>
+            <div className="docs-step-icon">
+              <span className="material-symbols-outlined">edit_note</span>
+            </div>
+            <h3 className="docs-step-title">Direct Code Ingestion</h3>
+            <p className="docs-step-desc">
+              Paste or type your C++20, C17, Python 3.12, or Java 21 files. Full multi-file header support (.cpp and .h) with live Monaco syntax highlighting.
+            </p>
+            <div className="docs-step-tags">
+              <span className="docs-tag">Multi-File</span>
+              <span className="docs-tag">Auto-Detect</span>
+            </div>
+          </div>
+
+          <div className="docs-pipeline-card">
+            <div className="docs-step-number">02</div>
+            <div className="docs-step-icon">
+              <span className="material-symbols-outlined">memory</span>
+            </div>
+            <h3 className="docs-step-title">Micro-Virtualization & JIT</h3>
+            <p className="docs-step-desc">
+              Isolated Linux container compiles your binary using Clang/GCC in under 180ms, generating LLDB/GDB machine interface execution snapshots.
+            </p>
+            <div className="docs-step-tags">
+              <span className="docs-tag">&lt;180ms Latency</span>
+              <span className="docs-tag">Seccomp Isolated</span>
+            </div>
+          </div>
+
+          <div className="docs-pipeline-card">
+            <div className="docs-step-number">03</div>
+            <div className="docs-step-icon">
+              <span className="material-symbols-outlined">account_tree</span>
+            </div>
+            <h3 className="docs-step-title">Time-Travel & RAM Inspection</h3>
+            <p className="docs-step-desc">
+              Scrub execution history bidirectionally. Observe recursion branches, inspect pointer offsets, and identify segmentation faults before they happen.
+            </p>
+            <div className="docs-step-tags">
+              <span className="docs-tag">Time-Travel</span>
+              <span className="docs-tag">Die Map</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Keyboard Command Reference Table */}
+        <div className="docs-shortcuts-box">
+          <div className="docs-shortcuts-head">
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span className="material-symbols-outlined" style={{ color: "#38BDF8" }}>keyboard</span>
+              <span style={{ fontWeight: 700, fontSize: 15, color: "#FFFFFF" }}>Quantum Studio Shortcuts Reference</span>
+            </div>
+            <span className="docs-shortcuts-badge">Zero Friction HUD</span>
+          </div>
+
+          <div className="docs-shortcuts-grid">
+            <div className="shortcut-chip">
+              <kbd className="shortcut-kbd">⌘ + ↵</kbd>
+              <span className="shortcut-label">Compile & Run Code</span>
+            </div>
+            <div className="shortcut-chip">
+              <kbd className="shortcut-kbd">F5</kbd>
+              <span className="shortcut-label">Continue to Next Breakpoint</span>
+            </div>
+            <div className="shortcut-chip">
+              <kbd className="shortcut-kbd">→</kbd>
+              <span className="shortcut-label">Step Over Next Instruction</span>
+            </div>
+            <div className="shortcut-chip">
+              <kbd className="shortcut-kbd">↓</kbd>
+              <span className="shortcut-label">Step Into Function Call</span>
+            </div>
+            <div className="shortcut-chip">
+              <kbd className="shortcut-kbd">↑</kbd>
+              <span className="shortcut-label">Step Out of Stack Frame</span>
+            </div>
+            <div className="shortcut-chip">
+              <kbd className="shortcut-kbd">Space</kbd>
+              <span className="shortcut-label">Play / Pause Live Stepping</span>
+            </div>
+            <div className="shortcut-chip">
+              <kbd className="shortcut-kbd">?</kbd>
+              <span className="shortcut-label">Open Command Palette</span>
+            </div>
+            <div className="shortcut-chip">
+              <kbd className="shortcut-kbd">⌘ + S</kbd>
+              <span className="shortcut-label">Save Project File</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Section: Unified Community & Developer Ecosystem ── */}
+      <section id="community" className="landing-community-section">
+        <div className="landing-section-header">
+          <span className="section-eyebrow">Developer Lounge & Ecosystem</span>
+          <h2 className="section-heading-lg">Built with the Systems Programming Community</h2>
+          <p className="section-subtext">
+            Join thousands of developers, researchers, and students mastering algorithms, diagnosing pointer corruption, and building the future of code visualization.
+          </p>
+        </div>
+
+        <div className="community-cards-grid">
+          {/* Card 1: Discord */}
+          <div className="community-card">
+            <div className="community-icon-bubble discord">
+              <span className="material-symbols-outlined">forum</span>
+            </div>
+            <h3 className="community-card-title">Discord Community</h3>
+            <p className="community-card-desc">
+              Join live discussions, share execution traces, debate C++ proposal patterns, and get rapid debugging assistance from fellow engineers.
+            </p>
+            <button
+              className="community-card-btn"
+              onClick={() => {
+                navigator.clipboard?.writeText("https://discord.gg/traceon");
+                setDiscordToast(true);
+                setTimeout(() => setDiscordToast(false), 3500);
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 16 }}>link</span>
+              <span>Copy Discord Invite</span>
+            </button>
+          </div>
+
+          {/* Card 2: GitHub Open Ecosystem */}
+          <div className="community-card">
+            <div className="community-icon-bubble github">
+              <span className="material-symbols-outlined">code</span>
+            </div>
+            <h3 className="community-card-title">GitHub Repository</h3>
+            <p className="community-card-desc">
+              Star the project, inspect runtime conduit architectures, track release milestones, and open feature requests or pull requests.
+            </p>
+            <a
+              href="https://github.com/NkOffiCiAL07/AI-Powered-C-Execution-Flow-Visualizer"
+              target="_blank"
+              rel="noreferrer"
+              className="community-card-btn"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 16 }}>star</span>
+              <span>Star on GitHub</span>
+            </a>
+          </div>
+
+          {/* Card 3: Direct Feedback & Bug Reports */}
+          <div className="community-card">
+            <div className="community-icon-bubble mail">
+              <span className="material-symbols-outlined">mark_email_read</span>
+            </div>
+            <h3 className="community-card-title">Engineering Direct Line</h3>
+            <p className="community-card-desc">
+              Found an edge case with pointer mutation or have a specialized debugger feature request? Talk directly to the core engineering team.
+            </p>
+            <a
+              href="mailto:nishantkumar19041@gmail.com?subject=Traceon Feedback & Bug Report"
+              className="community-card-btn"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 16 }}>mail</span>
+              <span>Send Direct Feedback</span>
+            </a>
+          </div>
+        </div>
+
+        {discordToast && (
+          <div className="landing-toast">
+            <span className="material-symbols-outlined" style={{ color: "#38BDF8" }}>check_circle</span>
+            <span>Discord invite link copied to clipboard!</span>
+          </div>
+        )}
       </section>
 
       {/* ── Section: Developer FAQ Accordion ── */}

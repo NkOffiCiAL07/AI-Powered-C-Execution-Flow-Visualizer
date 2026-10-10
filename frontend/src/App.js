@@ -18,9 +18,6 @@ import "./styles/CppEditorPage.css";
 const LandingPage        = lazy(() => import("./components/LandingPage"));
 const DashboardPage      = lazy(() => import("./components/DashboardPage"));
 const CppEditorPage      = lazy(() => import("./components/CppEditorPage"));
-const DocsPage           = lazy(() => import("./components/DocsPage"));
-const PricingPage        = lazy(() => import("./components/PricingPage"));
-const CommunityPage      = lazy(() => import("./components/CommunityPage"));
 const NewsPage           = lazy(() => import("./components/NewsPage"));
 const BlogPage           = lazy(() => import("./components/BlogPage"));
 
@@ -98,11 +95,33 @@ function App() {
   const [stepLoading, setStepLoading] = useState(false);
   const [view, setView] = useState(() => {
     const v = _initialParams.get("v");
-    if (v === "editor" || v === "visualizer" || v === "docs" || v === "pricing" || v === "community" || v === "news" || v === "blog") {
+    if (v === "editor" || v === "visualizer" || v === "dashboard" || v === "news" || v === "blog") {
       return v;
     }
     return "landing";
   });
+
+  const handleSwitchView = useCallback((nextView) => {
+    if (nextView === "pricing" || nextView === "docs" || nextView === "community") {
+      setView("landing");
+      setTimeout(() => {
+        const el = document.getElementById(nextView);
+        if (el) el.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+      return;
+    }
+    setView(nextView);
+  }, []);
+
+  useEffect(() => {
+    const v = _initialParams.get("v");
+    if (v === "pricing" || v === "docs" || v === "community") {
+      setTimeout(() => {
+        const el = document.getElementById(v);
+        if (el) el.scrollIntoView({ behavior: "smooth" });
+      }, 350);
+    }
+  }, []);
   const [activeTab, setActiveTab] = useState("flow");
   const [aiExplanation, setAiExplanation] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
@@ -1005,8 +1024,11 @@ function App() {
 
   const renderView = () => {
     switch (view) {
+      case "docs":
+      case "pricing":
+      case "community":
       case "landing":
-        return <LandingPage onStart={() => setView("editor")} onSwitchView={setView} onLogin={handleLogin} onSignIn={() => setShowLoginModal(true)} user={user} serverDown={serverDown} />;
+        return <LandingPage onStart={() => setView("editor")} onSwitchView={handleSwitchView} onLogin={handleLogin} onSignIn={() => setShowLoginModal(true)} user={user} serverDown={serverDown} />;
       case "dashboard":
         return (
           <DashboardPage
@@ -1014,18 +1036,12 @@ function App() {
             onLogout={handleLogout}
             onOpenProject={handleOpenProject}
             onOpenPlayground={() => { setCurrentProject(null); setView("editor"); }}
-            onSwitchView={setView}
+            onSwitchView={handleSwitchView}
             onBack={() => setView(currentProject ? 'editor' : 'landing')}
           />
         );
-      case "docs":
-        return <DocsPage />;
-      case "pricing":
-        return <PricingPage user={user} onStart={() => setView("editor")} onSignIn={() => setShowLoginModal(true)} />;
-      case "community":
-        return <CommunityPage onStart={() => setView("editor")} />;
       case "news":
-        return <NewsPage user={user} onSwitchView={setView} />;
+        return <NewsPage user={user} onSwitchView={handleSwitchView} />;
       case "blog":
         return <BlogPage onSwitchView={setView} />;
       case "editor":
@@ -1628,7 +1644,7 @@ function App() {
       }
 
       default:
-        return <LandingPage onStart={() => setView("editor")} onSwitchView={setView} />;
+        return <LandingPage onStart={() => setView("editor")} onSwitchView={handleSwitchView} onLogin={handleLogin} onSignIn={() => setShowLoginModal(true)} user={user} serverDown={serverDown} />;
     }
   };
 
@@ -1637,7 +1653,7 @@ function App() {
       {view !== "landing" && view !== "dashboard" && (
         <Header
           view={view}
-          onSwitchView={setView}
+          onSwitchView={handleSwitchView}
           user={user}
           onLogout={handleLogout}
           onSignIn={() => setShowLoginModal(true)}
@@ -1693,7 +1709,7 @@ function App() {
         onStepIn={() => handleStep("next", "in")}
         onStepOut={() => handleStep("next", "out")}
         onExplain={handleExplain}
-        onSwitchView={setView}
+        onSwitchView={handleSwitchView}
         onOpenShortcuts={() => setShowShortcuts(true)}
         currentView={view}
       />
